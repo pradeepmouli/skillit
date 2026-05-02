@@ -136,8 +136,8 @@ export function parseHelpOutput(text: string, commandName: string): ExtractedCon
           args.push({
             name: arg.name,
             description: arg.description,
-            required: false,
-            variadic: false
+            required: arg.required,
+            variadic: arg.variadic
           });
         }
       }
@@ -337,9 +337,7 @@ function parseOptionLine(raw: string): ExtractedConfigOption | null {
   return option;
 }
 
-function parseArgumentLine(
-  raw: string
-): Pick<ExtractedConfigArgument, 'name' | 'description'> | null {
+function parseArgumentLine(raw: string): ExtractedConfigArgument | null {
   const trimmed = raw.trim();
   if (trimmed.length === 0 || trimmed.startsWith('-')) {
     return null;
@@ -350,13 +348,19 @@ function parseArgumentLine(
     return null;
   }
 
-  const name = normalizeArgumentName(match[1] ?? '');
+  const token = (match[1] ?? '').trim();
+  const name = normalizeArgumentName(token);
   const description = (match[2] ?? '').trim();
   if (name.length === 0) {
     return null;
   }
 
-  return { name, description };
+  return {
+    name,
+    description,
+    required: token.startsWith('<'),
+    variadic: token.includes('...')
+  };
 }
 
 function normalizeArgumentName(name: string): string {

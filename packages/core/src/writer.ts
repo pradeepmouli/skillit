@@ -190,31 +190,100 @@ function readLenientSkillMetadataFromContent(content: string): {
   const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return {};
 
-  const frontmatter = match[1]!;
-  const name = matchSimpleFrontmatterValue(frontmatter, 'name');
-  const version = matchSimpleFrontmatterValue(frontmatter, 'version');
-  const curated = /(?:^|\r?\n)curated:\s*true(?:\s|$)/.test(frontmatter) ? true : undefined;
-  const explicitBundledGuidance =
-    /(?:^|\r?\n)toSkills:\s*(?:\r?\n[ \t]+[^\r\n]*)*?\r?\n[ \t]+managed:\s*bundled-guidance(?:\s|$)/.test(
-      frontmatter
-    );
+  const parsed = parseLenientFrontmatter(match[1]!);
   const legacyBundledGuidance =
-    typeof name === 'string' && name.startsWith('to-skills-') && typeof version === 'string';
+    typeof parsed.name === 'string' &&
+    parsed.name.startsWith('to-skills-') &&
+    typeof parsed.version === 'string';
   return {
-    bundledGuidance: explicitBundledGuidance || legacyBundledGuidance ? true : undefined,
+    bundledGuidance: parsed.bundledGuidance || legacyBundledGuidance ? true : undefined,
+    curated: parsed.curated,
+    version: parsed.version,
+    name: parsed.name
+  };
+}
+
+function parseLenientFrontmatter(frontmatter: string): {
+  bundledGuidance?: boolean;
+  curated?: boolean;
+  version?: string;
+  name?: string;
+} {
+  let name: string | undefined;
+  let version: string | undefined;
+  let curated: boolean | undefined;
+  let bundledGuidance: boolean | undefined;
+  let inToSkills = false;
+  let toSkillsIndent = -1;
+
+  for (const line of frontmatter.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed.length === 0) continue;
+
+    const indent = leadingIndentWidth(line);
+    if (inToSkills && indent <= toSkillsIndent) {
+      inToSkills = false;
+      toSkillsIndent = -1;
+    }
+
+    if (inToSkills) {
+      const [key, value] = splitFrontmatterKeyValue(trimmed);
+      if (key === 'managed' && value === 'bundled-guidance') {
+        bundledGuidance = true;
+      }
+      continue;
+    }
+
+    const [key, value] = splitFrontmatterKeyValue(trimmed);
+    if (!key || value === undefined) continue;
+    if (key === 'name') {
+      name = value;
+      continue;
+    }
+    if (key === 'version') {
+      version = value;
+      continue;
+    }
+    if (key === 'curated' && value === 'true') {
+      curated = true;
+      continue;
+    }
+    if (key === 'toSkills') {
+      inToSkills = true;
+      toSkillsIndent = indent;
+    }
+  }
+
+  return {
+    bundledGuidance,
     curated,
     version,
     name
   };
 }
 
-function matchSimpleFrontmatterValue(
-  frontmatter: string,
-  key: 'name' | 'version'
-): string | undefined {
-  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = frontmatter.match(new RegExp(`(?:^|\\r?\\n)${escapedKey}:\\s*([^\\r\\n#]+)`));
-  return match?.[1]?.trim();
+function splitFrontmatterKeyValue(
+  line: string
+): [key: string | undefined, value: string | undefined] {
+  const separator = line.indexOf(':');
+  if (separator === -1) return [undefined, undefined];
+  const key = line.slice(0, separator).trim();
+  const rawValue = line.slice(separator + 1).trim();
+  if (key.length === 0) return [undefined, undefined];
+  return [key, stripInlineComment(rawValue)];
+}
+
+function stripInlineComment(value: string): string {
+  const hashIndex = value.indexOf('#');
+  return (hashIndex === -1 ? value : value.slice(0, hashIndex)).trim();
+}
+
+function leadingIndentWidth(line: string): number {
+  let width = 0;
+  while (width < line.length && (line[width] === ' ' || line[width] === '\t')) {
+    width++;
+  }
+  return width;
 }
 
 function compareSemver(a: string, b: string): -1 | 0 | 1 {

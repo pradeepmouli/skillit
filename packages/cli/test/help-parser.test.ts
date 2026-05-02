@@ -53,6 +53,19 @@ Options:
   --dry-run    Preview without writing
 `;
 
+const HELP_ARGUMENTS_ONLY_CARDINALITY = `Usage: deploy [options]
+
+Deploy the project
+
+Arguments:
+  <environment>  Target environment name
+  [artifact]     Optional artifact identifier
+  <files...>     Files to upload
+
+Options:
+  --dry-run    Preview without writing
+`;
+
 const HELP_SHORT_ONLY = `Usage: prog [options]
 
 Options:
@@ -255,6 +268,30 @@ describe('parseHelpOutput', () => {
     expect(result.arguments?.find((arg) => arg.name === 'artifact')?.description).toBe(
       'Optional artifact identifier'
     );
+  });
+
+  it('preserves required and variadic cardinality parsed from Arguments: lines', () => {
+    const result = parseHelpOutput(HELP_ARGUMENTS_ONLY_CARDINALITY, 'deploy');
+    expect(result.arguments).toEqual([
+      {
+        name: 'environment',
+        description: 'Target environment name',
+        required: true,
+        variadic: false
+      },
+      {
+        name: 'artifact',
+        description: 'Optional artifact identifier',
+        required: false,
+        variadic: false
+      },
+      {
+        name: 'files',
+        description: 'Files to upload',
+        required: true,
+        variadic: true
+      }
+    ]);
   });
 
   // -------------------------------------------------------------------------

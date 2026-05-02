@@ -402,6 +402,54 @@ describe('writeSkills', () => {
     expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toContain('# keep-me');
   });
 
+  it('preserves malformed bundled guidance when lenient metadata shows the installed version is newer', () => {
+    const outDir = tempDir('to-skills-out-');
+    const installDir = tempDir('to-skills-install-');
+    const skillDir = join(installDir, 'to-skills-docs');
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(
+      join(skillDir, 'SKILL.md'),
+      [
+        '---',
+        'name: to-skills-docs',
+        'description: [broken',
+        'toSkills:',
+        '  managed: bundled-guidance',
+        '',
+        'version: 9.9.9',
+        '---',
+        '',
+        '# keep-installed',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+
+    const bundled = renderSkill(
+      {
+        ...minimalSkill,
+        name: 'to-skills-docs',
+        description: 'Bundled guidance skill',
+        functions: [],
+        examples: []
+      },
+      {
+        additionalFrontmatter: {
+          version: '1.4.0',
+          toSkills: { managed: 'bundled-guidance' }
+        }
+      }
+    );
+
+    const results = writeSkills([bundled], { outDir, installTargets: [installDir] });
+
+    expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toContain('# keep-installed');
+    expect(results.find((result) => result.root === installDir)).toMatchObject({
+      action: 'preserved',
+      preserveReason: 'bundled-newer-version'
+    });
+  });
+
   it('uses last-wins semantics when multiple rendered skills resolve to the same directory', () => {
     const outDir = tempDir('to-skills-out-');
     const installDir = tempDir('to-skills-install-');
