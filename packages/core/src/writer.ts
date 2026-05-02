@@ -59,6 +59,12 @@ export function writeSkills(
   return results;
 }
 
+export function readInstalledSkillMetadata(
+  skillDir: string
+): { bundledGuidance?: boolean; curated?: boolean; version?: string; name?: string } | null {
+  return readSkillMetadata(skillDir);
+}
+
 function writeFile(outDir: string, file: RenderedFile): void {
   const fullPath = join(outDir, file.filename);
   try {

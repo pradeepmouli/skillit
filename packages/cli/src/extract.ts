@@ -142,7 +142,8 @@ export function writeCliSkill(skill: ExtractedSkill, options: CliWriteOptions) {
   const installTargets = options.installTargets ?? [];
   const results = writeSkills(renderedSkills, {
     outDir: options.outDir,
-    installTargets
+    installTargets,
+    ...(options.includeOutDir !== undefined ? { includeOutDir: options.includeOutDir } : {})
   });
 
   if (installTargets.length === 0) {

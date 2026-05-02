@@ -26,7 +26,7 @@
 import { existsSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { Command, InvalidArgumentError } from 'commander';
-import { renderSkill, writeSkills } from '@to-skills/core';
+import { readInstalledSkillMetadata, renderSkill, writeSkills } from '@to-skills/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import type { InvocationAdapter } from './adapter/types.js';
 import { bundleMcpSkill } from './bundle.js';
@@ -45,6 +45,8 @@ import { McpError, type McpErrorCode } from './errors.js';
 import { extractMcpSkill } from './extract.js';
 import { renderLlmsTxt } from './render/llms-txt.js';
 import { PACKAGE_VERSION } from './version.js';
+
+const BUNDLED_MCP_GUIDANCE_NAME = 'to-skills-mcp-docs';
 
 /**
  * Build the top-level commander program for `to-skills-mcp`.
@@ -267,8 +269,9 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
     assertNoExistingSkillDirectories({
       outDir: opts.out,
       installTargets: opts.installTarget,
-      dirNames: ['to-skills-mcp-docs'],
+      dirNames: [BUNDLED_MCP_GUIDANCE_NAME],
       includeOutDir: false,
+      allowExistingBundledGuidance: true,
       force: opts.force === true
     });
   }
@@ -405,8 +408,9 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
     assertNoExistingSkillDirectories({
       outDir: opts.out,
       installTargets: opts.installTarget,
-      dirNames: ['to-skills-mcp-docs'],
+      dirNames: [BUNDLED_MCP_GUIDANCE_NAME],
       includeOutDir: false,
+      allowExistingBundledGuidance: true,
       force: opts.force === true
     });
   }
@@ -628,6 +632,7 @@ function assertNoExistingSkillDirectories(options: {
   installTargets: readonly string[];
   dirNames: readonly string[];
   includeOutDir?: boolean;
+  allowExistingBundledGuidance?: boolean;
   force?: boolean;
 }): void {
   if (options.force) return;
@@ -640,12 +645,32 @@ function assertNoExistingSkillDirectories(options: {
     for (const dirName of options.dirNames) {
       const skillDir = join(root, dirName);
       if (existsSync(skillDir)) {
+        if (
+          options.allowExistingBundledGuidance === true &&
+          dirName === BUNDLED_MCP_GUIDANCE_NAME &&
+          isManagedBundledGuidanceDirectory(skillDir)
+        ) {
+          continue;
+        }
         throw new McpError(
           `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
           'DUPLICATE_SKILL_NAME'
         );
       }
     }
+  }
+}
+
+function isManagedBundledGuidanceDirectory(skillDir: string): boolean {
+  try {
+    const metadata = readInstalledSkillMetadata(skillDir);
+    return metadata?.curated === true || metadata?.bundledGuidance === true;
+  } catch (error) {
+    throw new McpError(
+      `Failed to inspect installed SKILL.md at ${join(skillDir, 'SKILL.md')}: ${messageOf(error)}`,
+      'LOCAL_IO_FAILED',
+      error
+    );
   }
 }
 
@@ -849,8 +874,9 @@ async function runBundle(opts: BundleOpts): Promise<void> {
       assertNoExistingSkillDirectories({
         outDir: resolvedOutDir,
         installTargets: opts.installTarget,
-        dirNames: ['to-skills-mcp-docs'],
-        includeOutDir: false
+        dirNames: [BUNDLED_MCP_GUIDANCE_NAME],
+        includeOutDir: false,
+        allowExistingBundledGuidance: true
       });
     }
   }

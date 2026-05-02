@@ -9,7 +9,7 @@
  * Adapter loading goes through the real `loadAdapterAsync` against the
  * workspace-linked `target-mcp-protocol` and `target-mcpc` packages.
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Command } from 'commander';
@@ -157,31 +157,36 @@ describe('extract --invocation flag', () => {
     expect(existsSync(path.join(installB, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
   });
 
-  it('rejects install-target collisions for bundled guidance before extract runs', async () => {
+  it('allows existing bundled guidance in install targets before extract runs', async () => {
     const installTarget = path.join(workDir, '.claude', 'skills');
     const guidanceDir = path.join(installTarget, 'to-skills-mcp-docs');
     mkdirSync(guidanceDir, { recursive: true });
-    const program = makeProgram();
-
-    await expect(
-      program.parseAsync([
-        'node',
-        'bin',
-        'extract',
-        '--command',
-        'node',
-        '--out',
-        workDir,
-        '--install-target',
-        installTarget
-      ])
-    ).rejects.toSatisfy(
-      (err) =>
-        err instanceof McpError &&
-        err.code === 'DUPLICATE_SKILL_NAME' &&
-        err.message.includes(guidanceDir)
+    writeFileSync(
+      path.join(guidanceDir, 'SKILL.md'),
+      [
+        '---',
+        'name: to-skills-mcp-docs',
+        'version: 0.7.0',
+        'toSkills:',
+        '  managed: bundled-guidance',
+        '---',
+        '# Existing bundled guidance'
+      ].join('\n')
     );
-    expect(extractCalls).toHaveLength(0);
+
+    await makeProgram().parseAsync([
+      'node',
+      'bin',
+      'extract',
+      '--command',
+      'node',
+      '--out',
+      workDir,
+      '--install-target',
+      installTarget
+    ]);
+    expect(extractCalls).toHaveLength(1);
+    expect(existsSync(path.join(installTarget, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
   });
 
   it('cli:mcpc render emits generated-by frontmatter (no mcp: block)', async () => {

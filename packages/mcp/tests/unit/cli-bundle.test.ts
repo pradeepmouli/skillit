@@ -182,6 +182,38 @@ describe('bundle subcommand', () => {
     expect(bundleCalls).toHaveLength(0);
   });
 
+  it('allows existing bundled guidance in install targets during pre-flight', async () => {
+    configEntries.push({ skillName: 'my-server' });
+    bundleResults.push({ skills: {}, failures: {}, packageJsonWarnings: [] });
+    const installTarget = path.join(workDir, '.claude', 'skills');
+    const guidanceDir = path.join(installTarget, 'to-skills-mcp-docs');
+    mkdirSync(guidanceDir, { recursive: true });
+    writeFileSync(
+      path.join(guidanceDir, 'SKILL.md'),
+      [
+        '---',
+        'name: to-skills-mcp-docs',
+        'version: 0.7.0',
+        'toSkills:',
+        '  managed: bundled-guidance',
+        '---',
+        '# Existing bundled guidance'
+      ].join('\n')
+    );
+
+    const program = makeProgram();
+    await program.parseAsync([
+      'node',
+      'bin',
+      'bundle',
+      '--package-root',
+      workDir,
+      '--install-target',
+      installTarget
+    ]);
+    expect(bundleCalls).toHaveLength(1);
+  });
+
   it('--force bypasses the pre-flight collision check', async () => {
     configEntries.push({ skillName: 'preexisting' });
     bundleResults.push({ skills: {}, failures: {}, packageJsonWarnings: [] });

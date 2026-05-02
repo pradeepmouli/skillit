@@ -264,6 +264,43 @@ describe('extract --config <path>', () => {
     expect(stderrLines.join('')).toContain(skillDir);
   });
 
+  it('allows existing bundled guidance in install targets during config pre-flight', async () => {
+    writeConfig({
+      mcpServers: {
+        alpha: { command: 'node', args: ['./a.js'] }
+      }
+    });
+    const installTarget = join(workDir, '.claude', 'skills');
+    const guidanceDir = join(installTarget, 'to-skills-mcp-docs');
+    mkdirSync(guidanceDir, { recursive: true });
+    writeFileSync(
+      join(guidanceDir, 'SKILL.md'),
+      [
+        '---',
+        'name: to-skills-mcp-docs',
+        'version: 0.7.0',
+        'toSkills:',
+        '  managed: bundled-guidance',
+        '---',
+        '# Existing bundled guidance'
+      ].join('\n')
+    );
+
+    const program = makeProgram();
+    await program.parseAsync([
+      'node',
+      'bin',
+      'extract',
+      '--config',
+      configPath,
+      '--out',
+      outDir,
+      '--install-target',
+      installTarget
+    ]);
+    expect(extractCalls).toHaveLength(1);
+  });
+
   it('rejects --config combined with --command (mutually exclusive)', async () => {
     writeConfig({ mcpServers: { x: { command: 'node' } } });
     const program = makeProgram();

@@ -45,4 +45,32 @@ describe('writeCliSkill', () => {
     expect(existsSync(path.join(installDir, 'demo-cli', 'SKILL.md'))).toBe(true);
     expect(existsSync(path.join(installDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(true);
   });
+
+  it('respects includeOutDir=false for extracted CLI skills', () => {
+    const outDir = createTempDir('cli-out');
+    const installDir = createTempDir('cli-install');
+
+    writeCliSkill(
+      {
+        name: 'demo-cli',
+        description: 'Demo CLI',
+        functions: [],
+        classes: [],
+        types: [],
+        enums: [],
+        variables: [],
+        examples: []
+      },
+      {
+        outDir,
+        installTargets: [installDir],
+        includeOutDir: false
+      }
+    );
+
+    expect(existsSync(path.join(outDir, 'demo-cli', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(outDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(installDir, 'demo-cli', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(installDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(true);
+  });
 });
