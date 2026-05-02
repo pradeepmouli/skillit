@@ -22,20 +22,24 @@ export function runCliAudit(skill: ExtractedSkill): CliAuditIssue[] {
 
   for (const surface of skill.configSurfaces ?? []) {
     if (surface.sourceType !== 'cli') continue;
-    auditSurface(surface, issues);
+    auditSurface(surface, issues, surface.name);
   }
 
   return issues;
 }
 
-function auditSurface(surface: ExtractedConfigSurface, issues: CliAuditIssue[]): void {
+function auditSurface(
+  surface: ExtractedConfigSurface,
+  issues: CliAuditIssue[],
+  commandPath: string
+): void {
   if (!surface.description.trim()) {
     issues.push({
       code: 'C1',
       severity: 'warning',
-      message: `Command "${surface.name}" has no description.`,
+      message: `Command "${commandPath}" has no description.`,
       suggestion: `Add .description('[One sentence: what this command does and why]') to Commander command`,
-      location: { command: surface.name }
+      location: { command: commandPath }
     });
   }
 
@@ -43,10 +47,10 @@ function auditSurface(surface: ExtractedConfigSurface, issues: CliAuditIssue[]):
     issues.push({
       code: 'C3',
       severity: 'alert',
-      message: `Command "${surface.name}" has no usage or examples.`,
+      message: `Command "${commandPath}" has no usage or examples.`,
       suggestion:
         "Add .usage('[command] [options] <required-arg>') and .addHelpText('after', 'Examples:\\n  $ [command] [typical-args]')",
-      location: { command: surface.name }
+      location: { command: commandPath }
     });
   }
 
@@ -54,32 +58,33 @@ function auditSurface(surface: ExtractedConfigSurface, issues: CliAuditIssue[]):
     issues.push({
       code: 'C8',
       severity: 'warning',
-      message: `Command "${surface.name}" has no useWhen guidance.`,
+      message: `Command "${commandPath}" has no useWhen guidance.`,
       suggestion:
         'Add @useWhen to the config interface or .addHelpText() with scenario: when to prefer this command over alternatives',
-      location: { command: surface.name }
+      location: { command: commandPath }
     });
   }
 
   for (const option of surface.options) {
-    auditOption(surface.name, option, issues);
+    auditOption(commandPath, option, issues);
   }
 
   for (const argument of surface.arguments ?? []) {
-    auditArgument(surface.name, argument, issues);
+    auditArgument(commandPath, argument, issues);
   }
 
   for (const subcommand of surface.subcommands ?? []) {
+    const subcommandPath = `${commandPath} ${subcommand.name}`;
     if (!subcommand.description.trim()) {
       issues.push({
         code: 'C5',
         severity: 'warning',
-        message: `Subcommand "${surface.name} ${subcommand.name}" has no description.`,
+        message: `Subcommand "${subcommandPath}" has no description.`,
         suggestion: `Add .description('[One sentence]') to subcommand '${subcommand.name}'`,
-        location: { command: `${surface.name} ${subcommand.name}` }
+        location: { command: subcommandPath }
       });
     }
-    auditSurface(subcommand, issues);
+    auditSurface(subcommand, issues, subcommandPath);
   }
 }
 

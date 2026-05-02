@@ -163,4 +163,48 @@ describe('runCliAudit', () => {
       location: { command: 'build' }
     });
   });
+
+  it('preserves the full nested command path in recursive audit findings', () => {
+    const issues = runCliAudit(
+      makeSkill({
+        configSurfaces: [
+          makeCliSurface({
+            subcommands: [
+              {
+                name: 'release',
+                description: 'Create a release',
+                sourceType: 'cli',
+                usage: 'tool build release <channel>',
+                options: [],
+                arguments: [{ name: 'channel', description: '', required: true, variadic: false }],
+                useWhen: ['Use when creating releases'],
+                subcommands: [
+                  {
+                    name: 'deploy',
+                    description: 'Deploy a release',
+                    sourceType: 'cli',
+                    usage: 'tool build release deploy <region>',
+                    options: [],
+                    arguments: [
+                      { name: 'region', description: '', required: true, variadic: false }
+                    ],
+                    useWhen: ['Use when deploying a release']
+                  }
+                ]
+              }
+            ]
+          })
+        ]
+      })
+    );
+
+    expect(
+      issues.find(
+        (candidate) =>
+          candidate.code === 'C4' &&
+          candidate.location?.command === 'build release deploy' &&
+          candidate.location?.argument === 'region'
+      )
+    ).toBeDefined();
+  });
 });
