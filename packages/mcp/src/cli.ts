@@ -26,10 +26,11 @@
 import { existsSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { Command, InvalidArgumentError } from 'commander';
-import { renderSkill, writeSkills } from '@to-skills/core';
+import { readInstalledSkillMetadata, renderSkill, writeSkills } from '@to-skills/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import type { InvocationAdapter } from './adapter/types.js';
 import { bundleMcpSkill } from './bundle.js';
+import { loadBundledMcpGuidanceSkill } from './bundled-skills.js';
 // Internal import: the bundle CLI does its own pre-flight DUPLICATE_SKILL_NAME
 // check (so --force semantics fire BEFORE bundleMcpSkill calls writeSkills,
 // which always rmSyncs the destination). readBundleConfig is the cleanest
@@ -44,6 +45,8 @@ import { McpError, type McpErrorCode } from './errors.js';
 import { extractMcpSkill } from './extract.js';
 import { renderLlmsTxt } from './render/llms-txt.js';
 import { PACKAGE_VERSION } from './version.js';
+
+const BUNDLED_MCP_GUIDANCE_NAME = 'to-skills-mcp-docs';
 
 /**
  * Build the top-level commander program for `to-skills-mcp`.
@@ -78,6 +81,12 @@ export function buildProgram(): Command {
       'Path to mcp.json / claude_desktop_config.json (batch extract over mcpServers)'
     )
     .option('-o, --out <dir>', 'Output directory', 'skills')
+    .option(
+      '--install-target <dir>',
+      'Install skills to agent discovery directory (repeatable)',
+      collect,
+      [] as string[]
+    )
     .option('--max-tokens <n>', 'Per reference-file token budget', parsePositiveInt, 4000)
     .option('--llms-txt', 'Emit llms.txt alongside SKILL.md')
     .option('--force', 'Overwrite existing skill directory')
@@ -102,6 +111,12 @@ export function buildProgram(): Command {
     .description('Bundle an MCP server into its host package as a generated skill')
     .option('--package-root <dir>', 'Path to the host package (default: cwd)')
     .option('-o, --out <dir>', 'Output directory (default: <packageRoot>/skills)')
+    .option(
+      '--install-target <dir>',
+      'Install skills to agent discovery directory (repeatable)',
+      collect,
+      [] as string[]
+    )
     .option('--max-tokens <n>', 'Per reference-file token budget', parsePositiveInt, 4000)
     .option('--llms-txt', 'Emit llms.txt alongside SKILL.md')
     .option('--force', 'Overwrite existing skill directories')
@@ -170,6 +185,7 @@ interface ExtractOpts {
   header: Record<string, string>;
   config?: string;
   out: string;
+  installTarget: string[];
   maxTokens: number;
   llmsTxt?: boolean;
   force?: boolean;
@@ -240,15 +256,24 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
   // depends on server introspection, the check repeats post-extract per
   // target directory.
   if (opts.skillName !== undefined) {
-    for (const adapter of adapters) {
-      const earlyDir = join(opts.out, dirNameForTarget(opts.skillName, adapter, adapters.length));
-      if (existsSync(earlyDir) && !opts.force) {
-        throw new McpError(
-          `Output directory already exists: ${earlyDir}. Pass --force to overwrite.`,
-          'DUPLICATE_SKILL_NAME'
-        );
-      }
-    }
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: adapters.map((adapter) =>
+        dirNameForTarget(opts.skillName!, adapter, adapters.length)
+      ),
+      force: opts.force === true
+    });
+  }
+  if (opts.installTarget.length > 0) {
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: [BUNDLED_MCP_GUIDANCE_NAME],
+      includeOutDir: false,
+      allowExistingBundledGuidance: true,
+      force: opts.force === true
+    });
   }
 
   // Extract once — the IR is target-agnostic, so the loop below renders
@@ -269,6 +294,7 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
           },
           skillName: opts.skillName,
           maxTokens: opts.maxTokens,
+          installTargets: opts.installTarget,
           ...auditOpts
         })
       : await extractMcpSkill({
@@ -280,21 +306,23 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
           },
           skillName: opts.skillName,
           maxTokens: opts.maxTokens,
+          installTargets: opts.installTarget,
           ...auditOpts
         });
 
   // Per-target render+write loop. Each iteration writes its own directory and
   // emits one stdout line. Collision detection moves into the loop so each
   // target dir is checked independently.
+  let wroteBundledGuidance = false;
   for (const adapter of adapters) {
     const dirName = dirNameForTarget(skill.name, adapter, adapters.length);
     const skillDir = join(opts.out, dirName);
-    if (existsSync(skillDir) && !opts.force) {
-      throw new McpError(
-        `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
-        'DUPLICATE_SKILL_NAME'
-      );
-    }
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: [dirName],
+      force: opts.force === true
+    });
 
     const renderOptions: Parameters<typeof renderSkill>[1] = {
       invocation: adapter,
@@ -323,7 +351,15 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
       // (next to SKILL.md), per the llmstxt.org convention.
       rendered.references.push(renderLlmsTxt(rendered, skill));
     }
-    writeSkills([rendered], { outDir: opts.out });
+    writeRenderedSkill(rendered, {
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      skillDir
+    });
+    if (opts.installTarget.length > 0 && !wroteBundledGuidance) {
+      writeBundledGuidance(opts.out, opts.installTarget);
+      wroteBundledGuidance = true;
+    }
 
     process.stdout.write(`Wrote ${skillDir}/SKILL.md (${rendered.references.length} references)\n`);
   }
@@ -368,8 +404,19 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
       ? (opts.invocation as InvocationTarget[])
       : (['mcp-protocol'] as InvocationTarget[]);
   const adapters = await validateTargets(targets);
+  if (opts.installTarget.length > 0) {
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: [BUNDLED_MCP_GUIDANCE_NAME],
+      includeOutDir: false,
+      allowExistingBundledGuidance: true,
+      force: opts.force === true
+    });
+  }
 
   const failures: Record<string, BundleFailure> = {};
+  const bundledGuidanceState = { value: false };
 
   for (const entry of entries) {
     if (entry.disabled === true) {
@@ -377,17 +424,16 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
     }
 
     try {
-      await runConfigEntry(entry, opts, adapters);
+      await runConfigEntry(entry, opts, adapters, bundledGuidanceState);
     } catch (err) {
       // Per-entry containment — match `bundle.ts::recordFailure`'s shape so
       // the partial-success contract documented at the top of this function
-      // actually holds for non-McpError throws too (renderer bugs, fs errors
-      // like ENOSPC/EACCES). Without this, a single ENOSPC during one entry's
-      // write would abort the whole batch — exactly the opposite of what the
-      // docstring promises. The McpError branch is preferred so structured
-      // errors keep their codes; everything else is recorded as
-      // TRANSPORT_FAILED, the conservative default already used by
-      // `recordFailure`.
+      // actually holds for non-McpError throws too (renderer bugs or other
+      // unexpected failures). Local write/parse problems in the install path
+      // are wrapped earlier as LOCAL_IO_FAILED so they don't get mislabeled as
+      // transport issues here. The McpError branch is preferred so structured
+      // errors keep their codes; truly unknown failures still fall back to
+      // TRANSPORT_FAILED as the conservative catch-all.
       if (err instanceof McpError) {
         failures[entry.name] = { code: err.code, message: err.message };
         process.stderr.write(`Failed [${err.code}] ${entry.name}: ${err.message}\n`);
@@ -422,7 +468,8 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
 async function runConfigEntry(
   entry: ConfigEntry,
   opts: ExtractOpts,
-  adapters: InvocationAdapter[]
+  adapters: InvocationAdapter[],
+  bundledGuidanceState: { value: boolean }
 ): Promise<void> {
   // Build the McpExtractOptions from the entry. The reader has already
   // collapsed `command`/`url` into a fully-discriminated `McpTransport`, so
@@ -437,21 +484,18 @@ async function runConfigEntry(
     transport: entry.transport,
     skillName: entry.name,
     maxTokens: opts.maxTokens,
+    installTargets: opts.installTarget,
     ...auditOpts
   };
 
   // Pre-flight collision check, per target. Mirrors runExtract so --force
   // semantics fire before writeSkills rmSyncs anything.
-  for (const adapter of adapters) {
-    const dirName = dirNameForTarget(entry.name, adapter, adapters.length);
-    const skillDir = join(opts.out, dirName);
-    if (existsSync(skillDir) && !opts.force) {
-      throw new McpError(
-        `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
-        'DUPLICATE_SKILL_NAME'
-      );
-    }
-  }
+  assertNoExistingSkillDirectories({
+    outDir: opts.out,
+    installTargets: opts.installTarget,
+    dirNames: adapters.map((adapter) => dirNameForTarget(entry.name, adapter, adapters.length)),
+    force: opts.force === true
+  });
 
   const skill = await extractMcpSkill(extractOpts);
 
@@ -491,7 +535,15 @@ async function runConfigEntry(
     if (opts.llmsTxt) {
       rendered.references.push(renderLlmsTxt(rendered, skill));
     }
-    writeSkills([rendered], { outDir: opts.out });
+    writeRenderedSkill(rendered, {
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      skillDir
+    });
+    if (opts.installTarget.length > 0 && !bundledGuidanceState.value) {
+      writeBundledGuidance(opts.out, opts.installTarget);
+      bundledGuidanceState.value = true;
+    }
 
     process.stdout.write(`Wrote ${skillDir}/SKILL.md (${rendered.references.length} references)\n`);
   }
@@ -517,6 +569,7 @@ function pickWorstCode(codes: readonly McpErrorCode[]): McpErrorCode {
     // actionable than a transient init or transport blip, but less actionable
     // than a config-side cycle that the operator must fix in source.
     'AUDIT_FAILED',
+    'LOCAL_IO_FAILED',
     'PROTOCOL_VERSION_UNSUPPORTED',
     'INITIALIZE_FAILED',
     'TRANSPORT_FAILED'
@@ -531,6 +584,106 @@ function pickWorstCode(codes: readonly McpErrorCode[]): McpErrorCode {
     throw new Error('pickWorstCode: codes array must be non-empty');
   }
   return ordered.find((c) => codes.includes(c)) ?? fallback;
+}
+
+function writeRenderedSkill(
+  rendered: Awaited<ReturnType<typeof renderSkill>>,
+  options: {
+    outDir: string;
+    installTargets: readonly string[];
+    skillDir: string;
+  }
+): void {
+  try {
+    writeSkills([rendered], {
+      outDir: options.outDir,
+      installTargets: options.installTargets
+    });
+  } catch (error) {
+    throw toLocalIoError(`Failed to write skill to ${options.skillDir}`, error);
+  }
+}
+
+function writeBundledGuidance(outDir: string, installTargets: readonly string[]): void {
+  try {
+    writeSkills([loadBundledMcpGuidanceSkill()], {
+      outDir,
+      installTargets,
+      includeOutDir: false
+    });
+  } catch (error) {
+    throw toLocalIoError('Failed to install bundled MCP guidance', error);
+  }
+}
+
+function toLocalIoError(message: string, error: unknown): McpError {
+  if (error instanceof McpError) {
+    return error;
+  }
+  return new McpError(`${message}: ${messageOf(error)}`, 'LOCAL_IO_FAILED', error);
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function assertNoExistingSkillDirectories(options: {
+  outDir: string;
+  installTargets: readonly string[];
+  dirNames: readonly string[];
+  includeOutDir?: boolean;
+  allowExistingBundledGuidance?: boolean;
+  force?: boolean;
+}): void {
+  if (options.force) return;
+  const roots = collectWriteRoots(
+    options.outDir,
+    options.installTargets,
+    options.includeOutDir !== false
+  );
+  for (const root of roots) {
+    for (const dirName of options.dirNames) {
+      const skillDir = join(root, dirName);
+      if (existsSync(skillDir)) {
+        if (
+          options.allowExistingBundledGuidance === true &&
+          dirName === BUNDLED_MCP_GUIDANCE_NAME &&
+          isManagedBundledGuidanceDirectory(skillDir)
+        ) {
+          continue;
+        }
+        throw new McpError(
+          `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
+          'DUPLICATE_SKILL_NAME'
+        );
+      }
+    }
+  }
+}
+
+function isManagedBundledGuidanceDirectory(skillDir: string): boolean {
+  try {
+    const metadata = readInstalledSkillMetadata(skillDir);
+    return metadata?.curated === true || metadata?.bundledGuidance === true;
+  } catch (error) {
+    throw new McpError(
+      `Failed to inspect installed SKILL.md at ${join(skillDir, 'SKILL.md')}: ${messageOf(error)}`,
+      'LOCAL_IO_FAILED',
+      error
+    );
+  }
+}
+
+function collectWriteRoots(
+  outDir: string,
+  installTargets: readonly string[],
+  includeOutDir: boolean
+): string[] {
+  const roots = [
+    ...(includeOutDir ? [path.resolve(outDir)] : []),
+    ...installTargets.map((target) => path.resolve(target))
+  ];
+  return [...new Set(roots)];
 }
 
 /**
@@ -643,6 +796,7 @@ async function formatInstalledAdaptersHint(): Promise<string> {
 interface BundleOpts {
   packageRoot?: string;
   out?: string;
+  installTarget: string[];
   maxTokens: number;
   llmsTxt?: boolean;
   force?: boolean;
@@ -708,25 +862,29 @@ async function runBundle(opts: BundleOpts): Promise<void> {
       opts.invocation.length > 0 ? (opts.invocation as InvocationTarget[]) : undefined;
     for (const entry of entries) {
       const effective = overrideTargets ?? entry.invocation;
-      for (const target of effective) {
-        const dirName =
-          effective.length > 1
-            ? `${entry.skillName}-${target.replace(/:/g, '-')}`
-            : entry.skillName;
-        const dest = path.join(resolvedOutDir, dirName);
-        if (existsSync(dest)) {
-          throw new McpError(
-            `Output directory already exists: ${dest}. Pass --force to overwrite.`,
-            'DUPLICATE_SKILL_NAME'
-          );
-        }
-      }
+      assertNoExistingSkillDirectories({
+        outDir: resolvedOutDir,
+        installTargets: opts.installTarget,
+        dirNames: effective.map((target) =>
+          effective.length > 1 ? `${entry.skillName}-${target.replace(/:/g, '-')}` : entry.skillName
+        )
+      });
+    }
+    if (opts.installTarget.length > 0) {
+      assertNoExistingSkillDirectories({
+        outDir: resolvedOutDir,
+        installTargets: opts.installTarget,
+        dirNames: [BUNDLED_MCP_GUIDANCE_NAME],
+        includeOutDir: false,
+        allowExistingBundledGuidance: true
+      });
     }
   }
 
   const bundleOptions: McpBundleOptions = {
     packageRoot,
     ...(outDir !== undefined ? { outDir } : {}),
+    ...(opts.installTarget.length > 0 ? { installTargets: opts.installTarget } : {}),
     ...(opts.invocation.length > 0 ? { invocation: opts.invocation as InvocationTarget[] } : {}),
     ...(opts.skipAudit === true ? { skipAudit: true } : {}),
     ...(opts.llmsTxt === true ? { llmsTxt: true } : {})

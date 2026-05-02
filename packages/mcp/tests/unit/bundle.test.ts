@@ -252,6 +252,28 @@ describe('bundleMcpSkill', () => {
     expect(result.failures).toEqual({});
   });
 
+  it('copies generated skills and bundled MCP guidance into install targets', async () => {
+    writePkg({
+      name: '@my/server',
+      'to-skills': {
+        mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
+      }
+    });
+    const installDir = path.join(workDir, '.claude', 'skills');
+    const result = await bundleMcpSkill({ packageRoot: workDir, installTargets: [installDir] });
+    expect(result.failures).toEqual({});
+    expect(existsSync(path.join(workDir, 'skills', 'my-server', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(installDir, 'my-server', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(workDir, 'skills', 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(installDir, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(readFileSync(path.join(installDir, 'to-skills-mcp-docs', 'SKILL.md'), 'utf8')).toContain(
+      'managed: bundled-guidance'
+    );
+    expect(readFileSync(path.join(installDir, 'to-skills-mcp-docs', 'SKILL.md'), 'utf8')).toContain(
+      'version: 0.1.0'
+    );
+  });
+
   it('options.invocation overrides per-entry invocation', async () => {
     writePkg({
       name: '@my/server',

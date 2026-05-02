@@ -41,11 +41,42 @@ Options:
   --minify   Minify output
 `;
 
+const HELP_WITH_ARGUMENTS_SECTION = `Usage: deploy [options] <environment> [artifact]
+
+Deploy the project
+
+Arguments:
+  environment  Target environment name
+  artifact     Optional artifact identifier
+
+Options:
+  --dry-run    Preview without writing
+`;
+
+const HELP_ARGUMENTS_ONLY_CARDINALITY = `Usage: deploy [options]
+
+Deploy the project
+
+Arguments:
+  <environment>  Target environment name
+  [artifact]     Optional artifact identifier
+  <files...>     Files to upload
+
+Options:
+  --dry-run    Preview without writing
+`;
+
 const HELP_SHORT_ONLY = `Usage: prog [options]
 
 Options:
   -v, --verbose   Enable verbose output (default: false)
   -c, --config <path>   Config file path (required)
+`;
+
+const HELP_OPTIONAL_VALUE = `Usage: prog [options]
+
+Options:
+  --config [path]   Optional config path
 `;
 
 // ---------------------------------------------------------------------------
@@ -185,6 +216,12 @@ describe('parseHelpOutput', () => {
     expect(config?.type).toBe('string');
   });
 
+  it('infers string type for flags with [arg] fallback syntax', () => {
+    const result = parseHelpOutput(HELP_OPTIONAL_VALUE, 'prog');
+    const config = result.options.find((o) => o.name === 'config');
+    expect(config?.type).toBe('string');
+  });
+
   // -------------------------------------------------------------------------
   // Positional arguments
   // -------------------------------------------------------------------------
@@ -221,6 +258,40 @@ describe('parseHelpOutput', () => {
     const files = result.arguments?.find((a) => a.name === 'files');
     expect(files).toBeDefined();
     expect(files?.variadic).toBe(true);
+  });
+
+  it('fills positional argument descriptions from an Arguments: section', () => {
+    const result = parseHelpOutput(HELP_WITH_ARGUMENTS_SECTION, 'deploy');
+    expect(result.arguments?.find((arg) => arg.name === 'environment')?.description).toBe(
+      'Target environment name'
+    );
+    expect(result.arguments?.find((arg) => arg.name === 'artifact')?.description).toBe(
+      'Optional artifact identifier'
+    );
+  });
+
+  it('preserves required and variadic cardinality parsed from Arguments: lines', () => {
+    const result = parseHelpOutput(HELP_ARGUMENTS_ONLY_CARDINALITY, 'deploy');
+    expect(result.arguments).toEqual([
+      {
+        name: 'environment',
+        description: 'Target environment name',
+        required: true,
+        variadic: false
+      },
+      {
+        name: 'artifact',
+        description: 'Optional artifact identifier',
+        required: false,
+        variadic: false
+      },
+      {
+        name: 'files',
+        description: 'Files to upload',
+        required: true,
+        variadic: true
+      }
+    ]);
   });
 
   // -------------------------------------------------------------------------

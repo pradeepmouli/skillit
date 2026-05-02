@@ -6,7 +6,7 @@
  * specific entry names. Adapter loading goes through the real
  * `loadAdapterAsync` against the workspace-linked adapter packages.
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Command } from 'commander';
@@ -234,6 +234,71 @@ describe('extract --config <path>', () => {
     await expect(
       program.parseAsync(['node', 'bin', 'extract', '--config', configPath, '--out', outDir])
     ).rejects.toSatisfy((err) => err instanceof McpError && err.code === 'DUPLICATE_SKILL_NAME');
+  });
+
+  it('blocks install-target collisions before running config extracts', async () => {
+    writeConfig({
+      mcpServers: {
+        alpha: { command: 'node', args: ['./a.js'] }
+      }
+    });
+    const installTarget = join(workDir, '.claude', 'skills');
+    const skillDir = join(installTarget, 'alpha');
+    mkdirSync(skillDir, { recursive: true });
+
+    const program = makeProgram();
+    await expect(
+      program.parseAsync([
+        'node',
+        'bin',
+        'extract',
+        '--config',
+        configPath,
+        '--out',
+        outDir,
+        '--install-target',
+        installTarget
+      ])
+    ).rejects.toSatisfy((err) => err instanceof McpError && err.code === 'DUPLICATE_SKILL_NAME');
+    expect(extractCalls).toHaveLength(0);
+    expect(stderrLines.join('')).toContain(skillDir);
+  });
+
+  it('allows existing bundled guidance in install targets during config pre-flight', async () => {
+    writeConfig({
+      mcpServers: {
+        alpha: { command: 'node', args: ['./a.js'] }
+      }
+    });
+    const installTarget = join(workDir, '.claude', 'skills');
+    const guidanceDir = join(installTarget, 'to-skills-mcp-docs');
+    mkdirSync(guidanceDir, { recursive: true });
+    writeFileSync(
+      join(guidanceDir, 'SKILL.md'),
+      [
+        '---',
+        'name: to-skills-mcp-docs',
+        'version: 0.7.0',
+        'toSkills:',
+        '  managed: bundled-guidance',
+        '---',
+        '# Existing bundled guidance'
+      ].join('\n')
+    );
+
+    const program = makeProgram();
+    await program.parseAsync([
+      'node',
+      'bin',
+      'extract',
+      '--config',
+      configPath,
+      '--out',
+      outDir,
+      '--install-target',
+      installTarget
+    ]);
+    expect(extractCalls).toHaveLength(1);
   });
 
   it('rejects --config combined with --command (mutually exclusive)', async () => {

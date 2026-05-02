@@ -50,6 +50,7 @@ Useful flags:
 | Flag                    | Meaning                                                                                            |
 | ----------------------- | -------------------------------------------------------------------------------------------------- |
 | `--invocation <target>` | Render with a specific invocation target (default `mcp-protocol`). Repeat for multi-target output. |
+| `--install-target <d>`  | Also install generated skills into an agent discovery directory. Repeat for multiple targets.      |
 | `--max-tokens <n>`      | Per reference-file token budget (default 4000).                                                    |
 | `--llms-txt`            | Emit `llms.txt` next to `SKILL.md` per [llmstxt.org](https://llmstxt.org/).                        |
 | `--skip-audit`          | Skip the post-render audit (M1–M4 rules).                                                          |
@@ -57,6 +58,11 @@ Useful flags:
 | `--skill-name <name>`   | Override the directory name (default: server's `serverInfo.name`).                                 |
 
 Exit codes are documented in [`src/bin.ts`](src/bin.ts).
+
+When `--install-target` is set, the CLI also installs the bundled
+`to-skills-mcp-docs` guidance skill beside the generated MCP skill. Bundled
+skills are version-aware: newer packaged copies replace older packaged copies,
+while custom or unversioned copies are preserved.
 
 ---
 
@@ -131,7 +137,10 @@ const rendered = await renderSkill(skill, {
 writeSkills([rendered], { outDir: './skills' });
 
 // Or run the full bundle pipeline (reads `to-skills.mcp` from package.json):
-const result = await bundleMcpSkill({ packageRoot: process.cwd() });
+const result = await bundleMcpSkill({
+  packageRoot: process.cwd(),
+  installTargets: ['.claude/skills']
+});
 console.log(result.skills, result.failures);
 ```
 

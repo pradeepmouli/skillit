@@ -54,7 +54,7 @@ function checkF1(context: AuditContext, issues: AuditIssue[], passing: AuditPass
         desc
           ? `package.json description is too short (${desc.length} chars, needs >10)`
           : 'package.json description is missing',
-        'Add a meaningful description to your package.json (>10 characters)'
+        'Add to package.json: "description": "[One sentence: what problem this library solves for the caller]"'
       )
     );
   } else {
@@ -80,7 +80,7 @@ function checkF2(context: AuditContext, issues: AuditIssue[], passing: AuditPass
         keywords.length < 5
           ? `Only ${keywords.length} keyword(s) found (need ≥5)`
           : `Only ${domainKeywords.length} domain-specific keyword(s) (need ≥3 non-generic)`,
-        'Add at least 5 keywords with 3+ domain-specific terms (not generic like "library", "utils", etc.)'
+        'Add to package.json: "keywords": ["[domain-verb]", "[domain-noun]", "[use-case]", "[integration]", "[pattern]"]'
       )
     );
   } else {
@@ -112,7 +112,7 @@ function checkF3(context: AuditContext, issues: AuditIssue[], passing: AuditPass
         text
           ? `README description is too short (${text.length} chars, needs >20)`
           : 'README is missing a description (blockquote or first paragraph)',
-        'Add a blockquote or opening paragraph to README.md that describes the package (>20 characters)'
+        'Add after title: > [One sentence: what this library does and why someone would use it]'
       )
     );
   } else {
@@ -137,7 +137,7 @@ function checkF4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
           null,
           fn.name,
           `Function '${fn.name}' is missing a JSDoc description`,
-          `Add a /** ... */ JSDoc comment above the '${fn.name}' function`
+          `Add: /** [One sentence: what problem ${fn.name} solves for the caller] */`
         )
       );
     }
@@ -154,7 +154,7 @@ function checkF4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
           null,
           cls.name,
           `Class '${cls.name}' is missing a JSDoc description`,
-          `Add a /** ... */ JSDoc comment above the '${cls.name}' class`
+          `Add: /** [One sentence: what problem ${cls.name} solves for the caller] */`
         )
       );
     }
@@ -171,7 +171,7 @@ function checkF4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
           null,
           typ.name,
           `Type '${typ.name}' is missing a JSDoc description`,
-          `Add a /** ... */ JSDoc comment above the '${typ.name}' type`
+          `Add: /** [One sentence: what problem ${typ.name} solves for the caller] */`
         )
       );
     }
@@ -188,7 +188,7 @@ function checkF4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
           null,
           enm.name,
           `Enum '${enm.name}' is missing a JSDoc description`,
-          `Add a /** ... */ JSDoc comment above the '${enm.name}' enum`
+          `Add: /** [One sentence: what problem ${enm.name} solves for the caller] */`
         )
       );
     }
@@ -205,7 +205,7 @@ function checkF4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
           null,
           variable.name,
           `Variable '${variable.name}' is missing a JSDoc description`,
-          `Add a /** ... */ JSDoc comment above the '${variable.name}' variable`
+          `Add: /** [One sentence: what problem ${variable.name} solves for the caller] */`
         )
       );
     }
@@ -297,7 +297,7 @@ function checkE1(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
             null,
             `${fnName}#${param.name}`,
             `Parameter '${param.name}' in '${fnName}' is missing a description`,
-            `Add @param ${param.name} <description> to the JSDoc for '${fnName}'`
+            `Add: @param ${param.name} — [What the caller controls with this parameter — not the type, but the effect]`
           )
         );
       }
@@ -348,7 +348,7 @@ function checkE2(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
           null,
           context,
           `'${context}' returns '${fn.returnType}' but has no @returns description`,
-          `Add @returns <description> to the JSDoc for '${context}'`
+          'Add: @returns [What the caller gets back and what they do with it]'
         )
       );
     }
@@ -388,7 +388,7 @@ function checkE3(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
             null,
             `${typ.name}.${prop.name}`,
             `Property '${prop.name}' in type '${typ.name}' is missing a JSDoc description`,
-            `Add a /** ... */ comment above the '${prop.name}' property in '${typ.name}'`
+            'Add: /** [What this property controls — one phrase] */'
           )
         );
       }
@@ -416,7 +416,7 @@ function checkE4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
         null,
         skill.name,
         'No @example tags found anywhere in the package',
-        'Add @example code blocks to at least one exported function'
+        'Add @example with: import statement, setup, call, assertion/output'
       )
     );
   } else {
@@ -437,7 +437,7 @@ function checkE5(context: AuditContext, issues: AuditIssue[], passing: AuditPass
         null,
         'repository',
         'package.json is missing a repository URL',
-        'Add a "repository" field to your package.json'
+        'Add to package.json: "repository": { "type": "git", "url": "[repo-url]" }'
       )
     );
   } else {
@@ -625,7 +625,7 @@ function checkW7(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
         null,
         skill.name,
         'No exports have a @useWhen tag',
-        'Add @useWhen <condition> to at least one exported function to describe when to use it'
+        'Add @useWhen to 3-5 key exports: @useWhen - [Scenario where the caller should reach for this — include non-obvious expert knowledge]'
       )
     );
   } else {
@@ -648,7 +648,7 @@ function checkW8(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
         null,
         skill.name,
         'No exports have an @avoidWhen tag',
-        'Add @avoidWhen <condition> to at least one exported function to describe when not to use it'
+        'Add @avoidWhen: @avoidWhen - [When NOT to use this — name the alternative]'
       )
     );
   } else {
@@ -671,7 +671,7 @@ function checkW9(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
         null,
         skill.name,
         'No exports have a @never tag',
-        'Add @never <description> to at least one exported function to document known traps'
+        'Add @never: @never - NEVER [action] — [non-obvious reason]. Fix: [recovery path]'
       )
     );
   } else {

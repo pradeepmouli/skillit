@@ -16,7 +16,9 @@
 
 export type {
   ExtractedSkill,
+  ExtractedSkillAudit,
   ExtractedFunction,
+  ExtractedFunctionMcpMetadata,
   ExtractedClass,
   ExtractedType,
   ExtractedEnum,
@@ -35,9 +37,15 @@ export type {
   AdapterRenderContextBundle,
   AdapterRenderContextHttp,
   AdapterRenderContextStdio,
+  RefCategory,
+  RefManifest,
+  RefManifestEntry,
   RenderedFile,
   RenderedSkill,
   SkillRenderOptions,
+  SkillWriteOptions,
+  SkillWriteResult,
+  SkillWritePreserveReason,
   McpAuditSeverity,
   McpAuditIssue
 } from './types.js';
@@ -45,7 +53,7 @@ export type {
 export { renderSkills, renderSkill } from './renderer.js';
 export { canonicalize } from './canonical.js';
 export type { CanonicalizeOptions } from './canonical.js';
-export { writeSkills } from './writer.js';
+export { writeSkills, readInstalledSkillMetadata } from './writer.js';
 export { estimateTokens, truncateToTokenBudget } from './tokens.js';
 export { renderResourcesReference, renderPromptsReference } from './references-mcp.js';
 export type { McpReferenceOptions } from './references-mcp.js';

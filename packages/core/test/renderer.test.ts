@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderSkill, renderConfigSurfaceSection } from '@to-skills/core';
+import { renderSkill, renderSkills, renderConfigSurfaceSection } from '@to-skills/core';
 import type { ExtractedSkill, ExtractedConfigSurface } from '@to-skills/core';
 
 const minimalSkill: ExtractedSkill = {
@@ -131,6 +131,30 @@ describe('renderSkill — SKILL.md (discovery)', () => {
   it('reads license from ExtractedSkill when option not set', () => {
     const { skill } = renderSkill({ ...minimalSkill, license: 'Apache-2.0' });
     expect(skill.content).toContain('license: Apache-2.0');
+  });
+});
+
+describe('renderSkills — router baseline', () => {
+  it('adds a router skill for multi-package renders', () => {
+    const rendered = renderSkills([
+      { ...minimalSkill, name: '@scope/pkg-a', description: 'Package A', functions: [] },
+      { ...minimalSkill, name: '@scope/pkg-b', description: 'Package B', functions: [] }
+    ]);
+
+    expect(rendered.map((skill) => skill.skill.filename)).toEqual(
+      expect.arrayContaining(['scope/SKILL.md', 'scope-pkg-a/SKILL.md', 'scope-pkg-b/SKILL.md'])
+    );
+    const router = rendered.find((skill) => skill.skill.filename === 'scope/SKILL.md');
+    expect(router?.skill.content).toContain('Use this skill for ANY work with scope.');
+  });
+
+  it('does not add a router skill for a single package render', () => {
+    const rendered = renderSkills([
+      { ...minimalSkill, name: '@scope/pkg-a', description: 'Package A' }
+    ]);
+
+    expect(rendered).toHaveLength(1);
+    expect(rendered[0]!.skill.filename).toBe('scope-pkg-a/SKILL.md');
   });
 });
 
@@ -305,6 +329,145 @@ describe('renderSkill — references (progressive disclosure)', () => {
     const { references } = renderSkill(minimalSkill);
     const vars = references.find((r) => r.filename.endsWith('variables.md'));
     expect(vars).toBeUndefined();
+  });
+
+  it('uses directory loading triggers when grouped function references split into multiple files', () => {
+    const skill: ExtractedSkill = {
+      ...minimalSkill,
+      functions: [
+        {
+          name: 'coreFunction',
+          description: 'A'.repeat(400),
+          signature: 'coreFunction(value: string): string',
+          parameters: [{ name: 'value', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Core'
+        },
+        {
+          name: 'utilFunction',
+          description: 'B'.repeat(400),
+          signature: 'utilFunction(value: string): string',
+          parameters: [{ name: 'value', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Utils'
+        }
+      ]
+    };
+
+    const rendered = renderSkill(skill, { maxTokens: 80 });
+    expect(
+      rendered.references.some((ref) => ref.filename.endsWith('references/functions/core.md'))
+    ).toBe(true);
+    expect(
+      rendered.references.some((ref) => ref.filename.endsWith('references/functions/utils.md'))
+    ).toBe(true);
+    expect(rendered.skill.content).toContain('browse `references/functions/`');
+    expect(rendered.skill.content).not.toContain('read `references/functions.md`');
+  });
+
+  it('omits phantom loading triggers for empty reference sections', () => {
+    const skill: ExtractedSkill = {
+      ...minimalSkill,
+      functions: [
+        {
+          name: 'greet',
+          description: 'Greets a user',
+          signature: 'greet(name: string): string',
+          parameters: [
+            { name: 'name', type: 'string', description: 'Who to greet', optional: false }
+          ],
+          returnType: 'string',
+          examples: [],
+          tags: {}
+        }
+      ]
+    };
+
+    const rendered = renderSkill(skill);
+    expect(rendered.skill.content).toContain('read `references/functions.md`');
+    expect(rendered.skill.content).not.toContain('references/variables');
+    expect(rendered.skill.content).not.toContain('references/classes');
+  });
+
+  it('keeps single-file loading triggers when a reference section fits within budget', () => {
+    const skill: ExtractedSkill = {
+      ...minimalSkill,
+      functions: [
+        {
+          name: 'greet',
+          description: 'Greets a user',
+          signature: 'greet(name: string): string',
+          parameters: [
+            { name: 'name', type: 'string', description: 'Who to greet', optional: false }
+          ],
+          returnType: 'string',
+          examples: [],
+          tags: {}
+        }
+      ]
+    };
+
+    const rendered = renderSkill(skill, { maxTokens: 8_000 });
+    expect(
+      rendered.references.some((ref) => ref.filename.endsWith('references/functions.md'))
+    ).toBe(true);
+    expect(rendered.skill.content).toContain('read `references/functions.md`');
+  });
+
+  it('handles nested split references without pointing back to functions.md', () => {
+    const skill: ExtractedSkill = {
+      ...minimalSkill,
+      functions: [
+        {
+          name: 'alphaOne',
+          description: 'A'.repeat(900),
+          signature: 'alphaOne(input: string): string',
+          parameters: [{ name: 'input', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Alpha'
+        },
+        {
+          name: 'alphaTwo',
+          description: 'B'.repeat(900),
+          signature: 'alphaTwo(input: string): string',
+          parameters: [{ name: 'input', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Alpha'
+        },
+        {
+          name: 'betaOne',
+          description: 'C'.repeat(900),
+          signature: 'betaOne(input: string): string',
+          parameters: [{ name: 'input', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Beta'
+        }
+      ]
+    };
+
+    const rendered = renderSkill(skill, { maxTokens: 40 });
+    expect(
+      rendered.references.some((ref) =>
+        ref.filename.endsWith('references/functions/alpha/index.md')
+      )
+    ).toBe(true);
+    expect(
+      rendered.references.some((ref) =>
+        ref.filename.endsWith('references/functions/alpha/alpha-one.md')
+      )
+    ).toBe(true);
+    expect(rendered.skill.content).toContain('browse `references/functions/`');
+    expect(rendered.skill.content).not.toContain('read `references/functions.md`');
   });
 });
 

@@ -51,7 +51,9 @@ export function runM4(
         code: 'M4',
         severity: 'alert',
         message: `Tool name "${fn.name}" is too generic; consider a more specific name (e.g. "get_user_profile" instead of "get").`,
-        location: { tool: fn.name }
+        location: { tool: fn.name },
+        suggestion:
+          'Rename the tool to a more specific name: [verb]_[object] or [domain]_[action] so agents can choose it without reading every description'
       });
     }
   }

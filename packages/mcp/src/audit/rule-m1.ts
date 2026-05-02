@@ -33,7 +33,9 @@ export function runM1(skill: ExtractedSkill): AuditIssue[] {
         code: 'M1',
         severity: 'fatal',
         message: `Tool "${fn.name}" has no description. MCP agents require a description to surface the tool to users.`,
-        location: { tool: fn.name }
+        location: { tool: fn.name },
+        suggestion:
+          'Add a description to the tool: [One sentence: what this tool does and when an agent should call it]'
       });
     }
   }

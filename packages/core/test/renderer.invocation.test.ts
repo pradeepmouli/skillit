@@ -268,6 +268,67 @@ describe('renderSkill — invocation hook', () => {
     expect(skippedHasFunctions).toBe(false);
   });
 
+  it('uses file loading triggers when references stay in a single file', () => {
+    const skillWithFn: ExtractedSkill = {
+      ...minimalSkill,
+      functions: [
+        {
+          name: 'greet',
+          description: 'Greets a user',
+          signature: 'greet(name: string): string',
+          parameters: [
+            { name: 'name', type: 'string', description: 'Who to greet', optional: false }
+          ],
+          returnType: 'string',
+          examples: [],
+          tags: {}
+        }
+      ]
+    };
+
+    const out = renderSkill(skillWithFn, { maxTokens: 8_000 });
+    expect(out.references.some((r) => r.filename.endsWith('references/functions.md'))).toBe(true);
+    expect(out.skill.content).toContain('read `references/functions.md`');
+  });
+
+  it('uses directory loading triggers when grouped references split into a directory', () => {
+    const splitSkill: ExtractedSkill = {
+      ...minimalSkill,
+      functions: [
+        {
+          name: 'coreFunction',
+          description: 'A'.repeat(400),
+          signature: 'coreFunction(value: string): string',
+          parameters: [{ name: 'value', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Core'
+        },
+        {
+          name: 'utilFunction',
+          description: 'B'.repeat(400),
+          signature: 'utilFunction(value: string): string',
+          parameters: [{ name: 'value', type: 'string', description: 'Input', optional: false }],
+          returnType: 'string',
+          examples: [],
+          tags: {},
+          category: 'Utils'
+        }
+      ]
+    };
+
+    const out = renderSkill(splitSkill, { maxTokens: 80 });
+    expect(out.references.some((r) => r.filename.endsWith('references/functions/core.md'))).toBe(
+      true
+    );
+    expect(out.references.some((r) => r.filename.endsWith('references/functions/utils.md'))).toBe(
+      true
+    );
+    expect(out.skill.content).toContain('browse `references/functions/`');
+    expect(out.skill.content).not.toContain('read `references/functions.md`');
+  });
+
   it('canonicalize: false returns un-canonicalized output (default path)', () => {
     // additionalFrontmatter with insertion-order keys lets us observe whether
     // canonicalize ran (canonicalize sorts keys alphabetically).

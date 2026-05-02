@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Application, Converter, type Context, ParameterType } from 'typedoc';
 import type { ExtractedSkill } from '@to-skills/core';
 import {
@@ -41,6 +42,11 @@ export interface SkillsPluginOptions {
    * @defaultValue "skills"
    */
   skillsOutDir?: string;
+
+  /** Agent discovery directories to install generated skills into
+   * @defaultValue []
+   */
+  skillsInstallTargets?: string[];
 
   /** Emit one skill per package in a monorepo
    * @defaultValue true
@@ -103,8 +109,8 @@ export interface SkillsPluginOptions {
    * @defaultValue false
    * @useWhen
    * - CI enforcement — block PRs with undocumented exports
-   * @never
-   * - NEVER enable during local development — it blocks all typedoc output on audit failures
+   * @avoidWhen
+   * - Rapid local iteration where you still want SKILL.md output even if the audit is incomplete
    */
   skillsAuditFailOnError?: boolean;
 
@@ -134,6 +140,13 @@ export function load(app: Application): void {
     help: '[Skills] Output directory for generated skill files',
     type: ParameterType.String,
     defaultValue: 'skills'
+  });
+
+  app.options.addDeclaration({
+    name: 'skillsInstallTargets',
+    help: '[Skills] Agent discovery directories to install generated skills into',
+    type: ParameterType.Array,
+    defaultValue: []
   });
 
   app.options.addDeclaration({
@@ -261,6 +274,7 @@ export function load(app: Application): void {
   const allSkills: ExtractedSkill[] = [];
   const pkg = readPackageJson();
   const workspacePackages = getWorkspacePackageNames(pkg.name);
+  let bundledGuidanceWritten = false;
 
   // --- Per-package: extract + write skills immediately ---
   app.converter.on(Converter.EVENT_RESOLVE_END, (context: Context) => {
@@ -343,8 +357,16 @@ export function load(app: Application): void {
       namePrefix: app.options.getValue('skillsNamePrefix') as string,
       license
     });
-
-    writeSkills(rendered, { outDir });
+    const installTargets = app.options.getValue('skillsInstallTargets') as string[];
+    writeSkills(rendered, { outDir, installTargets });
+    if (installTargets.length > 0 && !bundledGuidanceWritten) {
+      writeSkills([loadBundledTypeDocGuidanceSkill()], {
+        outDir,
+        installTargets,
+        includeOutDir: false
+      });
+      bundledGuidanceWritten = true;
+    }
 
     for (const skill of rendered) {
       const st = skill.skill.tokens ? ` (~${skill.skill.tokens} tokens)` : '';
@@ -450,6 +472,32 @@ function readPackageJson(): PackageJson {
   } catch {
     return {};
   }
+}
+
+function loadBundledTypeDocGuidanceSkill() {
+  const skillPath = fileURLToPath(new URL('../skills/to-skills-docs/SKILL.md', import.meta.url));
+  let content: string;
+  try {
+    content = readFileSync(skillPath, 'utf-8');
+  } catch (error) {
+    throw new Error(
+      `Failed to read bundled TypeDoc guidance from ${skillPath}: ${messageOf(error)}`,
+      {
+        cause: error
+      }
+    );
+  }
+  return {
+    skill: {
+      filename: 'to-skills-docs/SKILL.md',
+      content
+    },
+    references: []
+  };
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 /** Try to find a workspace package's package.json by matching project name. */

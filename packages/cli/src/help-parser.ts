@@ -34,9 +34,11 @@ export function parseHelpOutput(text: string, commandName: string): ExtractedCon
   let usageString: string | undefined;
   let description = '';
   let inOptionsBlock = false;
+  let inArgumentsBlock = false;
 
   const options: ExtractedConfigOption[] = [];
   const args: ExtractedConfigArgument[] = [];
+  const argumentDescriptions = new Map<string, string>();
 
   // Track whether we have seen the first non-usage, non-blank line for
   // the description. We stop collecting description lines once we hit an
@@ -63,6 +65,13 @@ export function parseHelpOutput(text: string, commandName: string): ExtractedCon
     // -----------------------------------------------------------------------
     if (/^Options\s*:/i.test(trimmed) || trimmed === 'Options') {
       inOptionsBlock = true;
+      inArgumentsBlock = false;
+      continue;
+    }
+
+    if (/^Arguments\s*:/i.test(trimmed) || trimmed === 'Arguments') {
+      inOptionsBlock = false;
+      inArgumentsBlock = true;
       continue;
     }
 
@@ -72,6 +81,7 @@ export function parseHelpOutput(text: string, commandName: string): ExtractedCon
     // -----------------------------------------------------------------------
     if (/^[A-Z][A-Za-z ]+:/.test(trimmed) && !trimmed.startsWith('-')) {
       inOptionsBlock = false;
+      inArgumentsBlock = false;
       descriptionCandidateIndex = -1;
       continue;
     }
@@ -111,6 +121,33 @@ export function parseHelpOutput(text: string, commandName: string): ExtractedCon
       if (opt) {
         options.push(opt);
       }
+      continue;
+    }
+
+    if (inArgumentsBlock) {
+      const arg = parseArgumentLine(raw);
+      if (arg) {
+        argumentDescriptions.set(normalizeArgumentName(arg.name), arg.description);
+        if (
+          !args.some(
+            (existing) => normalizeArgumentName(existing.name) === normalizeArgumentName(arg.name)
+          )
+        ) {
+          args.push({
+            name: arg.name,
+            description: arg.description,
+            required: arg.required,
+            variadic: arg.variadic
+          });
+        }
+      }
+    }
+  }
+
+  for (const arg of args) {
+    const descriptionForArg = argumentDescriptions.get(normalizeArgumentName(arg.name));
+    if (descriptionForArg) {
+      arg.description = descriptionForArg;
     }
   }
 
@@ -228,14 +265,16 @@ function parseOptionLine(raw: string): ExtractedConfigOption | null {
     flagsPart = flagsPart.slice(shortMatch[0].length);
   }
 
-  // Match long flag (with optional argument)
-  const longMatch = flagsPart.match(/^(--[a-zA-Z][\w-]*)(?:\s+<([^>]+)>)?/);
+  // Match long flag with optional required/optional value:
+  //   --config <path>
+  //   --config [path]
+  const longMatch = flagsPart.match(/^(--[a-zA-Z][\w-]*)(?:\s+(?:<([^>]+)>|\[([^\]]+)\]))?/);
   if (!longMatch) {
     // No long flag found — not a valid option line
     return null;
   }
   cliFlag = longMatch[1];
-  argName = longMatch[2]; // undefined when flag is boolean
+  argName = longMatch[2] ?? longMatch[3]; // undefined when flag is boolean
 
   // -------------------------------------------------------------------------
   // Skip internal / noise flags
@@ -296,4 +335,37 @@ function parseOptionLine(raw: string): ExtractedConfigOption | null {
   }
 
   return option;
+}
+
+function parseArgumentLine(raw: string): ExtractedConfigArgument | null {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0 || trimmed.startsWith('-')) {
+    return null;
+  }
+
+  const match = trimmed.match(/^([<[.\]>\w-]+)\s{2,}(.*)$/);
+  if (!match) {
+    return null;
+  }
+
+  const token = (match[1] ?? '').trim();
+  const name = normalizeArgumentName(token);
+  const description = (match[2] ?? '').trim();
+  if (name.length === 0) {
+    return null;
+  }
+
+  return {
+    name,
+    description,
+    required: token.startsWith('<'),
+    variadic: token.includes('...')
+  };
+}
+
+function normalizeArgumentName(name: string): string {
+  return name
+    .replace(/[<>[\]]/g, '')
+    .replace(/\.{3}/g, '')
+    .trim();
 }

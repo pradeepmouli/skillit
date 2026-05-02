@@ -1,6 +1,9 @@
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { Command } from 'commander';
-import { extractCliSkill } from '../src/extract.js';
+import { extractCliSkill, writeCliSkill } from '../src/extract.js';
 
 describe('extractCliSkill', () => {
   it('extracts from commander program', async () => {
@@ -96,6 +99,25 @@ describe('extractCliSkill', () => {
     expect(skill.configSurfaces).toBeUndefined();
   });
 
+  it('attaches CLI audit findings to the extracted skill', async () => {
+    const program = new Command().name('tool');
+    program.command('build');
+
+    const skill = await extractCliSkill({
+      program,
+      metadata: { name: 'tool' }
+    });
+
+    expect(skill.audit).toEqual({
+      status: 'completed',
+      issues: skill.auditIssues
+    });
+    expect(skill.auditIssues).toBeDefined();
+    expect(skill.auditIssues!.map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(['C1', 'C8'])
+    );
+  });
+
   it('populates metadata fields', async () => {
     const skill = await extractCliSkill({
       metadata: {
@@ -145,5 +167,45 @@ describe('extractCliSkill', () => {
     // (it's a config type, not cli, so it passes through as-is)
     const cfgSurface = skill.configSurfaces!.filter((s) => s.sourceType === 'config');
     expect(cfgSurface.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('publishes the bundled CLI guidance directory', () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+      files?: string[];
+    };
+
+    expect(pkg.files).toContain('skills');
+  });
+
+  it('writeCliSkill installs bundled guidance alongside the extracted skill', () => {
+    const outDir = mkdtempSync(path.join(os.tmpdir(), 'to-skills-cli-out-'));
+    const installDir = mkdtempSync(path.join(os.tmpdir(), 'to-skills-cli-install-'));
+
+    try {
+      writeCliSkill(
+        {
+          name: 'demo-cli',
+          description: 'Demo CLI',
+          functions: [],
+          classes: [],
+          types: [],
+          enums: [],
+          variables: [],
+          examples: []
+        },
+        {
+          outDir,
+          installTargets: [installDir]
+        }
+      );
+
+      expect(existsSync(path.join(outDir, 'demo-cli', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(outDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(installDir, 'demo-cli', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(installDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(true);
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+      rmSync(installDir, { recursive: true, force: true });
+    }
   });
 });

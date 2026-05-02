@@ -55,17 +55,20 @@ One skill per package — each with its own SKILL.md, references, and config sur
 ### CLI Tool (commander/yargs)
 
 ```typescript
-import { extractCliSkill } from '@to-skills/cli';
-import { renderSkill, writeSkills } from '@to-skills/core';
+import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
 
 const skill = await extractCliSkill({
   program, // commander Program object
   metadata: { name: 'my-tool', keywords: ['build', 'deploy'] }
 });
-writeSkills([renderSkill(skill)], { outDir: 'skills' });
+
+writeCliSkill(skill, {
+  outDir: 'skills',
+  installTargets: ['.claude/skills']
+});
 ```
 
-Introspects command definitions and correlates flags with typed `*Options` interfaces for JSDoc enrichment.
+Introspects command definitions, correlates flags with typed `*Options` interfaces for JSDoc enrichment, surfaces CLI audit findings on `skill.audit`, and can install the generated skill plus bundled CLI guidance into agent discovery roots.
 
 ### Library with Docs Site (VitePress)
 
@@ -186,6 +189,7 @@ Each reference file is token-budgeted independently (default 4000 tokens).
 | Option                   | Default    | Description                                     |
 | ------------------------ | ---------- | ----------------------------------------------- |
 | `skillsOutDir`           | `"skills"` | Output directory for SKILL.md files             |
+| `skillsInstallTargets`   | `[]`       | Additional agent discovery directories to sync  |
 | `skillsPerPackage`       | `true`     | One skill per package in monorepos              |
 | `skillsMaxTokens`        | `4000`     | Max token budget per reference file             |
 | `skillsAudit`            | `true`     | Run documentation audit during generation       |

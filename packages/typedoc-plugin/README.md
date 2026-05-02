@@ -14,6 +14,18 @@ pnpm typedoc
 
 No need to add anything to the `plugin` array in `typedoc.json`.
 
+If you want generated skills copied into agent discovery roots as part of the
+TypeDoc run, add `skillsInstallTargets`:
+
+```json
+{
+  "skillsInstallTargets": [".claude/skills", ".agents/skills"]
+}
+```
+
+When install targets are configured, the plugin installs both the generated
+skills and the bundled `to-skills-docs` guidance skill into each target.
+
 For configuration options, see the [@to-skills/typedoc docs](https://github.com/pradeepmouli/to-skills/tree/master/packages/typedoc).
 
 ## License

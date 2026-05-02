@@ -51,6 +51,22 @@ describe('buildProgram', () => {
     expect(subNames).toEqual(['bundle', 'extract']);
   });
 
+  it('registers install-target as an array option on extract and bundle', () => {
+    const program = buildProgram();
+    const extract = program.commands.find((command) => command.name() === 'extract');
+    const bundle = program.commands.find((command) => command.name() === 'bundle');
+
+    const extractInstall = extract?.options.find(
+      (option) => option.attributeName() === 'installTarget'
+    );
+    const bundleInstall = bundle?.options.find(
+      (option) => option.attributeName() === 'installTarget'
+    );
+
+    expect(extractInstall?.defaultValue).toEqual([]);
+    expect(bundleInstall?.defaultValue).toEqual([]);
+  });
+
   it('bundle subcommand is no longer a Phase-5 stub (action wired to runBundle)', async () => {
     // Run against an empty tmpdir so readBundleConfig surfaces a real
     // TRANSPORT_FAILED (no package.json) — proves the action ran, didn't
@@ -261,6 +277,35 @@ describe('buildProgram', () => {
       );
       // Confirms that the collision check fired BEFORE the spawn would have:
       // a TRANSPORT_FAILED would have been thrown if the spawn was reached.
+      expect(existsSync(skillDir)).toBe(true);
+    });
+
+    it('throws DUPLICATE_SKILL_NAME early when install-target dir exists and --force omitted', async () => {
+      const skillName = 'preexisting';
+      const installTarget = join(workDir, '.claude', 'skills');
+      const skillDir = join(installTarget, skillName);
+      mkdirSync(skillDir, { recursive: true });
+      const program = makeProgram();
+      await expect(
+        program.parseAsync([
+          'node',
+          'bin',
+          'extract',
+          '--command',
+          '/this/path/should/never/exist',
+          '--out',
+          workDir,
+          '--skill-name',
+          skillName,
+          '--install-target',
+          installTarget
+        ])
+      ).rejects.toSatisfy(
+        (err) =>
+          err instanceof McpError &&
+          err.code === 'DUPLICATE_SKILL_NAME' &&
+          err.message.includes(skillDir)
+      );
       expect(existsSync(skillDir)).toBe(true);
     });
 

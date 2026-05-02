@@ -383,7 +383,14 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
   const resources = capabilities.resources ? await listResources(introspectClient) : undefined;
   const prompts = capabilities.prompts ? await listPrompts(introspectClient) : undefined;
 
-  const skill: ExtractedSkill = {
+  // Annotation enrichment via `_meta.toSkills`. Server- and
+  // tool-level metadata produced by `_meta.toSkills.{useWhen, avoidWhen,
+  // pitfalls, remarks, packageDescription}` is read here and projected onto
+  // the skill so the core renderer's existing "When to Use" / "NEVER" /
+  // remarks sections light up automatically. Strictly additive: malformed or
+  // absent metadata leaves the skill unchanged.
+  const metaEnrichment = collectMetaEnrichment(serverInfo, functions);
+  const skillWithoutAudit: ExtractedSkill = {
     name: skillName,
     description,
     functions,
@@ -391,18 +398,11 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
     types: [],
     enums: [],
     variables: [],
-    examples: []
+    examples: [],
+    ...(resources !== undefined ? { resources } : {}),
+    ...(prompts !== undefined ? { prompts } : {}),
+    ...metaEnrichment
   };
-  if (resources !== undefined) skill.resources = resources;
-  if (prompts !== undefined) skill.prompts = prompts;
-
-  // Annotation enrichment via `_meta.toSkills`. Server- and
-  // tool-level metadata produced by `_meta.toSkills.{useWhen, avoidWhen,
-  // pitfalls, remarks, packageDescription}` is read here and projected onto
-  // the skill so the core renderer's existing "When to Use" / "NEVER" /
-  // remarks sections light up automatically. Strictly additive: malformed or
-  // absent metadata leaves the skill unchanged.
-  applyMetaEnrichment(skill, serverInfo, functions);
 
   // Surface audit findings to stderr at extract time.
   //
@@ -419,16 +419,11 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
   // opt in. We don't change exit codes here because extract is informational
   // at the IR layer; bundle mode owns the failure-on-fatal/error policy.
   if (options.audit?.skip !== true) {
-    const issues = runMcpAudit(skill);
+    const issues = runMcpAudit(skillWithoutAudit);
     // US3 (FR-H006): surface audit findings on the return value so
-    // programmatic callers can gate CI on structured `auditIssues` without
-    // forking stderr. Tri-state semantics on the field:
-    //   undefined  — audit was skipped
-    //   []         — audit ran clean
-    //   [...]      — audit found issues
-    // The `as` cast bypasses the readonly modifier on `ExtractedSkill.auditIssues`;
-    // we own this skill literal end-to-end so the localized mutation is safe.
-    (skill as { auditIssues: readonly AuditIssue[] }).auditIssues = issues;
+    // programmatic callers can gate CI on structured results without forking
+    // stderr. `audit` is the source-of-truth state machine; `auditIssues`
+    // stays populated for backward compatibility with earlier callers.
     const includeAlerts = options.audit?.includeAlerts === true;
     for (const issue of issues) {
       if (issue.severity === 'alert' && !includeAlerts) continue;
@@ -436,9 +431,17 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
       const where = tool ? ` [${tool}]` : '';
       process.stderr.write(`[audit ${issue.code} ${issue.severity}]${where} ${issue.message}\n`);
     }
+    return {
+      ...skillWithoutAudit,
+      audit: { status: 'completed', issues },
+      auditIssues: issues
+    };
   }
 
-  return skill;
+  return {
+    ...skillWithoutAudit,
+    audit: { status: 'skipped' }
+  };
 }
 
 /**
@@ -471,20 +474,23 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
  * non-string array entries are silently dropped so a malformed annotation
  * cannot crash a healthy extract.
  */
-function applyMetaEnrichment(
-  skill: ExtractedSkill,
+function collectMetaEnrichment(
   serverInfo: unknown,
   functions: ExtractedSkill['functions']
-): void {
+): Pick<ExtractedSkill, 'avoidWhen' | 'packageDescription' | 'pitfalls' | 'remarks' | 'useWhen'> {
   const serverMeta = readServerMetaToSkills(serverInfo);
+  const enrichment: Pick<
+    ExtractedSkill,
+    'avoidWhen' | 'packageDescription' | 'pitfalls' | 'remarks' | 'useWhen'
+  > = {};
 
   const remarks = serverMeta['remarks'];
   if (typeof remarks === 'string' && remarks.length > 0) {
-    skill.remarks = remarks;
+    enrichment.remarks = remarks;
   }
   const packageDescription = serverMeta['packageDescription'];
   if (typeof packageDescription === 'string' && packageDescription.length > 0) {
-    skill.packageDescription = packageDescription;
+    enrichment.packageDescription = packageDescription;
   }
 
   const useWhen: string[] = [];
@@ -504,23 +510,32 @@ function applyMetaEnrichment(
     for (const v of serverPitfalls) if (typeof v === 'string' && v.length > 0) pitfalls.push(v);
   }
 
-  // Per-tool aggregation. tags.* values are newline-joined arrays (see
-  // readToolMetaTags); split and accumulate.
+  // Per-tool aggregation. Typed MCP metadata is preferred; tags stay as a
+  // compatibility fallback for older ExtractedFunction producers.
   for (const fn of functions) {
-    pushSplit(useWhen, fn.tags['useWhen']);
-    pushSplit(avoidWhen, fn.tags['avoidWhen']);
-    pushSplit(pitfalls, fn.tags['pitfalls']);
+    pushLines(useWhen, fn.mcpMetadata?.toSkills?.useWhen, fn.tags['useWhen']);
+    pushLines(avoidWhen, fn.mcpMetadata?.toSkills?.avoidWhen, fn.tags['avoidWhen']);
+    pushLines(pitfalls, fn.mcpMetadata?.toSkills?.pitfalls, fn.tags['pitfalls']);
   }
 
-  if (useWhen.length > 0) skill.useWhen = useWhen;
-  if (avoidWhen.length > 0) skill.avoidWhen = avoidWhen;
-  if (pitfalls.length > 0) skill.pitfalls = pitfalls;
+  if (useWhen.length > 0) enrichment.useWhen = useWhen;
+  if (avoidWhen.length > 0) enrichment.avoidWhen = avoidWhen;
+  if (pitfalls.length > 0) enrichment.pitfalls = pitfalls;
+  return enrichment;
 }
 
-/** Append each non-empty line of a newline-joined string to `target`. */
-function pushSplit(target: string[], joined: string | undefined): void {
-  if (!joined) return;
-  for (const line of joined.split('\n')) {
+/** Append each non-empty metadata line to `target`. */
+function pushLines(
+  target: string[],
+  lines: readonly string[] | undefined,
+  fallbackJoined: string | undefined
+): void {
+  if (lines !== undefined) {
+    target.push(...lines.filter((line) => line.trim().length > 0));
+    return;
+  }
+  if (!fallbackJoined) return;
+  for (const line of fallbackJoined.split('\n')) {
     const trimmed = line.trim();
     if (trimmed.length > 0) target.push(trimmed);
   }

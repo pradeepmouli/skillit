@@ -106,6 +106,9 @@ describe('audit rule M3 — malformed _meta.toSkills sub-rule (US6)', () => {
       location: { tool: 'badTool' }
     });
     expect(malformed[0]!.message).toContain('useWhen must be string[], got string');
+    expect(malformed[0]!.suggestion).toBe(
+      'Change to array: _meta.toSkills.useWhen = ["[scenario]"]'
+    );
   });
 
   it('emits no malformed-meta warning when the sentinel is absent', () => {
@@ -142,6 +145,8 @@ describe('audit rule M3 — malformed _meta.toSkills sub-rule (US6)', () => {
     const malformed = issues.filter((i) => /malformed _meta\.toSkills/.test(i.message));
     expect(malformed).toHaveLength(2);
     expect(malformed.map((i) => i.location?.tool)).toEqual(['badA', 'badB']);
+    expect(malformed[0]!.suggestion).toMatch(/useWhen|Fix _meta\.toSkills shape/);
+    expect(malformed[1]!.suggestion).toMatch(/Fix _meta\.toSkills shape/);
   });
 
   it('flows through runMcpAudit with the expected sort order (warnings)', () => {
@@ -165,6 +170,7 @@ describe('audit rule M3 — malformed _meta.toSkills sub-rule (US6)', () => {
       location: { tool: 'alpha' }
     });
     expect(issues[0]!.message).toMatch(/malformed _meta\.toSkills/);
+    expect(issues[0]!.suggestion).toMatch(/Fix _meta\.toSkills shape/);
   });
 });
 
@@ -186,6 +192,9 @@ describe('listTools — malformed _meta.toSkills sentinel (US6)', () => {
     const fns = await listTools(client);
     expect(fns).toHaveLength(1);
     expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen must be string[], got string');
+    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
+      'useWhen must be string[], got string'
+    );
     // The malformed key itself should NOT be projected onto tags.
     expect(fns[0]!.tags.useWhen).toBeUndefined();
     // hasMetaToSkills marker should not fire for a malformed-only annotation.
@@ -205,6 +214,9 @@ describe('listTools — malformed _meta.toSkills sentinel (US6)', () => {
 
     const fns = await listTools(client);
     expect(fns[0]!.tags.metaToSkillsMalformed).toBe('toSkills must be object, got string');
+    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
+      'toSkills must be object, got string'
+    );
   });
 
   it('plants the sentinel when an array contains non-string entries', async () => {
@@ -219,6 +231,9 @@ describe('listTools — malformed _meta.toSkills sentinel (US6)', () => {
 
     const fns = await listTools(client);
     expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen contains non-string entries');
+    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
+      'useWhen contains non-string entries'
+    );
     // The malformed key is dropped — no partial pickup.
     expect(fns[0]!.tags.useWhen).toBeUndefined();
   });

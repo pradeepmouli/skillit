@@ -119,6 +119,7 @@ describe('extractMcpSkill — auditIssues return value (US3, FR-H006)', () => {
       audit: { skip: true }
     });
 
+    expect(skill.audit).toEqual({ status: 'skipped' });
     expect(skill.auditIssues).toBeUndefined();
   });
 
@@ -151,6 +152,7 @@ describe('extractMcpSkill — auditIssues return value (US3, FR-H006)', () => {
 
     const skill = await extractMcpSkill(baseStdio);
 
+    expect(skill.audit).toEqual({ status: 'completed', issues: [] });
     expect(skill.auditIssues).toBeDefined();
     expect(skill.auditIssues).toEqual([]);
   });
@@ -164,6 +166,8 @@ describe('extractMcpSkill — auditIssues return value (US3, FR-H006)', () => {
 
     const skill = await extractMcpSkill(baseStdio);
 
+    expect(skill.audit?.status).toBe('completed');
+    expect(skill.audit?.issues).toEqual(skill.auditIssues);
     expect(skill.auditIssues).toBeDefined();
     expect(skill.auditIssues!.length).toBeGreaterThan(0);
     expect(skill.auditIssues![0]!.code).toBe('M1');

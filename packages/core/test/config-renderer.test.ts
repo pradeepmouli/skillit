@@ -103,10 +103,27 @@ describe('renderConfigSurfaceSection — CLI surfaces', () => {
     expect(result).toContain('Output directory');
   });
 
+  it('renders envVar metadata in the inline options table', () => {
+    const result = renderConfigSurfaceSection([
+      makeCliSurface({ options: [makeOption({ envVar: 'BUILD_OUTPUT_DIR' })] })
+    ]);
+    expect(result).toContain('BUILD_OUTPUT_DIR');
+  });
+
   it('renders positional arguments', () => {
     const result = renderConfigSurfaceSection([makeCliSurface()]);
     expect(result).toContain('<entrypoint>');
     expect(result).toContain('The entry file to compile');
+  });
+
+  it('does not render a dangling dash for arguments without descriptions', () => {
+    const result = renderConfigSurfaceSection([
+      makeCliSurface({
+        arguments: [{ name: 'entrypoint', description: '', required: true, variadic: false }]
+      })
+    ]);
+    expect(result).toContain('- `entrypoint` *(required)*');
+    expect(result).not.toContain('- `entrypoint` *(required)* —');
   });
 
   it('renders useWhen section', () => {
@@ -227,6 +244,14 @@ describe('renderConfigReference — CLI surfaces', () => {
     });
     const result = renderConfigReference([surface]);
     expect(result).toContain('Takes precedence over config file setting');
+  });
+
+  it('renders envVar metadata in option detail views', () => {
+    const surface = makeCliSurface({
+      options: [makeOption({ envVar: 'BUILD_OUTPUT_DIR' })]
+    });
+    const result = renderConfigReference([surface]);
+    expect(result).toContain('BUILD_OUTPUT_DIR');
   });
 });
 
