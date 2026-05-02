@@ -75,6 +75,19 @@ export interface ExtractedSkill {
   /**
    * Structured audit findings surfaced for backward compatibility.
    *
+   * Tri-state semantics:
+   * - `undefined` — audit was skipped or this extractor does not populate
+   *   compatibility findings.
+   * - `[]` — audit ran and found no issues.
+   * - `[…]` — audit ran and found issues. Length and `severity` distribution
+   *   are the gate criteria for CI.
+   *
+   * @remarks
+   * The element shape (`McpAuditIssue`) is forward-declared here in
+   * `@to-skills/core` so this field is typeable without a runtime dependency
+   * on `@to-skills/mcp`. The concrete audit engine lives in `@to-skills/mcp`,
+   * which re-exports the type as `AuditIssue` for adapter-author ergonomics.
+   *
    * @deprecated Prefer `audit`. When present, this mirrors
    * `audit.status === 'completed' ? audit.issues : undefined`.
    */
@@ -90,10 +103,7 @@ export interface ExtractedSkill {
 // pre-existing skill-level `AuditIssue` exported from `audit-types.ts`,
 // which has a different shape (file/line/symbol/suggestion). Both are
 // re-exported from `@to-skills/core` under their respective names.
-/**
- * Audit severity levels for structured extractor findings, declared here so
- * `ExtractedSkill.auditIssues` is typeable from core.
- */
+/** Audit severity levels for structured extractor findings. */
 export type McpAuditSeverity = 'fatal' | 'error' | 'warning' | 'alert';
 
 export type ExtractedSkillAudit =
