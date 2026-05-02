@@ -185,6 +185,25 @@ describe('bundle subcommand', () => {
     expect(bundleCalls[0]?.invocation).toEqual(['mcp-protocol', 'cli:mcpc']);
   });
 
+  it('threads repeated --install-target values into bundleMcpSkill', async () => {
+    configEntries.push({ skillName: 'my-server' });
+    bundleResults.push({ skills: {}, failures: {}, packageJsonWarnings: [] });
+    const program = makeProgram();
+    await program.parseAsync([
+      'node',
+      'bin',
+      'bundle',
+      '--package-root',
+      workDir,
+      '--install-target',
+      '.claude/skills',
+      '--install-target',
+      '.agents/skills'
+    ]);
+    expect(bundleCalls).toHaveLength(1);
+    expect(bundleCalls[0]?.installTargets).toEqual(['.claude/skills', '.agents/skills']);
+  });
+
   it('omits invocation override when --invocation is not provided (per-entry config wins)', async () => {
     configEntries.push({ skillName: 'my-server' });
     bundleResults.push({ skills: {}, failures: {}, packageJsonWarnings: [] });

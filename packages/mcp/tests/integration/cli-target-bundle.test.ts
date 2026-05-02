@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import YAML from 'yaml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createInstallTargets } from './install-target-fixtures.js';
 
 const exec = promisify(execFile);
 const RUN = process.env.RUN_INTEGRATION_TESTS === 'true';
@@ -109,5 +110,31 @@ describe.skipIf(!RUN)('bundle integration: cli:mcpc target', () => {
     // 6. package.json byte-identical (FR-035).
     const pkgAfter = readFileSync(pkgPath);
     expect(pkgAfter.equals(pkgBefore)).toBe(true);
+  }, 90_000);
+
+  it('installs bundled guidance into agent discovery targets during bundle runs', async () => {
+    const { installA } = createInstallTargets(workDir);
+
+    await exec(
+      'node',
+      [
+        BIN_PATH,
+        'bundle',
+        '--package-root',
+        workDir,
+        '--out',
+        'skills',
+        '--invocation',
+        'cli:mcpc',
+        '--install-target',
+        installA
+      ],
+      { timeout: 60_000 }
+    );
+
+    expect(existsSync(join(workDir, 'skills', 'my-server', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(workDir, 'skills', 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(join(installA, 'my-server', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(installA, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
   }, 90_000);
 });

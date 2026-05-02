@@ -67,6 +67,11 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     expect(fns[0]!.tags.useWhen).toBe('use this for X\nuse for Y');
     expect(fns[0]!.tags.avoidWhen).toBe('avoid for Z');
     expect(fns[0]!.tags.pitfalls).toBe('NEVER pass a regex with backreferences');
+    expect(fns[0]!.mcpMetadata?.toSkills).toEqual({
+      useWhen: ['use this for X', 'use for Y'],
+      avoidWhen: ['avoid for Z'],
+      pitfalls: ['NEVER pass a regex with backreferences']
+    });
     // Marker so audit rules can flag tools that emit metadata.
     expect(fns[0]!.tags.hasMetaToSkills).toBe('true');
   });
@@ -96,6 +101,9 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     expect(fns[0]!.tags.useWhen).toBeUndefined();
     expect(fns[0]!.tags.hasMetaToSkills).toBeUndefined();
     expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen must be string[], got number');
+    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
+      'useWhen must be string[], got number'
+    );
   });
 
   it('flags non-string entries in a useWhen array as malformed (US6)', async () => {
@@ -113,6 +121,9 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     const fns = await listTools(client);
     expect(fns[0]!.tags.useWhen).toBeUndefined();
     expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen contains non-string entries');
+    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
+      'useWhen contains non-string entries'
+    );
   });
 
   it('treats empty _meta.toSkills as no-op (no IR fields, no marker)', async () => {
@@ -149,6 +160,8 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     const fns = await listTools(client);
     expect(fns[0]!.tags.schemaError).toBe('true');
     expect(fns[0]!.tags.useWhen).toBe('still annotated');
+    expect(fns[0]!.mcpMetadata?.schemaError).toEqual({ kind: 'ref-cycle' });
+    expect(fns[0]!.mcpMetadata?.toSkills?.useWhen).toEqual(['still annotated']);
   });
 });
 

@@ -30,6 +30,7 @@ import { renderSkill, writeSkills } from '@to-skills/core';
 import type { RenderedSkill } from '@to-skills/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import { runMcpAudit, worstSeverityOf } from './audit/rules.js';
+import { loadBundledMcpGuidanceSkill } from './bundled-skills.js';
 import { type NormalizedBundleEntry, readBundleConfig } from './bundle/config.js';
 import { McpError } from './errors.js';
 import { extractMcpSkill } from './extract.js';
@@ -84,6 +85,7 @@ export async function bundleMcpSkill(options: McpBundleOptions = {}): Promise<Bu
     failures: {},
     packageJsonWarnings: []
   };
+  const bundledSkillWritten = { value: false };
 
   for (const entry of entries) {
     await processEntry(entry, {
@@ -91,8 +93,10 @@ export async function bundleMcpSkill(options: McpBundleOptions = {}): Promise<Bu
       outDir,
       packageName,
       result,
+      installTargets: options.installTargets,
       skipAudit: options.skipAudit === true,
-      llmsTxt: options.llmsTxt === true
+      llmsTxt: options.llmsTxt === true,
+      bundledSkillWritten
     });
   }
 
@@ -122,11 +126,14 @@ async function processEntry(
     outDir: string;
     packageName: string | undefined;
     result: BundleResult;
+    installTargets: readonly string[] | undefined;
     skipAudit: boolean;
     llmsTxt: boolean;
+    bundledSkillWritten: { value: boolean };
   }
 ): Promise<void> {
-  const { outDir, packageName, result, skipAudit, llmsTxt } = ctx;
+  const { outDir, packageName, result, installTargets, skipAudit, llmsTxt, bundledSkillWritten } =
+    ctx;
 
   // 1. Extract via stdio transport. The IR is target-agnostic, so a single
   //    extract feeds the whole multi-target render loop below.
@@ -203,7 +210,11 @@ async function processEntry(
     }
 
     try {
-      writeSkills([rendered], { outDir });
+      writeGeneratedSkill(rendered, outDir, installTargets, dirName);
+      if (installTargets && installTargets.length > 0 && bundledSkillWritten.value === false) {
+        writeBundledGuidance(outDir, installTargets);
+        bundledSkillWritten.value = true;
+      }
     } catch (err) {
       recordFailure(result, dirName, err);
       continue;
@@ -272,9 +283,9 @@ function normalizeInvocationOverride(
 
 /**
  * Convert an unknown thrown value into a {@link BundleFailure} record on
- * `result.failures`. Preserves the McpError code where possible; non-McpError
- * throws fall through as TRANSPORT_FAILED so the CLI exit-code mapper has a
- * stable code to read.
+ * `result.failures`. Preserves the McpError code where possible; install-path
+ * filesystem/package failures are wrapped earlier as `LOCAL_IO_FAILED`, while
+ * truly unknown non-McpError throws fall through as `TRANSPORT_FAILED`.
  */
 function recordFailure(result: BundleResult, skillName: string, err: unknown): void {
   if (err instanceof McpError) {
@@ -283,6 +294,43 @@ function recordFailure(result: BundleResult, skillName: string, err: unknown): v
   }
   const message = err instanceof Error ? err.message : String(err);
   result.failures[skillName] = { code: 'TRANSPORT_FAILED', message };
+}
+
+function writeGeneratedSkill(
+  rendered: RenderedSkill,
+  outDir: string,
+  installTargets: readonly string[] | undefined,
+  dirName: string
+): void {
+  try {
+    writeSkills([rendered], { outDir, installTargets });
+  } catch (error) {
+    throw new McpError(
+      `Failed to write bundled output for ${dirName}: ${messageOf(error)}`,
+      'LOCAL_IO_FAILED',
+      error
+    );
+  }
+}
+
+function writeBundledGuidance(outDir: string, installTargets: readonly string[]): void {
+  try {
+    writeSkills([loadBundledMcpGuidanceSkill()], {
+      outDir,
+      installTargets,
+      includeOutDir: false
+    });
+  } catch (error) {
+    throw new McpError(
+      `Failed to install bundled MCP guidance: ${messageOf(error)}`,
+      'LOCAL_IO_FAILED',
+      error
+    );
+  }
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 /**

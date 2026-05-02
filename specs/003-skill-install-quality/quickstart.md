@@ -5,6 +5,7 @@
 ```jsonc
 // typedoc.json
 {
+  // Optional when the package is installed normally — TypeDoc auto-discovers it.
   "plugin": ["typedoc-plugin-to-skills"],
   "skillsInstallTargets": [".claude/skills", ".agents/skills"]
 }
@@ -13,24 +14,28 @@
 ```bash
 pnpm typedoc
 # [skills] rune-langium-core/SKILL.md (~2400 tokens)
-# [skills]   └─ references/functions/ (3 files, split by category)
-# [skills] Installed to .claude/skills/rune-langium-core/
-# [skills] Installed to .agents/skills/rune-langium-core/
-# [skills] Installed bundled to-skills-docs (v1.4.0) to .claude/skills/to-skills-docs/
-# [skills] Installed bundled to-skills-docs (v1.4.0) to .agents/skills/to-skills-docs/
+# [skills]   └─ rune-langium-core/references/functions.md (~900 tokens)
+
+# Files written:
+#   skills/rune-langium-core/SKILL.md
+#   .claude/skills/rune-langium-core/SKILL.md
+#   .agents/skills/rune-langium-core/SKILL.md
+#   .claude/skills/to-skills-docs/SKILL.md
+#   .agents/skills/to-skills-docs/SKILL.md
 ```
 
 ## Scenario 2: MCP extract with install target
 
 ```bash
 to-skills-mcp extract \
-  --command npx --arg -y --arg @modelcontextprotocol/server-filesystem \
+  --command npx --arg -y --arg @modelcontextprotocol/server-filesystem --arg /tmp \
   --install-target .claude/skills
 
-# [extract] Extracted filesystem skill (12 tools)
-# [extract] Written to skills/filesystem/SKILL.md
-# [extract] Installed to .claude/skills/filesystem/
-# [extract] Installed bundled to-skills-mcp-docs (v1.0.0) to .claude/skills/to-skills-mcp-docs/
+# Wrote skills/filesystem/SKILL.md
+#
+# Files installed:
+#   .claude/skills/filesystem/SKILL.md
+#   .claude/skills/to-skills-mcp-docs/SKILL.md
 ```
 
 ## Scenario 3: Curated router preserved
@@ -48,9 +53,8 @@ Use this router when...
 
 ```bash
 pnpm typedoc
-# [skills] Skipping rune-langium — curated router detected
-# [skills] rune-langium-core/SKILL.md (~2400 tokens)
-# ...per-package skills generated normally
+# Existing curated router stays unchanged.
+# Per-package outputs under skills/rune-langium-core/ still refresh normally.
 ```
 
 ## Scenario 4: Eval loop with audit suggestions
@@ -58,15 +62,12 @@ pnpm typedoc
 ```bash
 # Run 1: Initial generation
 pnpm typedoc
-# [audit] [FATAL] F4: renderSkill — Missing JSDoc
-#   Suggested: /** [One sentence: what problem renderSkill solves for the caller] */
-# [audit] [ERROR] E1: options — Missing @param description
-#   Suggested: @param options — [What the caller controls with this parameter]
+# Audit output includes actionable FATAL / ERROR lines with concrete suggestions.
 
 # Agent applies suggestions to source...
 # Run 2: Regenerate
 pnpm typedoc
-# [audit] Score estimate: 94/120 (C+) → all fatals/errors resolved
+# Re-run after fixes: fatal/error findings clear and the score estimate improves.
 ```
 
 ## Scenario 5: Bundled skill version upgrade
@@ -74,14 +75,39 @@ pnpm typedoc
 ```bash
 # First install: plugin v1.3.0 → to-skills-docs v1.3.0
 pnpm typedoc
-# [skills] Installed bundled to-skills-docs (v1.3.0)
+# Result: .claude/skills/to-skills-docs/SKILL.md contains version 1.3.0
 
 # Upgrade plugin to v1.4.0 → bundled to-skills-docs v1.4.0
 pnpm add -D typedoc-plugin-to-skills@latest
 pnpm typedoc
-# [skills] Upgraded to-skills-docs from v1.3.0 → v1.4.0
+# Result: installed bundled guidance updates to version 1.4.0
 
 # Re-run without upgrade → no-op
 pnpm typedoc
-# [skills] to-skills-docs already at v1.4.0 — skipping
+# Result: installed bundled guidance stays unchanged at version 1.4.0
+```
+
+## Scenario 6: CLI extraction with installed guidance
+
+```typescript
+import { Command } from 'commander';
+import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
+
+const program = new Command().name('demo');
+program.command('build').description('Build the project');
+
+const skill = await extractCliSkill({
+  program,
+  metadata: { name: 'demo' }
+});
+
+writeCliSkill(skill, {
+  outDir: 'skills',
+  installTargets: ['.claude/skills']
+});
+
+// skills/demo/SKILL.md
+// .claude/skills/demo/SKILL.md
+// .claude/skills/to-skills-cli-docs/SKILL.md
+// (no skills/to-skills-cli-docs copy is written)
 ```

@@ -117,6 +117,7 @@ describe('listTools', () => {
     expect(tools).toHaveLength(1);
     expect(tools[0]!.parameters).toEqual([]);
     expect(tools[0]!.tags.schemaError).toBe('true');
+    expect(tools[0]!.mcpMetadata?.schemaError).toEqual({ kind: 'ref-cycle' });
     // schemaErrorTool tag carries the offending tool name so the M2 audit
     // rule (Phase 9) can name the culprit when surfacing the row.
     expect(tools[0]!.tags.schemaErrorTool).toBe('recursive');

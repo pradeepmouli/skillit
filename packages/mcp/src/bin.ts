@@ -12,7 +12,7 @@
  *
  * | Code | Error codes |
  * | ---- | ----------- |
- * | 2    | TRANSPORT_FAILED, INITIALIZE_FAILED, PROTOCOL_VERSION_UNSUPPORTED |
+ * | 2    | LOCAL_IO_FAILED, TRANSPORT_FAILED, INITIALIZE_FAILED, PROTOCOL_VERSION_UNSUPPORTED |
  * | 3    | SCHEMA_REF_CYCLE, SERVER_EXITED_EARLY, AUDIT_FAILED |
  * | 4    | DUPLICATE_SKILL_NAME |
  * | 5    | ADAPTER_NOT_FOUND, UNKNOWN_TARGET, MISSING_LAUNCH_COMMAND |
@@ -25,6 +25,7 @@ import { buildProgram } from './cli.js';
 import { McpError } from './errors.js';
 
 const ERROR_EXIT_CODES: Record<string, number> = {
+  LOCAL_IO_FAILED: 2,
   TRANSPORT_FAILED: 2,
   INITIALIZE_FAILED: 2,
   PROTOCOL_VERSION_UNSUPPORTED: 2,

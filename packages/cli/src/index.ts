@@ -20,5 +20,7 @@
 export { introspectCommander } from './introspect-commander.js';
 export { parseHelpOutput } from './help-parser.js';
 export { correlateFlags } from './correlator.js';
-export { extractCliSkill } from './extract.js';
-export type { CliExtractionOptions } from './extract.js';
+export { runCliAudit } from './audit.js';
+export { extractCliSkill, writeCliSkill } from './extract.js';
+export type { CliExtractionOptions, CliWriteOptions } from './extract.js';
+export type { CliAuditIssue } from './audit.js';

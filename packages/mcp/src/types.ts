@@ -29,7 +29,13 @@ export type McpTransport =
 export interface AuditOptions {
   /** Skip audit entirely (for CI bypass). */
   skip?: boolean;
-  /** Exit non-zero on fatal/error severity when true (default: false at extract, true at bundle). */
+  /**
+   * Reserved for programmatic callers that want to turn completed audit
+   * findings into a hard failure after `extractMcpSkill()` returns.
+   *
+   * The CLI currently handles fail-on-error at the bundle/orchestration layer
+   * instead of consulting this field directly.
+   */
   failOnError?: boolean;
   /**
    * When `true`, audit-rule findings of severity `'alert'` (Rule M4 — generic
@@ -76,6 +82,14 @@ export interface McpExtractOptions {
    *   `renderSkill` and is controlled there via `SkillRenderOptions.canonicalize`.
    */
   canonicalize?: boolean;
+  /**
+   * Additional agent discovery directories that should receive installed
+   * copies at write time.
+   *
+   * `extractMcpSkill()` itself returns IR only; the CLI/orchestrators consume
+   * this during their render/write phase.
+   */
+  installTargets?: readonly string[];
 }
 
 export interface McpBundleOptions {
@@ -83,6 +97,12 @@ export interface McpBundleOptions {
   packageRoot?: string;
   /** Output directory override — defaults to <packageRoot>/skills. */
   outDir?: string;
+  /**
+   * Additional agent discovery directories that should receive installed
+   * copies. Bundled MCP guidance is installed only into these targets, not
+   * into the primary `outDir`.
+   */
+  installTargets?: readonly string[];
   /**
    * Invocation target(s). When set, overrides the per-entry `invocation` field
    * in `to-skills.mcp`. When omitted, each entry's declared invocation applies

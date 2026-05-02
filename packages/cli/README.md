@@ -20,16 +20,24 @@ pnpm add -D @to-skills/cli
 ## Usage
 
 ```typescript
-import { extractCliSkill } from '@to-skills/cli';
-import { renderSkill } from '@to-skills/core';
+import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
 
 const skill = await extractCliSkill({
   program, // commander Program object
   metadata: { name: 'my-tool', keywords: ['build', 'deploy'] }
 });
 
-const rendered = renderSkill(skill);
+console.log(skill.audit); // structured C1-C8 findings with suggestions
+
+writeCliSkill(skill, {
+  outDir: 'skills',
+  installTargets: ['.claude/skills', '.agents/skills']
+});
 ```
+
+`writeCliSkill()` writes the generated skill, installs it into any configured
+agent discovery directories, and adds the bundled `to-skills-cli-docs` guidance
+skill to those install targets when install targets are enabled.
 
 ## License
 

@@ -51,6 +51,22 @@ describe('buildProgram', () => {
     expect(subNames).toEqual(['bundle', 'extract']);
   });
 
+  it('registers install-target as an array option on extract and bundle', () => {
+    const program = buildProgram();
+    const extract = program.commands.find((command) => command.name() === 'extract');
+    const bundle = program.commands.find((command) => command.name() === 'bundle');
+
+    const extractInstall = extract?.options.find(
+      (option) => option.attributeName() === 'installTarget'
+    );
+    const bundleInstall = bundle?.options.find(
+      (option) => option.attributeName() === 'installTarget'
+    );
+
+    expect(extractInstall?.defaultValue).toEqual([]);
+    expect(bundleInstall?.defaultValue).toEqual([]);
+  });
+
   it('bundle subcommand is no longer a Phase-5 stub (action wired to runBundle)', async () => {
     // Run against an empty tmpdir so readBundleConfig surfaces a real
     // TRANSPORT_FAILED (no package.json) — proves the action ran, didn't

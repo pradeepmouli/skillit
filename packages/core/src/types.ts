@@ -65,23 +65,18 @@ export interface ExtractedSkill {
   /** Setup instructions emitted when the invocation target is CLI-based. */
   setup?: SkillSetup;
   /**
-   * MCP audit findings, surfaced on the return value of `extractMcpSkill`
-   * (FR-H006, US3) so programmatic callers can gate CI on structured results
-   * without parsing stderr.
+   * Structured audit execution state for extractors that run an audit pipeline.
    *
-   * Tri-state semantics:
-   * - `undefined` — audit was skipped (`options.audit?.skip === true`) OR
-   *   this skill was produced by a non-MCP extractor (TypeDoc, CLI). Callers
-   *   cannot distinguish "ran clean" from "never ran" without the context.
-   * - `[]` — audit ran and found no issues.
-   * - `[…]` — audit ran and found issues. Length and `severity` distribution
-   *   are the gate criteria for CI.
+   * `undefined` means the extractor does not populate audit state. Use this
+   * field when callers need to distinguish "audit skipped" from "audit ran
+   * clean" without relying on optional-array semantics.
+   */
+  readonly audit?: ExtractedSkillAudit;
+  /**
+   * Structured audit findings surfaced for backward compatibility.
    *
-   * @remarks
-   * The element shape (`McpAuditIssue`) is forward-declared here in
-   * `@to-skills/core` so this field is typeable without a runtime dependency
-   * on `@to-skills/mcp`. The concrete audit engine lives in `@to-skills/mcp`,
-   * which re-exports the type as `AuditIssue` for adapter-author ergonomics.
+   * @deprecated Prefer `audit`. When present, this mirrors
+   * `audit.status === 'completed' ? audit.issues : undefined`.
    */
   readonly auditIssues?: readonly McpAuditIssue[];
 }
@@ -96,27 +91,43 @@ export interface ExtractedSkill {
 // which has a different shape (file/line/symbol/suggestion). Both are
 // re-exported from `@to-skills/core` under their respective names.
 /**
- * Audit severity levels for MCP audit findings — same union as
- * `@to-skills/mcp`'s `AuditSeverity`, declared here so
+ * Audit severity levels for structured extractor findings, declared here so
  * `ExtractedSkill.auditIssues` is typeable from core.
  */
 export type McpAuditSeverity = 'fatal' | 'error' | 'warning' | 'alert';
 
+export type ExtractedSkillAudit =
+  | {
+      readonly status: 'skipped';
+    }
+  | {
+      readonly status: 'completed';
+      readonly issues: readonly McpAuditIssue[];
+    };
+
 /**
- * Structural shape of an MCP audit issue, matching `@to-skills/mcp`'s
- * `AuditIssue`. Forward-declared so `ExtractedSkill.auditIssues` is
- * typeable without a core→mcp dependency. `@to-skills/mcp` re-exports
- * this as `AuditIssue` so adapter authors get the familiar name.
+ * Structural shape of an extractor audit issue. Historically this matched the
+ * MCP package's `AuditIssue`, and the name is retained for compatibility, but
+ * other extractors may also populate `ExtractedSkill.auditIssues` using this
+ * shared structural contract.
  */
 export interface McpAuditIssue {
-  /** M1-M99 for MCP audit codes. */
-  readonly code: `M${number}`;
+  /** Pipeline-specific finding code such as M1 or C4. */
+  readonly code: `${string}${number}`;
   /** Severity level. */
   readonly severity: McpAuditSeverity;
   /** Human-readable description of the finding. */
   readonly message: string;
-  /** Where the issue was found (tool name, parameter path). */
-  readonly location?: { readonly tool?: string; readonly parameter?: string };
+  /** Where the issue was found. Fields vary by extractor. */
+  readonly location?: {
+    readonly tool?: string;
+    readonly parameter?: string;
+    readonly command?: string;
+    readonly option?: string;
+    readonly argument?: string;
+  };
+  /** Actionable next step or concrete remediation hint. */
+  readonly suggestion?: string;
 }
 
 /** An MCP-exposed resource (static or templated URI, readable by the agent harness). */
@@ -188,6 +199,8 @@ export interface ExtractedFunction {
   remarks?: string;
   examples: string[];
   tags: Record<string, string>;
+  /** MCP-specific metadata used by MCP audit/enrichment without magic tag keys. */
+  mcpMetadata?: ExtractedFunctionMcpMetadata;
   /** Additional overload signatures (if function has multiple signatures) */
   overloads?: string[];
   /** Source module name derived from file path (e.g. "renderer", "tokens") */
@@ -255,6 +268,20 @@ export interface ExtractedParameter {
   defaultValue?: string;
 }
 
+export interface ExtractedFunctionMcpMetadata {
+  /** Structured `_meta.toSkills` metadata extracted from MCP tool annotations. */
+  readonly toSkills?: {
+    readonly useWhen?: readonly string[];
+    readonly avoidWhen?: readonly string[];
+    readonly pitfalls?: readonly string[];
+    readonly malformedReason?: string;
+  };
+  /** Schema-introspection failures that MCP audit rules should surface. */
+  readonly schemaError?: {
+    readonly kind: 'ref-cycle';
+  };
+}
+
 export interface ExtractedProperty {
   name: string;
   type: string;
@@ -295,8 +322,66 @@ export interface RenderedSkill {
   references: RenderedFile[];
 }
 
+export type RefCategory =
+  | 'functions'
+  | 'classes'
+  | 'types'
+  | 'variables'
+  | 'commands'
+  | 'config'
+  | 'docs'
+  | 'resources'
+  | 'prompts'
+  | 'examples';
+
+export interface RefManifestEntry {
+  /** Relative path surfaced from SKILL.md loading triggers. */
+  path: `references/${string}`;
+  /** Whether the trigger points at a single file or a directory index. */
+  mode: 'file' | 'directory';
+}
+
+export type RefManifest = Partial<Record<RefCategory, RefManifestEntry>>;
+
 /** @deprecated Use RenderedFile instead */
 export type RenderedSkillLegacy = RenderedFile;
+
+/** Options controlling skill file writes after rendering. */
+export interface SkillWriteOptions {
+  /** Primary output directory for rendered skills. */
+  outDir: string;
+  /** Additional install targets that receive copied skill directories. */
+  installTargets?: readonly string[];
+  /**
+   * Whether to write into `outDir` as well as install targets.
+   *
+   * Callers that want install-target-only writes (for example bundled
+   * guidance that should not appear in the primary generated output) set this
+   * to `false`. Defaults to `true`.
+   */
+  includeOutDir?: boolean;
+}
+
+export type SkillWritePreserveReason =
+  | 'curated'
+  | 'bundled-custom-skill'
+  | 'bundled-name-mismatch'
+  | 'bundled-missing-version'
+  | 'bundled-same-version'
+  | 'bundled-newer-version';
+
+export interface SkillWriteResult {
+  /** Root directory that was evaluated for this write. */
+  readonly root: string;
+  /** Whether the result applies to the primary outDir or an install target. */
+  readonly rootKind: 'outDir' | 'installTarget';
+  /** Relative skill directory name (for example `demo-skill`). */
+  readonly skillName: string;
+  /** Whether the skill was written or intentionally preserved. */
+  readonly action: 'written' | 'preserved';
+  /** Preserve reason when `action === "preserved"`. */
+  readonly preserveReason?: SkillWritePreserveReason;
+}
 
 /** Options controlling skill rendering */
 export interface SkillRenderOptions {

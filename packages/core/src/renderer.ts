@@ -7,6 +7,8 @@ import type {
   ExtractedType,
   ExtractedEnum,
   ExtractedVariable,
+  RefCategory,
+  RefManifest,
   RenderedFile,
   RenderedSkill,
   SkillRenderOptions
@@ -27,6 +29,19 @@ const DEFAULT_OPTIONS: SkillRenderOptions = {
   namePrefix: '',
   license: ''
 };
+
+const REF_CATEGORY_ORDER: RefCategory[] = [
+  'functions',
+  'classes',
+  'types',
+  'variables',
+  'commands',
+  'config',
+  'docs',
+  'resources',
+  'prompts',
+  'examples'
+];
 
 /**
  * Render multiple extracted skills into progressive disclosure file sets.
@@ -146,22 +161,6 @@ export function renderSkill(
   const skillName = toSkillName(opts.namePrefix || skill.name);
   const basePath = skillName;
 
-  // --- Compute available reference categories for loading triggers ---
-  const refCategories: string[] = [];
-  if (skill.functions.length > 0) refCategories.push('functions');
-  if (skill.classes.length > 0) refCategories.push('classes');
-  if (skill.types.length > 0) refCategories.push('types');
-  if (skill.enums.length > 0) refCategories.push('enums');
-  if (skill.variables.length > 0) refCategories.push('variables');
-  if (skill.configSurfaces && skill.configSurfaces.length > 0) refCategories.push('config');
-  if (skill.documents && skill.documents.length > 0) refCategories.push('docs');
-  if (skill.resources && skill.resources.length > 0) refCategories.push('resources');
-  if (skill.prompts && skill.prompts.length > 0) refCategories.push('prompts');
-  if (opts.includeExamples && skill.examples.length > 1) refCategories.push('examples');
-
-  // --- SKILL.md: lean discovery document ---
-  const skillContent = renderSkillMd(skill, skillName, opts, refCategories);
-
   // --- references/*.md: detailed API loaded on demand ---
   const references: RenderedFile[] = [];
 
@@ -172,6 +171,7 @@ export function renderSkill(
       'functions',
       opts,
       (items) => renderFunctionsRef(items, opts),
+      'Function',
       references
     );
   }
@@ -183,6 +183,7 @@ export function renderSkill(
       'classes',
       opts,
       (items) => renderClassesRef(items, opts),
+      'Class',
       references
     );
   }
@@ -296,6 +297,9 @@ export function renderSkill(
     maxTokens: opts.maxTokens
   });
   if (promptsRef) references.push(promptsRef);
+
+  const refManifest = buildRefManifest(basePath, references);
+  const skillContent = renderSkillMd(skill, skillName, opts, refManifest);
 
   const result: RenderedSkill = {
     skill: {
@@ -498,7 +502,7 @@ function renderSkillMd(
   skill: ExtractedSkill,
   skillName: string,
   opts: SkillRenderOptions,
-  refCategories?: string[]
+  refManifest?: RefManifest
 ): string {
   const sections: string[] = [];
 
@@ -586,8 +590,8 @@ function renderSkillMd(
   const docs = renderDocumentation(skill);
   if (docs) sections.push(docs);
 
-  if (refCategories && refCategories.length > 0) {
-    sections.push(renderLoadingTriggers(refCategories));
+  if (refManifest && Object.keys(refManifest).length > 0) {
+    sections.push(renderLoadingTriggers(refManifest));
   }
 
   const links = renderLinks(skill);
@@ -923,12 +927,20 @@ function renderVariablesRef(variables: ExtractedVariable[]): string {
  * When rendered content exceeds the token budget, split into per-group reference files
  * using @category or sourceModule. Falls back to a single truncated file if no groups.
  */
-function addGroupedReferences<T extends { category?: string; sourceModule?: string }>(
+function addGroupedReferences<
+  T extends {
+    name: string;
+    description: string;
+    category?: string;
+    sourceModule?: string;
+  }
+>(
   items: T[],
   basePath: string,
   kind: string,
   opts: SkillRenderOptions,
   renderFn: (subset: T[]) => string,
+  itemLabel: string,
   references: RenderedFile[]
 ): void {
   const fullContent = renderFn(items);
@@ -978,16 +990,7 @@ function addGroupedReferences<T extends { category?: string; sourceModule?: stri
       // Group still too large — split into one file per item
       const indexRows: string[] = [];
       for (const item of groupItems) {
-        const itemName =
-          'name' in item && typeof (item as any).name === 'string' ? (item as any).name : 'item';
-        const itemDescription =
-          'description' in item && typeof (item as any).description === 'string'
-            ? (item as any).description
-            : '';
-        const itemSlug = itemName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '');
+        const itemSlug = toSkillName(item.name);
         const itemContent = renderFn([item]);
         // Use 2× budget for individual item files — they're already scoped to one item
         references.push({
@@ -995,15 +998,15 @@ function addGroupedReferences<T extends { category?: string; sourceModule?: stri
           content: truncateToTokenBudget(itemContent, opts.maxTokens * 2),
           tokens: estimateTokens(itemContent)
         });
-        indexRows.push(`| [${itemName}](${itemSlug}.md) | ${itemDescription} |`);
+        indexRows.push(`| [${item.name}](${itemSlug}.md) | ${item.description} |`);
       }
 
       // Emit an index.md for this subdirectory
       const indexContent = [
         `# ${groupName || slug}`,
         '',
-        '| Class | Description |',
-        '|-------|-------------|',
+        `| ${itemLabel} | Description |`,
+        `|${'-'.repeat(itemLabel.length + 2)}|-------------|`,
         ...indexRows
       ].join('\n');
       references.push({
@@ -1013,6 +1016,36 @@ function addGroupedReferences<T extends { category?: string; sourceModule?: stri
       });
     }
   }
+}
+
+function buildRefManifest(basePath: string, references: RenderedFile[]): RefManifest {
+  const manifest: RefManifest = {};
+  const prefix = `${basePath}/references/`;
+
+  for (const ref of references) {
+    if (!ref.filename.startsWith(prefix)) continue;
+    const relative = ref.filename.slice(prefix.length);
+    if (relative.length === 0) continue;
+
+    const segment = relative.split('/')[0] ?? '';
+    const category = segment.replace(/\.md$/, '') as RefCategory;
+    if (!REF_CATEGORY_ORDER.includes(category)) continue;
+
+    const isFile = relative === `${category}.md`;
+    const entry = {
+      path: (isFile
+        ? `references/${category}.md`
+        : `references/${category}/`) as `references/${string}`,
+      mode: isFile ? 'file' : 'directory'
+    } as const;
+
+    const existing = manifest[category];
+    if (!existing || entry.mode === 'directory') {
+      manifest[category] = entry;
+    }
+  }
+
+  return manifest;
 }
 
 function buildDescription(skill: ExtractedSkill): string {
@@ -1142,29 +1175,75 @@ function renderDocumentation(skill: ExtractedSkill): string {
 }
 
 /** Scenario-based loading triggers for reference files */
-function renderLoadingTriggers(categories: string[]): string {
-  const triggerMap: Record<string, string> = {
-    functions:
-      'When calling any function → read `references/functions.md` for full signatures, parameters, and return types',
-    classes:
-      'When using a class → read `references/classes/` for properties, methods, and inheritance',
-    types: 'When defining typed variables or function parameters → read `references/types.md`',
-    enums: 'When using enum values → read `references/enums.md`',
-    variables: 'When using exported constants → read `references/variables.md`',
-    config: 'When configuring options → read `references/config.md` for all settings and defaults',
-    docs: 'When learning concepts or workflows → browse `references/docs/` by category',
-    resources:
-      'When you need to read MCP-exposed resources → read `references/resources.md` for URI templates and MIME types',
-    prompts:
-      'When invoking MCP-exposed prompts → read `references/prompts.md` for arguments and prompt names',
-    examples: 'For additional usage patterns → read `references/examples.md`'
+function renderLoadingTriggers(manifest: RefManifest): string {
+  const triggerMap: Record<
+    RefCategory,
+    { file: (path: string) => string; directory: (path: string) => string }
+  > = {
+    functions: {
+      file: (path) =>
+        `When calling any function → read \`${path}\` for full signatures, parameters, and return types`,
+      directory: (path) =>
+        `When calling any function → browse \`${path}\` for grouped indexes, full signatures, parameters, and return types`
+    },
+    classes: {
+      file: (path) =>
+        `When using a class → read \`${path}\` for properties, methods, and inheritance`,
+      directory: (path) =>
+        `When using a class → browse \`${path}\` for grouped indexes, properties, methods, and inheritance`
+    },
+    types: {
+      file: (path) => `When defining typed variables or function parameters → read \`${path}\``,
+      directory: (path) =>
+        `When defining typed variables or function parameters → browse \`${path}\``
+    },
+    variables: {
+      file: (path) => `When using exported constants → read \`${path}\``,
+      directory: (path) => `When using exported constants → browse \`${path}\``
+    },
+    commands: {
+      file: (path) =>
+        `When using CLI commands → read \`${path}\` for flags, arguments, and defaults`,
+      directory: (path) =>
+        `When using CLI commands → browse \`${path}\` for grouped command references`
+    },
+    config: {
+      file: (path) => `When configuring options → read \`${path}\` for all settings and defaults`,
+      directory: (path) => `When configuring options → browse \`${path}\` for grouped settings`
+    },
+    docs: {
+      file: (path) => `When learning concepts or workflows → read \`${path}\``,
+      directory: (path) => `When learning concepts or workflows → browse \`${path}\` by category`
+    },
+    resources: {
+      file: (path) =>
+        `When you need to read MCP-exposed resources → read \`${path}\` for URI templates and MIME types`,
+      directory: (path) =>
+        `When you need to read MCP-exposed resources → browse \`${path}\` for URI templates and MIME types`
+    },
+    prompts: {
+      file: (path) =>
+        `When invoking MCP-exposed prompts → read \`${path}\` for arguments and prompt names`,
+      directory: (path) =>
+        `When invoking MCP-exposed prompts → browse \`${path}\` for arguments and prompt names`
+    },
+    examples: {
+      file: (path) => `For additional usage patterns → read \`${path}\``,
+      directory: (path) => `For additional usage patterns → browse \`${path}\``
+    }
   };
 
   const lines = ['## References\n'];
   lines.push('Load these on demand — do NOT read all at once:\n');
-  for (const cat of categories) {
-    const trigger = triggerMap[cat];
-    if (trigger) lines.push(`- ${trigger}`);
+  for (const category of REF_CATEGORY_ORDER) {
+    const entry = manifest[category];
+    if (!entry) continue;
+
+    const trigger =
+      entry.mode === 'directory'
+        ? triggerMap[category].directory(entry.path)
+        : triggerMap[category].file(entry.path);
+    lines.push(`- ${trigger}`);
   }
   return lines.join('\n');
 }

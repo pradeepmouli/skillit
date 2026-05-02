@@ -10,7 +10,8 @@
  * almost certainly intended to ship triggers and forgot.
  *
  * **Three paths.**
- *  - **Tool-level missing useWhen**: each function whose `tags.useWhen` is
+ *  - **Tool-level missing useWhen**: each function whose MCP metadata (or
+ *    compatibility `tags.useWhen`) is missing
  *    missing gets one warning. The location names the tool so the operator
  *    can fix it directly. Capped at 5 to avoid drowning the audit on a
  *    50-tool server; a single "+ N more tools missing useWhen" summary
@@ -20,8 +21,9 @@
  *    fires telling the operator there is no global trigger either. This
  *    avoids the false-positive case where a server-level `useWhen` covers
  *    every tool and the per-tool warnings would be noise.
- *  - **Malformed `_meta.toSkills`**: each function whose
- *    `tags.metaToSkillsMalformed` sentinel is set (planted by the
+ *  - **Malformed `_meta.toSkills`**: each function whose typed
+ *    `mcpMetadata.toSkills.malformedReason` (or compatibility
+ *    `tags.metaToSkillsMalformed`) is set (planted by the
  *    introspector when it detected a wrong-shape annotation) emits one
  *    warning naming the tool and the validation reason. Reuses M3 (not a
  *    new code) per Clarifications: user-facing impact is identical to
@@ -44,8 +46,8 @@ const PER_TOOL_CAP = 5;
 
 /**
  * Run rule M3 against a skill: emit per-tool warnings for missing
- * `tags.useWhen`, plus a single server-level warning when no `useWhen`
- * exists anywhere on the skill.
+ * typed per-tool useWhen metadata, plus a single server-level warning when no
+ * `useWhen` exists anywhere on the skill.
  *
  * @public
  */
@@ -56,8 +58,11 @@ export function runM3(skill: ExtractedSkill): AuditIssue[] {
   // into a summary issue without distorting the order of the kept ones.
   const missingTools: string[] = [];
   for (const fn of skill.functions) {
-    const useWhen = fn.tags['useWhen'];
-    if (useWhen === undefined || useWhen.trim().length === 0) {
+    const useWhen = fn.mcpMetadata?.toSkills?.useWhen;
+    const hasUseWhen =
+      (useWhen !== undefined && useWhen.some((entry) => entry.trim().length > 0)) ||
+      (fn.tags['useWhen'] !== undefined && fn.tags['useWhen'].trim().length > 0);
+    if (!hasUseWhen) {
       missingTools.push(fn.name);
     }
   }
@@ -68,7 +73,9 @@ export function runM3(skill: ExtractedSkill): AuditIssue[] {
       code: 'M3',
       severity: 'warning',
       message: `Tool "${toolName}" has no useWhen annotation. Agents will struggle to discover when to invoke it.`,
-      location: { tool: toolName }
+      location: { tool: toolName },
+      suggestion:
+        'Fix _meta.toSkills shape: { useWhen: string[], avoidWhen?: string[], remarks?: string }'
     });
   }
   const overflow = missingTools.length - kept.length;
@@ -82,31 +89,42 @@ export function runM3(skill: ExtractedSkill): AuditIssue[] {
 
   // Server-level — only fires when the skill has no aggregated useWhen AND
   // no per-tool useWhen contributed (i.e. every tool was in `missingTools`).
+  // Zero-tool servers intentionally skip this branch — resources/prompts-only
+  // servers are valid and should not get a bogus "no trigger" warning.
   // The existing extract-time aggregator pushes per-tool useWhen into
   // `skill.useWhen`, so a non-empty array implies at least one tool has one.
   const serverHasUseWhen = Array.isArray(skill.useWhen) && skill.useWhen.length > 0;
-  if (!serverHasUseWhen && missingTools.length === skill.functions.length) {
+  if (
+    skill.functions.length > 0 &&
+    !serverHasUseWhen &&
+    missingTools.length === skill.functions.length
+  ) {
     issues.push({
       code: 'M3',
       severity: 'warning',
       message:
-        'Server has no useWhen annotation at any level (server-wide or per-tool). Agents have no trigger to discover this skill.'
+        'Server has no useWhen annotation at any level (server-wide or per-tool). Agents have no trigger to discover this skill.',
+      suggestion:
+        'Fix _meta.toSkills shape: { useWhen: string[], avoidWhen?: string[], remarks?: string }'
     });
   }
 
   // Malformed `_meta.toSkills` sentinel (FR-H010, US6). The introspector
-  // plants `tags.metaToSkillsMalformed = <reason>` whenever it detects an
-  // annotation it could not honor. Surface one warning per offending tool
-  // — no cap because malformed metadata is rare in practice and
-  // suppressing detail would defeat the diagnostic.
+  // records a typed malformedReason and also projects the legacy
+  // `tags.metaToSkillsMalformed = <reason>` compatibility tag. Surface one
+  // warning per offending tool — no cap because malformed metadata is rare in
+  // practice and suppressing detail would defeat the diagnostic.
   for (const fn of skill.functions) {
-    const reason = fn.tags['metaToSkillsMalformed'];
+    const reason = fn.mcpMetadata?.toSkills?.malformedReason ?? fn.tags['metaToSkillsMalformed'];
     if (reason !== undefined && reason.length > 0) {
       issues.push({
         code: 'M3',
         severity: 'warning',
         message: `Tool "${fn.name}" has malformed _meta.toSkills annotation: ${reason}. Annotation was not honored.`,
-        location: { tool: fn.name }
+        location: { tool: fn.name },
+        suggestion: reason.includes('useWhen')
+          ? 'Change to array: _meta.toSkills.useWhen = ["[scenario]"]'
+          : 'Fix _meta.toSkills shape: { useWhen: string[], avoidWhen?: string[], remarks?: string }'
       });
     }
   }

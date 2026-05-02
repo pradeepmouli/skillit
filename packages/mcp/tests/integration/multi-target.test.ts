@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import YAML from 'yaml';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createInstallTargets } from './install-target-fixtures.js';
 
 const exec = promisify(execFile);
 const RUN = process.env.RUN_INTEGRATION_TESTS === 'true';
@@ -81,6 +82,9 @@ describe.skipIf(!RUN)('multi-target extract: server-filesystem × {mcp-protocol,
     const cliDir = join(outDir, 'filesystem-cli-mcpc');
     expect(existsSync(mcpDir)).toBe(true);
     expect(existsSync(cliDir)).toBe(true);
+    const { installA, installB } = createInstallTargets(outDir);
+    expect(existsSync(installA)).toBe(false);
+    expect(existsSync(installB)).toBe(false);
 
     // 3. Both have SKILL.md.
     const mcpSkill = join(mcpDir, 'SKILL.md');
@@ -132,5 +136,47 @@ describe.skipIf(!RUN)('multi-target extract: server-filesystem × {mcp-protocol,
     // mcp-protocol reference does NOT contain that shape.
     expect(cliRef).toMatch(/mcpc\s+filesystem-cli-mcpc\s+tools-call/);
     expect(mcpRef).not.toMatch(/mcpc\s+\S+\s+tools-call/);
+  }, 120_000);
+
+  it('installs each rendered target and bundled guidance into every install target', async () => {
+    const { installA, installB } = createInstallTargets(outDir);
+    const binPath = join(__dirname, '..', '..', 'dist', 'bin.js');
+
+    await exec(
+      'node',
+      [
+        binPath,
+        'extract',
+        '--command',
+        'npx',
+        '--arg',
+        '-y',
+        '--arg',
+        '@modelcontextprotocol/server-filesystem',
+        '--arg',
+        '/tmp',
+        '--invocation',
+        'mcp-protocol',
+        '--invocation',
+        'cli:mcpc',
+        '--out',
+        outDir,
+        '--skill-name',
+        'filesystem-installed',
+        '--install-target',
+        installA,
+        '--install-target',
+        installB
+      ],
+      { timeout: 90_000 }
+    );
+
+    for (const root of [outDir, installA, installB]) {
+      expect(existsSync(join(root, 'filesystem-installed-mcp-protocol', 'SKILL.md'))).toBe(true);
+      expect(existsSync(join(root, 'filesystem-installed-cli-mcpc', 'SKILL.md'))).toBe(true);
+    }
+    expect(existsSync(join(outDir, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(join(installA, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(installB, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
   }, 120_000);
 });

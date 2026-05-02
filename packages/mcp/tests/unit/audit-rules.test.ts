@@ -84,6 +84,7 @@ describe('audit rule M1 — missing tool description', () => {
     expect(issues[0]!.severity).toBe('fatal');
     expect(issues[0]!.location?.tool).toBe('compute');
     expect(issues[0]!.message).toContain('compute');
+    expect(issues[0]!.suggestion).toMatch(/description to the tool/i);
   });
 
   it('treats whitespace-only description as missing', () => {
@@ -104,7 +105,8 @@ describe('audit rule M2 — invalid inputSchema', () => {
         functions: [
           fn({
             name: 'broken',
-            tags: { schemaError: 'true', schemaErrorTool: 'broken', useWhen: 'demo' }
+            tags: { schemaError: 'true', schemaErrorTool: 'broken', useWhen: 'demo' },
+            mcpMetadata: { schemaError: { kind: 'ref-cycle' } }
           })
         ]
       })
@@ -114,6 +116,7 @@ describe('audit rule M2 — invalid inputSchema', () => {
     expect(issues[0]!.severity).toBe('error');
     expect(issues[0]!.message).toMatch(/cycle in \$ref/);
     expect(issues[0]!.location?.tool).toBe('broken');
+    expect(issues[0]!.suggestion).toMatch(/inputSchema/i);
   });
 
   it('emits nothing when no tool has the marker', () => {
@@ -144,6 +147,7 @@ describe('audit rule M3 — missing useWhen', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0]!.location?.tool).toBe('b');
     expect(issues[0]!.severity).toBe('warning');
+    expect(issues[0]!.suggestion).toMatch(/useWhen/i);
   });
 
   it('caps per-tool issues at 5 and emits a summary for the overflow', () => {
@@ -169,6 +173,16 @@ describe('audit rule M3 — missing useWhen', () => {
       )
     ).toEqual([]);
   });
+
+  it('does not emit a server-level warning for zero-tool servers', () => {
+    expect(
+      runM3(
+        skill({
+          functions: []
+        })
+      )
+    ).toEqual([]);
+  });
 });
 
 describe('audit rule M4 — generic tool name', () => {
@@ -181,6 +195,7 @@ describe('audit rule M4 — generic tool name', () => {
     expect(issues).toHaveLength(2);
     expect(issues.every((i) => i.code === 'M4' && i.severity === 'alert')).toBe(true);
     expect(issues.map((i) => i.location?.tool)).toEqual(['get', 'GET']);
+    expect(issues[0]!.suggestion).toMatch(/more specific name/i);
   });
 
   it('respects custom genericNames option (replaces, not augments)', () => {

@@ -8,7 +8,15 @@
  * specific bin from the published package.
  */
 import { execFile } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,5 +92,65 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
     );
     expect(refA).toMatch(/tool-a/);
     expect(refB).toMatch(/tool-b/);
+  }, 120_000);
+
+  it('uses last-wins semantics across successive bundle runs that target the same installed skill name', async () => {
+    const secondPackageRoot = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-multi-second-'));
+    cpSync(FIXTURE_DIR, secondPackageRoot, { recursive: true });
+    symlinkSync(PKG_NODE_MODULES, join(secondPackageRoot, 'node_modules'), 'dir');
+    const installDir = join(workDir, '.claude', 'skills');
+    try {
+      const firstPkgPath = join(workDir, 'package.json');
+      const secondPkgPath = join(secondPackageRoot, 'package.json');
+      const firstPkg = JSON.parse(readFileSync(firstPkgPath, 'utf8')) as {
+        'to-skills': { mcp: Array<{ skillName: string; binName: string }> };
+      };
+      const secondPkg = JSON.parse(readFileSync(secondPkgPath, 'utf8')) as {
+        'to-skills': { mcp: Array<{ skillName: string; binName: string }> };
+      };
+      firstPkg['to-skills'].mcp = [{ skillName: 'shared-server', binName: 'server-a' }];
+      secondPkg['to-skills'].mcp = [{ skillName: 'shared-server', binName: 'server-b' }];
+      writeFileSync(firstPkgPath, JSON.stringify(firstPkg, null, 2));
+      writeFileSync(secondPkgPath, JSON.stringify(secondPkg, null, 2));
+
+      await exec(
+        'node',
+        [
+          BIN_PATH,
+          'bundle',
+          '--package-root',
+          workDir,
+          '--out',
+          'skills',
+          '--install-target',
+          installDir
+        ],
+        { timeout: 90_000 }
+      );
+      await exec(
+        'node',
+        [
+          BIN_PATH,
+          'bundle',
+          '--package-root',
+          secondPackageRoot,
+          '--out',
+          'skills',
+          '--install-target',
+          installDir
+        ],
+        { timeout: 90_000 }
+      );
+
+      const functionsRef = readFileSync(
+        join(installDir, 'shared-server', 'references', 'functions.md'),
+        'utf8'
+      );
+      expect(existsSync(join(installDir, 'shared-server', 'SKILL.md'))).toBe(true);
+      expect(functionsRef).toMatch(/tool-b/);
+      expect(functionsRef).not.toMatch(/tool-a/);
+    } finally {
+      rmSync(secondPackageRoot, { recursive: true, force: true });
+    }
   }, 120_000);
 });

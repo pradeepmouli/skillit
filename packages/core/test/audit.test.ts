@@ -119,6 +119,34 @@ describe('F1: package.json description', () => {
   });
 });
 
+describe('audit suggestions', () => {
+  it('F4 suggestions use the problem-oriented JSDoc template', () => {
+    const issues = getIssues(
+      makeSkill({
+        functions: [makeFunction({ name: 'renderSkill', description: '' })]
+      }),
+      makeContext(),
+      'F4'
+    );
+    expect(issues[0]?.suggestion).toMatch(/\[One sentence: what problem renderSkill solves/i);
+  });
+
+  it('E1 suggestions use the @param template', () => {
+    const issues = getIssues(
+      makeSkill({
+        functions: [
+          makeFunction({
+            parameters: [makeParam({ name: 'options', description: '' })]
+          })
+        ]
+      }),
+      makeContext(),
+      'E1'
+    );
+    expect(issues[0]?.suggestion).toMatch(/@param options —/);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // F2: keywords
 // ---------------------------------------------------------------------------

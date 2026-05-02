@@ -60,7 +60,8 @@ function renderCommandsSection(surfaces: ExtractedConfigSurface[]): string {
       for (const arg of surface.arguments) {
         const req = arg.required ? ' *(required)*' : '';
         const def = arg.defaultValue ? ` — default: \`${arg.defaultValue}\`` : '';
-        lines.push(`- \`${arg.name}\`${req}${def} — ${arg.description}`);
+        const desc = arg.description ? ` — ${arg.description}` : '';
+        lines.push(`- \`${arg.name}\`${req}${def}${desc}`);
       }
     }
 
@@ -125,8 +126,8 @@ function renderOptionsTable(options: ExtractedConfigOption[], mode: 'cli' | 'con
   const flagCol = mode === 'cli' ? 'Flag' : 'Key';
 
   const rows: string[] = [
-    `| ${flagCol} | Type | Required | Default | Description |`,
-    `| --- | --- | --- | --- | --- |`
+    `| ${flagCol} | Type | Required | Default | Env | Description |`,
+    `| --- | --- | --- | --- | --- | --- |`
   ];
 
   for (const opt of options) {
@@ -139,9 +140,10 @@ function renderOptionsTable(options: ExtractedConfigOption[], mode: 'cli' | 'con
 
     const required = opt.required ? 'yes' : 'no';
     const def = opt.defaultValue ? `\`${opt.defaultValue}\`` : '—';
+    const env = opt.envVar ? `\`${opt.envVar}\`` : '—';
     const desc = opt.description.replace(/\|/g, '\\|');
 
-    rows.push(`| ${key} | \`${opt.type}\` | ${required} | ${def} | ${desc} |`);
+    rows.push(`| ${key} | \`${opt.type}\` | ${required} | ${def} | ${env} | ${desc} |`);
   }
 
   return rows.join('\n');
@@ -317,6 +319,11 @@ function renderOptionDetail(opt: ExtractedConfigOption, lines: string[]): void {
   if (opt.defaultValue) {
     lines.push('');
     lines.push(`**Default:** \`${opt.defaultValue}\``);
+  }
+
+  if (opt.envVar) {
+    lines.push('');
+    lines.push(`**Environment:** \`${opt.envVar}\``);
   }
 
   if (opt.remarks) {

@@ -26,11 +26,13 @@ import { resolveSchema } from './schema.js';
  * `parameters` without an error — the absence of a schema is a valid signal
  * that the tool takes no input.
  *
- * Tag-driven metadata: `_meta.toSkills.{useWhen, avoidWhen, pitfalls}`
- * is read from each tool's `_meta` envelope and projected onto
- * `ExtractedFunction.tags` as newline-joined strings, plus a `hasMetaToSkills`
- * marker. Skill-level aggregation (`ExtractedSkill.useWhen` etc.) happens in
- * `extract.ts`, which also reads server-level `_meta.toSkills`.
+ * Tool metadata: `_meta.toSkills.{useWhen, avoidWhen, pitfalls}` is read from
+ * each tool's `_meta` envelope and stored in
+ * `ExtractedFunction.mcpMetadata.toSkills`. For compatibility with existing
+ * renderer paths it is also projected onto `ExtractedFunction.tags` as
+ * newline-joined strings plus a `hasMetaToSkills` marker. Skill-level
+ * aggregation (`ExtractedSkill.useWhen` etc.) happens in `extract.ts`, which
+ * also reads server-level `_meta.toSkills`.
  *
  * @param client structural MCP client (real SDK `Client` or a test mock)
  * @returns one `ExtractedFunction` per tool, in the order returned by the server
@@ -55,7 +57,7 @@ export async function listTools(client: McpClient): Promise<ExtractedFunction[]>
 async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
   const name = tool.name;
   const description = tool.description ?? '';
-  const metaTags = readToolMetaTags(tool);
+  const metadata = readToolMetadata(tool);
 
   // No schema → no parameters. This is not an error condition. Non-object
   // shapes (string/number/array) coming from a misbehaving SDK or server are
@@ -74,7 +76,8 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
       parameters: [],
       returnType: 'unknown',
       examples: [],
-      tags: { ...metaTags }
+      tags: { ...metadata.tags },
+      ...(metadata.mcpMetadata ? { mcpMetadata: metadata.mcpMetadata } : {})
     };
   }
 
@@ -101,7 +104,11 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
         examples: [],
         // schemaErrorTool carries the offending tool name so the Phase-9 M2
         // audit rule can name the culprit when it surfaces this row.
-        tags: { schemaError: 'true', schemaErrorTool: name, ...metaTags }
+        tags: { schemaError: 'true', schemaErrorTool: name, ...metadata.tags },
+        mcpMetadata: {
+          ...metadata.mcpMetadata,
+          schemaError: { kind: 'ref-cycle' }
+        }
       };
     }
     throw err;
@@ -115,20 +122,20 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
     parameters,
     returnType: 'unknown',
     examples: [],
-    tags: { ...metaTags }
+    tags: { ...metadata.tags },
+    ...(metadata.mcpMetadata ? { mcpMetadata: metadata.mcpMetadata } : {})
   };
 }
 
 /**
  * Read `_meta.toSkills.{useWhen, avoidWhen, pitfalls}` off a tool entry and
- * return them as a `Record<string, string>` suitable for spreading into
- * `ExtractedFunction.tags`.
+ * return structured MCP metadata plus a compatibility tag projection.
  *
  * The MCP spec reserves the `_meta` envelope for extension namespaces; this
  * helper looks for the `toSkills` namespace specifically. Per US7 the values
- * are arrays of strings, but the IR's `tags` field is `Record<string, string>`,
- * so each array is joined with newlines. Adapters / aggregators that need the
- * structured form can re-split on newlines.
+ * are arrays of strings, so we keep them losslessly on
+ * `ExtractedFunction.mcpMetadata.toSkills` and also join them with newlines in
+ * the compatibility tag projection.
  *
  * **Malformed handling (US6, FR-H010).** When a recognized field has the
  * wrong shape (non-array, contains non-string entries, contains empty
@@ -146,16 +153,29 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
  * field, one malformed) keep the malformed sentinel and skip the marker;
  * the audit warning is the canonical signal in that case.
  */
-function readToolMetaTags(tool: McpToolListEntry): Record<string, string> {
+function readToolMetadata(tool: McpToolListEntry): {
+  tags: Record<string, string>;
+  mcpMetadata?: ExtractedFunction['mcpMetadata'];
+} {
   const tags: Record<string, string> = {};
   const meta = tool._meta?.['toSkills'];
-  if (meta === undefined) return tags; // absence is fine
+  if (meta === undefined) return { tags }; // absence is fine
   if (!isPlainObject(meta)) {
     tags['metaToSkillsMalformed'] = `toSkills must be object, got ${typeOfValue(meta)}`;
-    return tags;
+    return {
+      tags,
+      mcpMetadata: {
+        toSkills: { malformedReason: tags['metaToSkillsMalformed'] }
+      }
+    };
   }
 
   const malformedReasons: string[] = [];
+  const toSkills: {
+    useWhen?: string[];
+    avoidWhen?: string[];
+    pitfalls?: string[];
+  } = {};
   for (const key of ['useWhen', 'avoidWhen', 'pitfalls'] as const) {
     const raw = (meta as Record<string, unknown>)[key];
     if (raw === undefined) continue; // absence is fine
@@ -174,7 +194,9 @@ function readToolMetaTags(tool: McpToolListEntry): Record<string, string> {
       continue;
     }
     if (raw.length === 0) continue; // empty array is OK (treated as absent)
-    tags[key] = (raw as string[]).join('\n');
+    const values = raw as string[];
+    tags[key] = values.join('\n');
+    toSkills[key] = values;
   }
 
   if (malformedReasons.length > 0) {
@@ -190,7 +212,21 @@ function readToolMetaTags(tool: McpToolListEntry): Record<string, string> {
   ) {
     tags['hasMetaToSkills'] = 'true';
   }
-  return tags;
+  return {
+    tags,
+    ...(Object.keys(toSkills).length > 0 || malformedReasons.length > 0
+      ? {
+          mcpMetadata: {
+            toSkills: {
+              ...toSkills,
+              ...(malformedReasons.length > 0
+                ? { malformedReason: malformedReasons.join('; ') }
+                : {})
+            }
+          }
+        }
+      : {})
+  };
 }
 
 /** Return a human-friendly type label for diagnostic messages. */

@@ -1,7 +1,18 @@
-import type { ExtractedSkill, ExtractedConfigSurface } from '@to-skills/core';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import {
+  renderSkills,
+  writeSkills,
+  type ExtractedSkill,
+  type ExtractedConfigSurface,
+  type RenderedSkill,
+  type SkillRenderOptions,
+  type SkillWriteOptions
+} from '@to-skills/core';
 import { introspectCommander } from './introspect-commander.js';
 import { parseHelpOutput } from './help-parser.js';
 import { correlateFlags } from './correlator.js';
+import { runCliAudit } from './audit.js';
 
 export interface CliExtractionOptions {
   /** Commander program object (preferred) */
@@ -19,6 +30,16 @@ export interface CliExtractionOptions {
   /** Config surfaces from TypeDoc for JSDoc correlation */
   configSurfaces?: ExtractedConfigSurface[];
 }
+
+export interface CliWriteOptions
+  extends
+    SkillWriteOptions,
+    Partial<
+      Pick<
+        SkillRenderOptions,
+        'includeExamples' | 'includeSignatures' | 'maxTokens' | 'namePrefix' | 'license'
+      >
+    > {}
 
 /**
  * Extract a structured skill from a CLI program.
@@ -84,7 +105,7 @@ export async function extractCliSkill(options: CliExtractionOptions): Promise<Ex
 
   // Build ExtractedSkill with empty functions/classes/types/enums/variables
   // but populated configSurfaces
-  const skill: ExtractedSkill = {
+  const skillWithoutAudit: ExtractedSkill = {
     name: metadata.name ?? '',
     description: metadata.description ?? '',
     keywords: metadata.keywords,
@@ -98,6 +119,67 @@ export async function extractCliSkill(options: CliExtractionOptions): Promise<Ex
     examples: [],
     ...(allConfigSurfaces.length > 0 ? { configSurfaces: allConfigSurfaces } : {})
   };
+  const auditIssues = runCliAudit(skillWithoutAudit);
 
-  return skill;
+  return {
+    ...skillWithoutAudit,
+    audit: { status: 'completed', issues: auditIssues },
+    auditIssues
+  };
+}
+
+export function writeCliSkill(skill: ExtractedSkill, options: CliWriteOptions) {
+  const renderedSkills = renderSkills([skill], {
+    outDir: options.outDir,
+    ...(options.includeExamples !== undefined ? { includeExamples: options.includeExamples } : {}),
+    ...(options.includeSignatures !== undefined
+      ? { includeSignatures: options.includeSignatures }
+      : {}),
+    ...(options.maxTokens !== undefined ? { maxTokens: options.maxTokens } : {}),
+    ...(options.namePrefix !== undefined ? { namePrefix: options.namePrefix } : {}),
+    ...(options.license !== undefined ? { license: options.license } : {})
+  });
+  const installTargets = options.installTargets ?? [];
+  const results = writeSkills(renderedSkills, {
+    outDir: options.outDir,
+    installTargets
+  });
+
+  if (installTargets.length === 0) {
+    return results;
+  }
+
+  return [
+    ...results,
+    ...writeSkills([loadBundledCliGuidanceSkill()], {
+      outDir: options.outDir,
+      installTargets,
+      includeOutDir: false
+    })
+  ];
+}
+
+function loadBundledCliGuidanceSkill(): RenderedSkill {
+  const skillPath = fileURLToPath(
+    new URL('../skills/to-skills-cli-docs/SKILL.md', import.meta.url)
+  );
+  let content: string;
+  try {
+    content = readFileSync(skillPath, 'utf-8');
+  } catch (error) {
+    throw new Error(`Failed to read bundled CLI guidance from ${skillPath}: ${messageOf(error)}`, {
+      cause: error
+    });
+  }
+  return {
+    skill: {
+      filename: 'to-skills-cli-docs/SKILL.md',
+      content
+    },
+    references: []
+  };
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

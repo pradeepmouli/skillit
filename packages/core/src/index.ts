@@ -16,7 +16,9 @@
 
 export type {
   ExtractedSkill,
+  ExtractedSkillAudit,
   ExtractedFunction,
+  ExtractedFunctionMcpMetadata,
   ExtractedClass,
   ExtractedType,
   ExtractedEnum,
@@ -35,9 +37,15 @@ export type {
   AdapterRenderContextBundle,
   AdapterRenderContextHttp,
   AdapterRenderContextStdio,
+  RefCategory,
+  RefManifest,
+  RefManifestEntry,
   RenderedFile,
   RenderedSkill,
   SkillRenderOptions,
+  SkillWriteOptions,
+  SkillWriteResult,
+  SkillWritePreserveReason,
   McpAuditSeverity,
   McpAuditIssue
 } from './types.js';
