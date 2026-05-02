@@ -59,6 +59,9 @@ shell commands, and other important information, read the current plan
 
 ## Active Technologies
 
+- TypeScript 5.x, Node.js >=20 + TypeDoc >=0.28, Vitest, pnpm workspaces (003-skill-install-quality)
+- Filesystem only (read/write SKILL.md + references/) (003-skill-install-quality)
+
 - none (same as parent feature — filesystem-only, no DB) (002-mcp-hardening)
 
 - TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@to-skills/cli`) (001-mcp-extract-bundle)
