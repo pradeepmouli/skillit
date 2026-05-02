@@ -280,6 +280,35 @@ describe('buildProgram', () => {
       expect(existsSync(skillDir)).toBe(true);
     });
 
+    it('throws DUPLICATE_SKILL_NAME early when install-target dir exists and --force omitted', async () => {
+      const skillName = 'preexisting';
+      const installTarget = join(workDir, '.claude', 'skills');
+      const skillDir = join(installTarget, skillName);
+      mkdirSync(skillDir, { recursive: true });
+      const program = makeProgram();
+      await expect(
+        program.parseAsync([
+          'node',
+          'bin',
+          'extract',
+          '--command',
+          '/this/path/should/never/exist',
+          '--out',
+          workDir,
+          '--skill-name',
+          skillName,
+          '--install-target',
+          installTarget
+        ])
+      ).rejects.toSatisfy(
+        (err) =>
+          err instanceof McpError &&
+          err.code === 'DUPLICATE_SKILL_NAME' &&
+          err.message.includes(skillDir)
+      );
+      expect(existsSync(skillDir)).toBe(true);
+    });
+
     it('emits a stderr notice when --no-canonicalize is used (flag is currently a stub)', async () => {
       const program = makeProgram();
       const stderrText: string[] = [];

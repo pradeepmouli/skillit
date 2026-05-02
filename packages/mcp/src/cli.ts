@@ -254,15 +254,23 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
   // depends on server introspection, the check repeats post-extract per
   // target directory.
   if (opts.skillName !== undefined) {
-    for (const adapter of adapters) {
-      const earlyDir = join(opts.out, dirNameForTarget(opts.skillName, adapter, adapters.length));
-      if (existsSync(earlyDir) && !opts.force) {
-        throw new McpError(
-          `Output directory already exists: ${earlyDir}. Pass --force to overwrite.`,
-          'DUPLICATE_SKILL_NAME'
-        );
-      }
-    }
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: adapters.map((adapter) =>
+        dirNameForTarget(opts.skillName!, adapter, adapters.length)
+      ),
+      force: opts.force === true
+    });
+  }
+  if (opts.installTarget.length > 0) {
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: ['to-skills-mcp-docs'],
+      includeOutDir: false,
+      force: opts.force === true
+    });
   }
 
   // Extract once — the IR is target-agnostic, so the loop below renders
@@ -306,12 +314,12 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
   for (const adapter of adapters) {
     const dirName = dirNameForTarget(skill.name, adapter, adapters.length);
     const skillDir = join(opts.out, dirName);
-    if (existsSync(skillDir) && !opts.force) {
-      throw new McpError(
-        `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
-        'DUPLICATE_SKILL_NAME'
-      );
-    }
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: [dirName],
+      force: opts.force === true
+    });
 
     const renderOptions: Parameters<typeof renderSkill>[1] = {
       invocation: adapter,
@@ -393,6 +401,15 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
       ? (opts.invocation as InvocationTarget[])
       : (['mcp-protocol'] as InvocationTarget[]);
   const adapters = await validateTargets(targets);
+  if (opts.installTarget.length > 0) {
+    assertNoExistingSkillDirectories({
+      outDir: opts.out,
+      installTargets: opts.installTarget,
+      dirNames: ['to-skills-mcp-docs'],
+      includeOutDir: false,
+      force: opts.force === true
+    });
+  }
 
   const failures: Record<string, BundleFailure> = {};
   const bundledGuidanceState = { value: false };
@@ -469,16 +486,12 @@ async function runConfigEntry(
 
   // Pre-flight collision check, per target. Mirrors runExtract so --force
   // semantics fire before writeSkills rmSyncs anything.
-  for (const adapter of adapters) {
-    const dirName = dirNameForTarget(entry.name, adapter, adapters.length);
-    const skillDir = join(opts.out, dirName);
-    if (existsSync(skillDir) && !opts.force) {
-      throw new McpError(
-        `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
-        'DUPLICATE_SKILL_NAME'
-      );
-    }
-  }
+  assertNoExistingSkillDirectories({
+    outDir: opts.out,
+    installTargets: opts.installTarget,
+    dirNames: adapters.map((adapter) => dirNameForTarget(entry.name, adapter, adapters.length)),
+    force: opts.force === true
+  });
 
   const skill = await extractMcpSkill(extractOpts);
 
@@ -608,6 +621,44 @@ function toLocalIoError(message: string, error: unknown): McpError {
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function assertNoExistingSkillDirectories(options: {
+  outDir: string;
+  installTargets: readonly string[];
+  dirNames: readonly string[];
+  includeOutDir?: boolean;
+  force?: boolean;
+}): void {
+  if (options.force) return;
+  const roots = collectWriteRoots(
+    options.outDir,
+    options.installTargets,
+    options.includeOutDir !== false
+  );
+  for (const root of roots) {
+    for (const dirName of options.dirNames) {
+      const skillDir = join(root, dirName);
+      if (existsSync(skillDir)) {
+        throw new McpError(
+          `Output directory already exists: ${skillDir}. Pass --force to overwrite.`,
+          'DUPLICATE_SKILL_NAME'
+        );
+      }
+    }
+  }
+}
+
+function collectWriteRoots(
+  outDir: string,
+  installTargets: readonly string[],
+  includeOutDir: boolean
+): string[] {
+  const roots = [
+    ...(includeOutDir ? [path.resolve(outDir)] : []),
+    ...installTargets.map((target) => path.resolve(target))
+  ];
+  return [...new Set(roots)];
 }
 
 /**
@@ -786,19 +837,21 @@ async function runBundle(opts: BundleOpts): Promise<void> {
       opts.invocation.length > 0 ? (opts.invocation as InvocationTarget[]) : undefined;
     for (const entry of entries) {
       const effective = overrideTargets ?? entry.invocation;
-      for (const target of effective) {
-        const dirName =
-          effective.length > 1
-            ? `${entry.skillName}-${target.replace(/:/g, '-')}`
-            : entry.skillName;
-        const dest = path.join(resolvedOutDir, dirName);
-        if (existsSync(dest)) {
-          throw new McpError(
-            `Output directory already exists: ${dest}. Pass --force to overwrite.`,
-            'DUPLICATE_SKILL_NAME'
-          );
-        }
-      }
+      assertNoExistingSkillDirectories({
+        outDir: resolvedOutDir,
+        installTargets: opts.installTarget,
+        dirNames: effective.map((target) =>
+          effective.length > 1 ? `${entry.skillName}-${target.replace(/:/g, '-')}` : entry.skillName
+        )
+      });
+    }
+    if (opts.installTarget.length > 0) {
+      assertNoExistingSkillDirectories({
+        outDir: resolvedOutDir,
+        installTargets: opts.installTarget,
+        dirNames: ['to-skills-mcp-docs'],
+        includeOutDir: false
+      });
     }
   }
 

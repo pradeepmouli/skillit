@@ -157,6 +157,31 @@ describe('bundle subcommand', () => {
     expect(bundleCalls).toHaveLength(0);
   });
 
+  it('throws DUPLICATE_SKILL_NAME pre-flight when install-target destination exists', async () => {
+    configEntries.push({ skillName: 'preexisting' });
+    const installTarget = path.join(workDir, '.claude', 'skills');
+    const skillDir = path.join(installTarget, 'preexisting');
+    mkdirSync(skillDir, { recursive: true });
+    const program = makeProgram();
+    await expect(
+      program.parseAsync([
+        'node',
+        'bin',
+        'bundle',
+        '--package-root',
+        workDir,
+        '--install-target',
+        installTarget
+      ])
+    ).rejects.toSatisfy(
+      (err) =>
+        err instanceof McpError &&
+        err.code === 'DUPLICATE_SKILL_NAME' &&
+        err.message.includes(skillDir)
+    );
+    expect(bundleCalls).toHaveLength(0);
+  });
+
   it('--force bypasses the pre-flight collision check', async () => {
     configEntries.push({ skillName: 'preexisting' });
     bundleResults.push({ skills: {}, failures: {}, packageJsonWarnings: [] });

@@ -9,7 +9,7 @@
  * Adapter loading goes through the real `loadAdapterAsync` against the
  * workspace-linked `target-mcp-protocol` and `target-mcpc` packages.
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Command } from 'commander';
@@ -155,6 +155,33 @@ describe('extract --invocation flag', () => {
     expect(existsSync(path.join(workDir, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(installA, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
     expect(existsSync(path.join(installB, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+  });
+
+  it('rejects install-target collisions for bundled guidance before extract runs', async () => {
+    const installTarget = path.join(workDir, '.claude', 'skills');
+    const guidanceDir = path.join(installTarget, 'to-skills-mcp-docs');
+    mkdirSync(guidanceDir, { recursive: true });
+    const program = makeProgram();
+
+    await expect(
+      program.parseAsync([
+        'node',
+        'bin',
+        'extract',
+        '--command',
+        'node',
+        '--out',
+        workDir,
+        '--install-target',
+        installTarget
+      ])
+    ).rejects.toSatisfy(
+      (err) =>
+        err instanceof McpError &&
+        err.code === 'DUPLICATE_SKILL_NAME' &&
+        err.message.includes(guidanceDir)
+    );
+    expect(extractCalls).toHaveLength(0);
   });
 
   it('cli:mcpc render emits generated-by frontmatter (no mcp: block)', async () => {

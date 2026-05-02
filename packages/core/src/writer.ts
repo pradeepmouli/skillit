@@ -126,10 +126,8 @@ function readSkillMetadata(
   let frontmatter: ReturnType<typeof readSkillMetadataFromContent>;
   try {
     frontmatter = readSkillMetadataFromContent(content);
-  } catch (error) {
-    throw new Error(`Failed to parse installed SKILL.md at ${skillPath}: ${messageOf(error)}`, {
-      cause: error
-    });
+  } catch {
+    frontmatter = readLenientSkillMetadataFromContent(content);
   }
   return {
     ...frontmatter,
@@ -181,6 +179,42 @@ function readSkillMetadataFromContent(content: string): {
     version: typeof frontmatter?.version === 'string' ? frontmatter.version : undefined,
     name: typeof frontmatter?.name === 'string' ? frontmatter.name : undefined
   };
+}
+
+function readLenientSkillMetadataFromContent(content: string): {
+  bundledGuidance?: boolean;
+  curated?: boolean;
+  version?: string;
+  name?: string;
+} {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return {};
+
+  const frontmatter = match[1]!;
+  const name = matchSimpleFrontmatterValue(frontmatter, 'name');
+  const version = matchSimpleFrontmatterValue(frontmatter, 'version');
+  const curated = /(?:^|\r?\n)curated:\s*true(?:\s|$)/.test(frontmatter) ? true : undefined;
+  const explicitBundledGuidance =
+    /(?:^|\r?\n)toSkills:\s*(?:\r?\n[ \t]+[^\r\n]*)*?\r?\n[ \t]+managed:\s*bundled-guidance(?:\s|$)/.test(
+      frontmatter
+    );
+  const legacyBundledGuidance =
+    typeof name === 'string' && name.startsWith('to-skills-') && typeof version === 'string';
+  return {
+    bundledGuidance: explicitBundledGuidance || legacyBundledGuidance ? true : undefined,
+    curated,
+    version,
+    name
+  };
+}
+
+function matchSimpleFrontmatterValue(
+  frontmatter: string,
+  key: 'name' | 'version'
+): string | undefined {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = frontmatter.match(new RegExp(`(?:^|\\r?\\n)${escapedKey}:\\s*([^\\r\\n#]+)`));
+  return match?.[1]?.trim();
 }
 
 function compareSemver(a: string, b: string): -1 | 0 | 1 {

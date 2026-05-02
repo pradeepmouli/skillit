@@ -94,7 +94,7 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
     expect(refB).toMatch(/tool-b/);
   }, 120_000);
 
-  it('uses last-wins semantics across successive bundle runs that target the same installed skill name', async () => {
+  it('requires --force before a later bundle run overwrites an installed skill with the same name', async () => {
     const secondPackageRoot = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-multi-second-'));
     cpSync(FIXTURE_DIR, secondPackageRoot, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(secondPackageRoot, 'node_modules'), 'dir');
@@ -127,6 +127,22 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
         ],
         { timeout: 90_000 }
       );
+      await expect(
+        exec(
+          'node',
+          [
+            BIN_PATH,
+            'bundle',
+            '--package-root',
+            secondPackageRoot,
+            '--out',
+            'skills',
+            '--install-target',
+            installDir
+          ],
+          { timeout: 90_000 }
+        )
+      ).rejects.toThrow(/DUPLICATE_SKILL_NAME/);
       await exec(
         'node',
         [
@@ -137,7 +153,8 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
           '--out',
           'skills',
           '--install-target',
-          installDir
+          installDir,
+          '--force'
         ],
         { timeout: 90_000 }
       );

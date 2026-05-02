@@ -369,6 +369,39 @@ describe('writeSkills', () => {
     );
   });
 
+  it('overwrites malformed installed frontmatter when the skill is replaceable', () => {
+    const outDir = tempDir('to-skills-out-');
+    const installDir = tempDir('to-skills-install-');
+    const skillDir = join(installDir, 'writer-lib');
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(
+      join(skillDir, 'SKILL.md'),
+      '---\nname: writer-lib\ndescription: [broken\n---\n\nold content\n',
+      'utf8'
+    );
+
+    expect(() =>
+      writeSkills([makeRenderedSkill()], { outDir, installTargets: [installDir] })
+    ).not.toThrow();
+    expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toContain('name: writer-lib');
+  });
+
+  it('preserves malformed installed frontmatter when a curated marker is still present', () => {
+    const outDir = tempDir('to-skills-out-');
+    const installDir = tempDir('to-skills-install-');
+    const skillDir = join(installDir, 'writer-lib');
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(
+      join(skillDir, 'SKILL.md'),
+      '---\nname: writer-lib\ndescription: [broken\n---\n\n<!-- curated -->\n# keep-me\n',
+      'utf8'
+    );
+
+    writeSkills([makeRenderedSkill()], { outDir, installTargets: [installDir] });
+
+    expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toContain('# keep-me');
+  });
+
   it('uses last-wins semantics when multiple rendered skills resolve to the same directory', () => {
     const outDir = tempDir('to-skills-out-');
     const installDir = tempDir('to-skills-install-');
