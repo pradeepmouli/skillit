@@ -52,7 +52,7 @@
     "test:integration": "RUN_INTEGRATION_TESTS=true vitest run tests/integration"
   },
   "dependencies": {
-    "@apidevtools/json-schema-ref-parser": "^11.0.0",
+    "@apidevtools/json-schema-ref-parser": "^15.3.5",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@to-skills/core": "workspace:*",
     "@to-skills/target-mcp-protocol": "workspace:*",
