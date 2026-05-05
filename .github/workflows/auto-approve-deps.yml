@@ -9,6 +9,30 @@ permissions:
   pull-requests: write
 
 jobs:
+  # GitHub blocks ALL workflow runs for dependabot PRs that modify .github/workflows/*.yml
+  # (even pull_request_target), so auto-merge stalls waiting for checks that never arrive.
+  # Detect github_actions ecosystem bumps early and merge them directly — they only change
+  # action version pins, no user code runs, so no CI gate is needed.
+  merge-actions-bump:
+    name: Auto-merge GitHub Actions version bumps
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fetch dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge github_actions bumps immediately
+        if: steps.metadata.outputs.package-ecosystem == 'github_actions'
+        run: gh pr merge --squash --admin "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   triage:
     name: Auto-approve and request Copilot triage
     runs-on: ubuntu-latest
