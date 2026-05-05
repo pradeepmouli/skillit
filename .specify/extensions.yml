@@ -114,13 +114,6 @@ hooks:
     prompt: Commit task changes?
     description: Auto-commit after task generation
     condition: null
-  - extension: workflows
-    command: speckit.workflows.issue-sync-after-tasks
-    enabled: true
-    optional: false
-    prompt: null
-    description: Update linked issue for workflow boundary after_tasks
-    condition: null
   - extension: superb
     command: speckit.superb.review
     enabled: true
@@ -131,6 +124,13 @@ hooks:
 
       '
     condition: null
+  - extension: workflows
+    command: speckit.workflows.issue-sync-after-tasks
+    enabled: true
+    optional: false
+    prompt: null
+    description: Update linked issue for workflow boundary after_tasks
+    condition: null
   before_implement:
   - extension: git
     command: speckit.git.commit
@@ -138,13 +138,6 @@ hooks:
     optional: true
     prompt: Commit outstanding changes before implementation?
     description: Auto-commit before implementation
-    condition: null
-  - extension: workflows
-    command: speckit.workflows.issue-sync-before-implement
-    enabled: true
-    optional: false
-    prompt: null
-    description: Update linked issue for workflow boundary before_implement
     condition: null
   - extension: superb
     command: speckit.superb.tdd
@@ -156,6 +149,13 @@ hooks:
 
       '
     condition: null
+  - extension: workflows
+    command: speckit.workflows.issue-sync-before-implement
+    enabled: true
+    optional: false
+    prompt: null
+    description: Update linked issue for workflow boundary before_implement
+    condition: null
   after_implement:
   - extension: git
     command: speckit.git.commit
@@ -163,6 +163,16 @@ hooks:
     optional: true
     prompt: Commit implementation changes?
     description: Auto-commit after implementation
+    condition: null
+  - extension: superb
+    command: speckit.superb.verify
+    enabled: true
+    optional: false
+    prompt: Execute speckit.superb.verify?
+    description: 'Mandatory completion gate. Bridges an installed superpowers verification-before-completion
+      skill and extends it with spec-kit spec-coverage checks. Prevents false completions.
+
+      '
     condition: null
   - extension: workflows
     command: speckit.workflows.issue-sync-after-implement
@@ -191,16 +201,6 @@ hooks:
     optional: true
     prompt: Run verify to validate implementation against specification?
     description: Post-implementation verification gate
-    condition: null
-  - extension: superb
-    command: speckit.superb.verify
-    enabled: true
-    optional: false
-    prompt: Execute speckit.superb.verify?
-    description: 'Mandatory completion gate. Bridges an installed superpowers verification-before-completion
-      skill and extends it with spec-kit spec-coverage checks. Prevents false completions.
-
-      '
     condition: null
   before_constitution:
   - extension: git
