@@ -1,5 +1,12 @@
 # @to-skills/cli
 
+## 0.3.14
+
+### Patch Changes
+
+- Updated dependencies [[`2b91bd8`](https://github.com/pradeepmouli/to-skills/commit/2b91bd8e2882ee470c00e5b12705a28c052bb5c8)]:
+  - @to-skills/core@1.4.0
+
 ## 0.3.13
 
 ### Patch Changes
