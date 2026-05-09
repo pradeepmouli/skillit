@@ -29,7 +29,7 @@ jobs:
 
       - name: Merge github_actions bumps immediately
         if: steps.metadata.outputs.package-ecosystem == 'github_actions'
-        run: gh pr merge --squash --admin "${{ github.event.pull_request.number }}"
+        run: gh pr merge --squash --admin --repo "${{ github.repository }}" "${{ github.event.pull_request.number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

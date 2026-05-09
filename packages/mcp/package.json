@@ -56,13 +56,13 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@to-skills/core": "workspace:*",
     "@to-skills/target-mcp-protocol": "workspace:*",
+    "@types/json-schema": "^7.0.15",
     "commander": "^14.0.3",
     "yaml": "^2.8.4"
   },
   "devDependencies": {
     "@to-skills/target-fastmcp": "workspace:*",
     "@to-skills/target-mcpc": "workspace:*",
-    "@types/json-schema": "^7.0.15",
     "@types/node": "^25.6.2",
     "vitest": "^4.1.5"
   }
