@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { estimateSkillJudgeScore, formatScoreEstimate } from '@to-skills/core';
-import type { AuditResult, SkillJudgeEstimate, ActionableImprovement } from '@to-skills/core';
+import type { AuditResult, ActionableImprovement } from '@to-skills/core';
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -160,16 +160,6 @@ describe('missing @useWhen and @never', () => {
 // ---------------------------------------------------------------------------
 
 describe('grade boundaries', () => {
-  // Helper: build an audit result that achieves a specific approximate total
-  // by selectively passing codes
-  function auditWithTotal(targetPct: number): SkillJudgeEstimate {
-    // Use no codes → all at baseline
-    const baseAudit = makeResult([]);
-    const base = estimateSkillJudgeScore(baseAudit);
-    // Just verify we can get different grades from real combinations
-    return base;
-  }
-
   it('A: >= 90% — all checks pass', () => {
     const estimate = estimateSkillJudgeScore(makeResult(ALL_CODES));
     expect(estimate.grade).toBe('A');

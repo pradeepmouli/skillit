@@ -86,7 +86,7 @@ describe('resolveSchema', () => {
 
     // Caller's object still has the $ref exactly as before.
     expect(JSON.stringify(input)).toBe(snapshot);
-    expect((input.properties?.user as { $ref?: string }).$ref).toBe('#/definitions/User');
+    expect((input.properties!['user'] as { $ref?: string }).$ref).toBe('#/definitions/User');
   });
 
   it('throws McpError(SCHEMA_REF_CYCLE) on a cyclic $ref', async () => {

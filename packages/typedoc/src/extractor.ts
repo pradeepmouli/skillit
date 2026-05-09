@@ -600,7 +600,6 @@ function resolvePackageName(mod: DeclarationReflection | ProjectReflection): str
 /** Walk up from a file path to find the nearest package.json name */
 function findPackageName(filePath: string): string | undefined {
   let dir = dirname(filePath);
-  const root = dirname(dir); // safety: don't go above project
 
   for (let i = 0; i < 10; i++) {
     const pkgPath = join(dir, 'package.json');

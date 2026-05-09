@@ -37,7 +37,6 @@ import { extractMcpSkill } from './extract.js';
 import { renderLlmsTxt } from './render/llms-txt.js';
 import type {
   AuditIssue,
-  BundleFailure,
   BundleResult,
   McpBundleOptions,
   WrittenSkill

@@ -80,12 +80,10 @@ export function parseReadme(markdown: string): ParsedReadme {
   const preambleLines = lines.slice(0, preambleEnd);
 
   // Extract blockquote from preamble (skip title line)
-  let blockquoteFound = false;
   for (const line of preambleLines) {
     if (isHeading(line)) continue; // skip the # title
     if (line.startsWith('> ')) {
       result.blockquote = line.slice(2).trim();
-      blockquoteFound = true;
       break;
     }
   }
