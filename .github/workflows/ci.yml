@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches-ignore: ["sub**"]
+    branches: [master]
   pull_request:
-    branches-ignore: ["sub**"]
+    branches: [master]
 
 jobs:
   CI:
