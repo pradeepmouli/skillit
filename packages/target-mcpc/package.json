@@ -45,8 +45,8 @@
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",
-    "@types/node": "^25.6.0",
-    "vitest": "^2.0.0",
-    "yaml": "^2.0.0"
+    "@types/node": "^25.6.2",
+    "vitest": "^4.1.5",
+    "yaml": "^2.8.4"
   }
 }

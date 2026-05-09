@@ -26,7 +26,7 @@ import type { McpClient } from './introspect/client-types.js';
 import { listPrompts } from './introspect/prompts.js';
 import { listResources } from './introspect/resources.js';
 import { listTools } from './introspect/tools.js';
-import type { AuditIssue, McpExtractOptions } from './types.js';
+import type { McpExtractOptions } from './types.js';
 import { PACKAGE_VERSION } from './version.js';
 
 /**

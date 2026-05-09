@@ -12,7 +12,6 @@ function extractFrontmatter(markdown: string): {
   body: string;
 } {
   const FM_OPEN = /^---\r?\n/;
-  const FM_CLOSE = /\n---\r?\n/;
 
   if (!FM_OPEN.test(markdown)) {
     return { frontmatter: undefined, body: markdown };

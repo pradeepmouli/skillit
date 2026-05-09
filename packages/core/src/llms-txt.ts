@@ -4,17 +4,6 @@ import { estimateTokens } from './tokens.js';
 /** Max description length in llms.txt summary */
 const SUMMARY_DESC_MAX = 150;
 
-/** Section ordering — functions/classes first, types/enums in Optional */
-const SECTION_ORDER: Record<string, number> = {
-  Functions: 1,
-  Classes: 2,
-  Variables: 3,
-  Interfaces: 10,
-  Types: 11,
-  Enums: 12,
-  Other: 20
-};
-
 export interface LlmsTxtOptions {
   /** Project name (falls back to first skill name) */
   projectName: string;
