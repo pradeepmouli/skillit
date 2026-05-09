@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches-ignore: ["sub**"]
+  pull_request:
+    branches-ignore: ["sub**"]
 
 jobs:
   CI:
