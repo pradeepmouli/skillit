@@ -1,6 +1,6 @@
 {
   "name": "@to-skills/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Extract and bundle MCP servers as Agent Skills — introspects live MCP servers (stdio or HTTP) and produces SKILL.md consumable by MCP-native agents (via mcp: frontmatter) or non-MCP agents (via CLI-as-proxy adapters)",
   "keywords": [
     "agent-skills",

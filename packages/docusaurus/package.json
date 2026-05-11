@@ -1,6 +1,6 @@
 {
   "name": "@to-skills/docusaurus",
-  "version": "0.2.25",
+  "version": "0.2.26",
   "description": "Extract Docusaurus documentation structure for AI agent skill generation",
   "keywords": [
     "agent-skills",

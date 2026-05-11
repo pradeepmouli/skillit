@@ -1,6 +1,6 @@
 {
   "name": "@to-skills/target-mcp-protocol",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Default invocation-target adapter for @to-skills/mcp — emits mcp: frontmatter for MCP-native agent harnesses (OpenCode, Codex, Cursor)",
   "keywords": [
     "agent-skills",

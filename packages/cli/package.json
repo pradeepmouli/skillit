@@ -1,6 +1,6 @@
 {
   "name": "@to-skills/cli",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "description": "Extract CLI command structure from commander/yargs for AI agent skill generation",
   "keywords": [
     "agent-skills",
