@@ -41,7 +41,7 @@ jobs:
       - name: Build VitePress site
         run: cd website && pnpm docs:build
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: website/docs/.vitepress/dist
 
