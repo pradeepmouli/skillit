@@ -42,7 +42,7 @@ jobs:
       # --- Step 1: Classify the issue ---
       - name: Classify issue type
         id: classify
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const issue = context.payload.issue;
@@ -96,7 +96,7 @@ jobs:
       - name: Check dependencies
         if: steps.classify.outputs.skip != 'true'
         id: deps
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PROJECT_SYNC_TOKEN }}
           script: |
@@ -253,7 +253,7 @@ jobs:
       # --- Step 4: Link branch to issue ---
       - name: Link branch to issue
         if: steps.classify.outputs.skip != 'true' && steps.deps.outputs.blocked != 'true' && steps.create.outputs.skip != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const issue = context.payload.issue;
@@ -292,7 +292,7 @@ jobs:
       # --- Step 5: Update issue with branch info and instructions ---
       - name: Update issue and comment
         if: steps.classify.outputs.skip != 'true' && steps.deps.outputs.blocked != 'true' && steps.create.outputs.skip != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const issue = context.payload.issue;
@@ -382,7 +382,7 @@ jobs:
       # --- Fallback: script failed, use instruction-only mode ---
       - name: Fallback - append instructions without branch
         if: steps.classify.outputs.skip != 'true' && steps.deps.outputs.blocked != 'true' && steps.create.outputs.skip == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const issue = context.payload.issue;
@@ -439,7 +439,7 @@ jobs:
       # --- Step 6: Update project board status to "Specifying" ---
       - name: Update project status
         if: steps.classify.outputs.skip != 'true' && steps.deps.outputs.blocked != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PROJECT_SYNC_TOKEN }}
           script: |

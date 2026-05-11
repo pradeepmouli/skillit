@@ -78,7 +78,7 @@ jobs:
 
       - name: Enable auto-merge on version PR
         if: steps.changesets.outputs.hasChangesets == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.RELEASE_TOKEN }}
           script: |
