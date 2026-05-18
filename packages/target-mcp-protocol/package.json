@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@to-skills/mcp": "workspace:*",
-    "@types/node": "^25.6.2",
+    "@types/node": "^25.8.0",
     "vitest": "^4.1.5"
   },
   "peerDependencies": {
