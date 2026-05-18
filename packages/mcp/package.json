@@ -64,6 +64,6 @@
     "@to-skills/target-fastmcp": "workspace:*",
     "@to-skills/target-mcpc": "workspace:*",
     "@types/node": "^25.6.2",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.6"
   }
 }
