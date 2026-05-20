@@ -13,8 +13,9 @@ This is separate from the TypeDoc/docs extraction flow above: it introspects MCP
 tools/resources/prompts over stdio or HTTP and emits a progressive-disclosure
 `SKILL.md`. You can render:
 
-- native MCP launch instructions (`mcp:` frontmatter), or
-- CLI-proxy launch instructions for non-MCP harnesses (for example mcpc/fastmcp).
+- native MCP launch instructions (`mcp:` frontmatter in `SKILL.md`, which tells
+  MCP-capable agents how to start/connect to the server), or
+- CLI-proxy launch instructions for non-MCP harnesses (such as mcpc/fastmcp).
 
 ```bash
 # Inspect any running or launchable MCP server and generate skills
