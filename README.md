@@ -4,6 +4,39 @@
 
 Inline docs, CLI definitions, config schemas, and examples compile into progressively disclosed [SKILL.md](https://agentskills.io) files that any LLM can discover. Integrated with TypeDoc, with support for conventional repo docs, and plugins for Docusaurus and VitePress provided for what code can't cover.
 
+## MCP Servers (orthogonal workflow)
+
+`to-skills` can also generate skills from **any live MCP server**, even when the
+server was not authored with `to-skills`.
+
+This is separate from the TypeDoc/docs extraction flow above: it introspects MCP
+tools/resources/prompts over stdio or HTTP and emits a progressive-disclosure
+`SKILL.md`. You can render:
+
+- native MCP launch instructions (`mcp:` frontmatter), or
+- CLI-proxy launch instructions for non-MCP harnesses (for example mcpc/fastmcp).
+
+```bash
+# Inspect any running or launchable MCP server and generate skills
+npx to-skills-mcp extract \
+  --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
+  --out ./skills
+
+# Optionally emit CLI-proxy invocation variants for non-MCP agents
+npx to-skills-mcp extract \
+  --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
+  --invocation cli:mcpc \
+  --invocation cli:fastmcp \
+  --out ./skills
+```
+
+For server package authors, `to-skills-mcp bundle` can be run in your build to
+ship pre-generated skills with your MCP package.
+
+See [`packages/mcp/README.md`](packages/mcp/README.md) for install, extract,
+bundle, config-file batch mode (`mcp.json` / `claude_desktop_config.json`), and
+programmatic API details.
+
 ## Why Inline?
 
 When an agent updates your code, inline docs update atomically. There's no separate file to remember, no coordination problem, no drift. The agent edits ONE location and the truth propagates mechanically.
@@ -165,14 +198,18 @@ Each reference file is token-budgeted independently (default 4000 tokens).
 
 ## Packages
 
-| Package                                               | Description                                                            |
-| ----------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`typedoc-plugin-to-skills`](packages/typedoc-plugin) | Auto-discovery wrapper — just install, no config                       |
-| [`@to-skills/core`](packages/core)                    | Types, renderer, audit engine, token budgeting, docs/examples scanning |
-| [`@to-skills/typedoc`](packages/typedoc)              | TypeDoc plugin — API + config extraction from the reflection tree      |
-| [`@to-skills/cli`](packages/cli)                      | Commander/yargs introspection + `--help` fallback + flag correlation   |
-| [`@to-skills/vitepress`](packages/vitepress)          | VitePress Vite plugin — sidebar-driven docs extraction                 |
-| [`@to-skills/docusaurus`](packages/docusaurus)        | Docusaurus adapter — `_category_.json` + docs scanning                 |
+| Package                                                          | Description                                                            |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`typedoc-plugin-to-skills`](packages/typedoc-plugin)            | Auto-discovery wrapper — just install, no config                       |
+| [`@to-skills/core`](packages/core)                               | Types, renderer, audit engine, token budgeting, docs/examples scanning |
+| [`@to-skills/typedoc`](packages/typedoc)                         | TypeDoc plugin — API + config extraction from the reflection tree      |
+| [`@to-skills/cli`](packages/cli)                                 | Commander/yargs introspection + `--help` fallback + flag correlation   |
+| [`@to-skills/vitepress`](packages/vitepress)                     | VitePress Vite plugin — sidebar-driven docs extraction                 |
+| [`@to-skills/docusaurus`](packages/docusaurus)                   | Docusaurus adapter — `_category_.json` + docs scanning                 |
+| [`@to-skills/mcp`](packages/mcp)                                 | MCP extractor/bundler — introspect live servers and emit SKILL.md      |
+| [`@to-skills/target-mcp-protocol`](packages/target-mcp-protocol) | MCP-native invocation target adapter for rendered skills               |
+| [`@to-skills/target-mcpc`](packages/target-mcpc)                 | CLI-proxy invocation adapter via `mcpc`                                |
+| [`@to-skills/target-fastmcp`](packages/target-fastmcp)           | CLI-proxy invocation adapter via Python `fastmcp` CLI                  |
 
 ## Configuration
 
