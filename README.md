@@ -23,7 +23,10 @@ npx to-skills-mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --out ./skills
 
-# Optionally emit CLI-proxy invocation variants for non-MCP agents
+# Optional: install non-default CLI invocation adapters
+npm install --save-dev @to-skills/target-mcpc @to-skills/target-fastmcp
+
+# Emit CLI-proxy invocation variants for non-MCP agents
 npx to-skills-mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --invocation cli:mcpc \
