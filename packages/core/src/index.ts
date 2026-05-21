@@ -95,3 +95,5 @@ export { scanDocs, docsToExtractedDocuments, scanRootDocs } from './docs-scanner
 
 export { scanExamples, linkExamplesToSkill } from './examples-scanner.js';
 export type { ParsedExample } from './examples-scanner.js';
+
+export * from './refine/index.js';
