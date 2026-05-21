@@ -38,7 +38,11 @@ export class AnthropicModelClient implements ModelClient {
       max_tokens: MAX_TOKENS,
       messages: [{ role: 'user', content: prompt }]
     });
-    return (msg.content[0] as { text: string }).text.trim();
+    const block = msg.content[0];
+    if (!block || block.type !== 'text') {
+      throw new Error(`Unexpected response from ${DRAFTER}: no text block`);
+    }
+    return block.text.trim();
   }
 
   async review(req: ReviewRequest): Promise<ReviewResult> {
@@ -56,6 +60,10 @@ export class AnthropicModelClient implements ModelClient {
       max_tokens: MAX_TOKENS,
       messages: [{ role: 'user', content: prompt }]
     });
-    return parseReviewVerdict((msg.content[0] as { text: string }).text);
+    const block = msg.content[0];
+    if (!block || block.type !== 'text') {
+      throw new Error(`Unexpected response from ${REVIEWER}: no text block`);
+    }
+    return parseReviewVerdict(block.text);
   }
 }
