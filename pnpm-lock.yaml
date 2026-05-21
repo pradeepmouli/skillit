@@ -15,7 +15,7 @@ importers:
         specifier: ^2.31.0
         version: 2.31.0(@types/node@25.9.1)
       '@types/node':
-        specifier: ^25.6.2
+        specifier: ^25.9.1
         version: 25.9.1
       '@typescript/native-preview':
         specifier: beta
@@ -27,7 +27,7 @@ importers:
         specifier: ^17.0.5
         version: 17.0.5
       oxlint:
-        specifier: ^1.65.0
+        specifier: ^1.66.0
         version: 1.66.0
       simple-git-hooks:
         specifier: ^2.13.1
