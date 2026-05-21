@@ -34,7 +34,7 @@ describe('McpRefineSource', () => {
 
     await source.applyFixes([{ toolName: 'list_files', tag: 'useWhen', value: 'When listing' }]);
     const s2 = await source.extract();
-    expect((s2.functions[0] as any).mcpMetadata?.toSkills?.useWhen).toEqual(['When listing']);
+    expect(s2.functions[0]!.mcpMetadata?.toSkills?.useWhen).toEqual(['When listing']);
   });
 
   it('applyFixes writes overlay to disk', async () => {

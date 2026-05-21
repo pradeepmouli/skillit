@@ -33,6 +33,7 @@ export function writeOverlay(path: string, overlay: ToSkillsOverlay): void {
 
 export function applyFixToOverlay(overlay: ToSkillsOverlay, fix: DraftedFix): ToSkillsOverlay {
   const toolKey = fix.toolName;
+  // RefineTag and keyof OverlayAnnotations share the same 5 keys — cast is safe
   const tag = fix.tag as keyof OverlayAnnotations;
   const existing = overlay.tools[toolKey]?.[tag];
   const next =
