@@ -15,3 +15,4 @@
 
 export { load } from './plugin.js';
 export type { SkillsPluginOptions } from './plugin.js';
+export * from './refine/index.js';
