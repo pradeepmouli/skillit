@@ -1,5 +1,5 @@
 // packages/typedoc/src/refine/typedoc-source.ts
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
 import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
 import { insertJsDocTag } from './jsdoc-edit.js';
 
@@ -29,11 +29,11 @@ export class TypeDocRefineSource implements RefineSource {
       byFile.set(file, group);
     }
     for (const [file, fileFixes] of byFile) {
-      let source = readFileSync(file, 'utf8');
+      let source = await readFile(file, 'utf8');
       for (const fix of fileFixes) {
         source = insertJsDocTag(source, fix.toolName, fix.tag, fix.value);
       }
-      writeFileSync(file, source, 'utf8');
+      await writeFile(file, source, 'utf8');
     }
   }
 }

@@ -39,9 +39,15 @@ export function insertJsDocTag(
     // Check for duplicate
     const existingBlock = source.slice(block.start, block.end);
     if (existingBlock.includes(`@${tag} ${content}`)) return source;
-    // Insert before closing */
-    const closeIdx = block.start + existingBlock.lastIndexOf('*/');
-    return source.slice(0, closeIdx) + `${tagLine}\n ` + source.slice(closeIdx);
+    const closeOffset = existingBlock.lastIndexOf('*/');
+    const closeIdx = block.start + closeOffset;
+    // Capture the original indent before */ so we don't double it in the output
+    const lineBeforeClose = existingBlock.slice(0, closeOffset).match(/[^\n]*$/)?.[0] ?? ' ';
+    return (
+      source.slice(0, closeIdx - lineBeforeClose.length) +
+      `${tagLine}\n${lineBeforeClose}` +
+      source.slice(closeIdx)
+    );
   }
 
   // No existing block — create one
