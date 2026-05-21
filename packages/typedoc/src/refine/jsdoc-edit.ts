@@ -3,7 +3,12 @@ import type { RefineTag } from '@to-skills/core';
 
 // Matches `export function <name>` or `export const <name>` (arrow fns, etc.)
 function exportRe(name: string): RegExp {
-  return new RegExp(`(export\\s+(?:async\\s+)?(?:function|const|class)\\s+${name}[\\s(<:,{])`, 'm');
+  // Escape metacharacters — export names may include $ (Svelte stores, RxJS, etc.)
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(
+    `(export\\s+(?:async\\s+)?(?:function|const|class)\\s+${escaped}[\\s(<:,{])`,
+    'm'
+  );
 }
 
 // Matches a JSDoc block immediately before a token at a given index
