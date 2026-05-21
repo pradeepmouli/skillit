@@ -1,0 +1,30 @@
+{
+  "name": "@to-skills/client",
+  "version": "0.1.0",
+  "description": "Anthropic model client + to-skills CLI (refine command)",
+  "license": "MIT",
+  "author": "Pradeep Mouli",
+  "bin": {
+    "to-skills": "./dist/bin.js"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsgo -p tsconfig.build.json",
+    "type-check": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@to-skills/core": "workspace:*",
+    "@to-skills/mcp": "workspace:*",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {}
+}
