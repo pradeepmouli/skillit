@@ -27,11 +27,19 @@ describe('parseReviewVerdict', () => {
     });
   });
 
-  it('parses revise verdict when feedback contains braces', () => {
+  it('parses revise verdict when feedback contains balanced braces', () => {
     const text = '{"verdict":"revise","feedback":"handle {edge-case} and {null} inputs"}';
     expect(parseReviewVerdict(text)).toEqual({
       verdict: 'revise',
       feedback: 'handle {edge-case} and {null} inputs'
+    });
+  });
+
+  it('parses revise verdict when feedback contains an unbalanced open brace', () => {
+    const text = '{"verdict":"revise","feedback":"use {var in templates"}';
+    expect(parseReviewVerdict(text)).toEqual({
+      verdict: 'revise',
+      feedback: 'use {var in templates'
     });
   });
 });

@@ -63,7 +63,15 @@ export async function refineSkill(
     const fixes: DraftedFix[] = [];
     for (const item of workItems) {
       const fn = skill.functions.find((f) => f.name === item.toolName);
-      const currentValue = fn ? (fn.tags[item.tag] as string | undefined) : undefined;
+      let currentValue: string | undefined;
+      if (fn) {
+        const tag = item.tag;
+        if (tag === 'useWhen' || tag === 'avoidWhen' || tag === 'pitfalls') {
+          currentValue = fn.mcpMetadata?.toSkills?.[tag]?.[0];
+        } else {
+          currentValue = fn.tags[tag] as string | undefined;
+        }
+      }
       let draft = await model.draft({
         toolName: item.toolName,
         tag: item.tag,

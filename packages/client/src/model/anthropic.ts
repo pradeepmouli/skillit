@@ -9,15 +9,31 @@ const MAX_TOKENS = 1024;
 export function parseReviewVerdict(text: string): ReviewResult {
   // Prefer {"verdict" anchor to skip stray {braces} in prose.
   // Fall back to the first { if the model omits the verdict key.
-  // Depth-scan for the matching } — O(n), no regex backtracking.
+  // Depth-scan for the matching }, skipping { and } inside JSON string values.
   const verdictAnchor = text.indexOf('{"verdict"');
   const start = verdictAnchor !== -1 ? verdictAnchor : text.indexOf('{');
   if (start === -1) return { verdict: 'accepted', feedback: '' };
   let depth = 0;
   let end = -1;
+  let inString = false;
+  let escaped = false;
   for (let i = start; i < text.length; i++) {
-    if (text[i] === '{') depth++;
-    else if (text[i] === '}') {
+    const ch = text[i]!;
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === '\\' && inString) {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') {
       if (--depth === 0) {
         end = i;
         break;
