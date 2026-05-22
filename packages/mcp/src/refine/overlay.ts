@@ -20,11 +20,14 @@ export function emptyOverlay(): ToSkillsOverlay {
 }
 
 export function readOverlay(path: string): ToSkillsOverlay {
+  let raw: string;
   try {
-    return JSON.parse(readFileSync(path, 'utf8')) as ToSkillsOverlay;
-  } catch {
-    return emptyOverlay();
+    raw = readFileSync(path, 'utf8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return emptyOverlay();
+    throw err;
   }
+  return JSON.parse(raw) as ToSkillsOverlay;
 }
 
 export function writeOverlay(path: string, overlay: ToSkillsOverlay): void {

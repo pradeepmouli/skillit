@@ -5,11 +5,19 @@ import { refineSkill } from '@to-skills/core';
 import { AnthropicModelClient } from '../model/anthropic.js';
 import { join } from 'node:path';
 
+function parsePositiveInt(raw: string, flag: string): number {
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1) {
+    throw new Error(`${flag} must be a positive integer, got: ${raw}`);
+  }
+  return n;
+}
+
 export function buildRefineCommand(): Command {
   return new Command('refine')
     .description('Autonomously improve a skill via the audit→draft→review loop')
     .requiredOption('--mcp <path>', 'path to mcp.json or MCP config file')
-    .option('--server <name>', 'server name within the config (defaults to first)')
+    .option('--server <name>', 'server name within the config (defaults to first enabled)')
     .option('--overlay <path>', 'path to write the _meta.toSkills overlay JSON')
     .option('--max-iterations <n>', 'iteration cap (default 5)', '5')
     .option('--items <n>', 'work items per iteration (default 5)', '5')
@@ -21,14 +29,16 @@ export function buildRefineCommand(): Command {
         maxIterations: string;
         items: string;
       }) => {
-        const maxIterations = parseInt(opts.maxIterations, 10);
-        const itemsPerIteration = parseInt(opts.items, 10);
+        const maxIterations = parsePositiveInt(opts.maxIterations, '--max-iterations');
+        const itemsPerIteration = parsePositiveInt(opts.items, '--items');
         const overlayPath = opts.overlay ?? join(process.cwd(), '.to-skills-overlay.json');
 
         const entries = await readMcpConfigFile(opts.mcp);
-        const entry = opts.server ? entries.find((e) => e.name === opts.server) : entries[0];
+        const entry = opts.server
+          ? entries.find((e) => e.name === opts.server)
+          : entries.find((e) => !e.disabled);
         if (!entry) {
-          const name = opts.server ? `"${opts.server}"` : 'any server';
+          const name = opts.server ? `"${opts.server}"` : 'any enabled server';
           throw new Error(`Could not find ${name} in ${opts.mcp}`);
         }
 
@@ -54,11 +64,11 @@ export function buildRefineCommand(): Command {
         console.log(
           `Final grade: ${result.finalEstimate.grade} (${result.finalEstimate.total}/120)`
         );
-        if (result.passed) {
-          console.log(`Overlay written to ${overlayPath}`);
+        if (result.iterations.length > 0) {
+          console.log(`Overlay: ${overlayPath}`);
         }
 
-        process.exit(result.passed ? 0 : 1);
+        process.exitCode = result.passed ? 0 : 1;
       }
     );
 }

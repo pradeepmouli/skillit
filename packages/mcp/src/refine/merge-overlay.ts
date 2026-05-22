@@ -29,9 +29,9 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): E
   for (const fn of functions) {
     const ann = overlay.tools[fn.name];
     if (!ann) continue;
-    if (ann.useWhen) useWhen.push(ann.useWhen);
-    if (ann.avoidWhen) avoidWhen.push(ann.avoidWhen);
-    if (ann.pitfalls) pitfalls.push(ann.pitfalls);
+    if (ann.useWhen !== undefined) useWhen.push(ann.useWhen);
+    if (ann.avoidWhen !== undefined) avoidWhen.push(ann.avoidWhen);
+    if (ann.pitfalls !== undefined) pitfalls.push(ann.pitfalls);
   }
 
   return { ...skill, functions, useWhen, avoidWhen, pitfalls };
