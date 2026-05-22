@@ -41,6 +41,20 @@ describe('mergeOverlay', () => {
     expect(result.functions[0]!.mcpMetadata).toBeUndefined();
   });
 
+  it('surfaces remarks and example via fn.tags so the refine loop can read them', () => {
+    const s = skill([{ name: 'list_files' }]);
+    const overlay = {
+      version: 1 as const,
+      tools: {
+        list_files: { remarks: 'Rate-limited to 100 calls/min', example: 'list_files("/tmp")' }
+      }
+    };
+    const result = mergeOverlay(s, overlay);
+    const fn = result.functions.find((f) => f.name === 'list_files')!;
+    expect(fn.tags['remarks']).toBe('Rate-limited to 100 calls/min');
+    expect(fn.tags['example']).toBe('list_files("/tmp")');
+  });
+
   it('aggregates skill-level arrays from all tool annotations', () => {
     const s = skill([{ name: 'tool_a' }, { name: 'tool_b' }]);
     const overlay = {

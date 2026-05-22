@@ -26,4 +26,12 @@ describe('parseReviewVerdict', () => {
       feedback: 'ok'
     });
   });
+
+  it('parses revise verdict when feedback contains braces', () => {
+    const text = '{"verdict":"revise","feedback":"handle {edge-case} and {null} inputs"}';
+    expect(parseReviewVerdict(text)).toEqual({
+      verdict: 'revise',
+      feedback: 'handle {edge-case} and {null} inputs'
+    });
+  });
 });

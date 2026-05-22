@@ -7,8 +7,9 @@ const REVIEWER = 'claude-opus-4-7';
 const MAX_TOKENS = 1024;
 
 export function parseReviewVerdict(text: string): ReviewResult {
-  // Non-greedy, no nested braces — avoids ReDoS on adversarial input
-  const match = text.match(/\{[^{}]*\}/);
+  // One level of nesting allowed so feedback can contain {example} braces;
+  // alternatives are non-overlapping so no ReDoS backtracking.
+  const match = text.match(/\{(?:[^{}]|\{[^{}]*\})*\}/);
   if (!match) return { verdict: 'accepted', feedback: '' };
   try {
     const parsed = JSON.parse(match[0]) as Partial<ReviewResult>;

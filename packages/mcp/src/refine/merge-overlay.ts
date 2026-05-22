@@ -8,6 +8,13 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): E
     if (!ann) return fn;
     return {
       ...fn,
+      // remarks/example go into fn.tags (read by the refine loop drafter + scorer);
+      // they are not present on ExtractedFunctionMcpMetadata.toSkills
+      tags: {
+        ...fn.tags,
+        ...(ann.remarks !== undefined && { remarks: ann.remarks }),
+        ...(ann.example !== undefined && { example: ann.example })
+      },
       mcpMetadata: {
         ...fn.mcpMetadata,
         toSkills: {
@@ -15,8 +22,6 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): E
           ...(ann.useWhen !== undefined && { useWhen: [ann.useWhen] }),
           ...(ann.avoidWhen !== undefined && { avoidWhen: [ann.avoidWhen] }),
           ...(ann.pitfalls !== undefined && { pitfalls: [ann.pitfalls] })
-          // remarks and example are overlay-only fields not present on
-          // ExtractedFunctionMcpMetadata.toSkills — intentionally omitted here
         }
       }
     };
