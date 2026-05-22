@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // packages/client/src/bin.ts
 import { Command } from 'commander';
 import { buildRefineCommand } from './commands/refine.js';
