@@ -7,12 +7,26 @@ const REVIEWER = 'claude-opus-4-7';
 const MAX_TOKENS = 1024;
 
 export function parseReviewVerdict(text: string): ReviewResult {
-  // One level of nesting allowed so feedback can contain {example} braces;
-  // alternatives are non-overlapping so no ReDoS backtracking.
-  const match = text.match(/\{(?:[^{}]|\{[^{}]*\})*\}/);
-  if (!match) return { verdict: 'accepted', feedback: '' };
+  // Prefer {"verdict" anchor to skip stray {braces} in prose.
+  // Fall back to the first { if the model omits the verdict key.
+  // Depth-scan for the matching } — O(n), no regex backtracking.
+  const verdictAnchor = text.indexOf('{"verdict"');
+  const start = verdictAnchor !== -1 ? verdictAnchor : text.indexOf('{');
+  if (start === -1) return { verdict: 'accepted', feedback: '' };
+  let depth = 0;
+  let end = -1;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      if (--depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+  if (end === -1) return { verdict: 'accepted', feedback: '' };
   try {
-    const parsed = JSON.parse(match[0]) as Partial<ReviewResult>;
+    const parsed = JSON.parse(text.slice(start, end + 1)) as Partial<ReviewResult>;
     return {
       verdict: parsed.verdict === 'revise' ? 'revise' : 'accepted',
       feedback: parsed.feedback ?? ''

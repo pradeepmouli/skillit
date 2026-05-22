@@ -27,7 +27,16 @@ export function readOverlay(path: string): ToSkillsOverlay {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return emptyOverlay();
     throw err;
   }
-  return JSON.parse(raw) as ToSkillsOverlay;
+  const parsed: unknown = JSON.parse(raw);
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    typeof (parsed as Record<string, unknown>)['tools'] !== 'object' ||
+    (parsed as Record<string, unknown>)['tools'] === null
+  ) {
+    return emptyOverlay();
+  }
+  return parsed as ToSkillsOverlay;
 }
 
 export function writeOverlay(path: string, overlay: ToSkillsOverlay): void {
