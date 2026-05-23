@@ -8,22 +8,27 @@ export interface DiscoveryResult {
   warnings: string[];
 }
 
-// Matches: server.tool( 'name', ...  — capture group 1 is the tool name
-const TOOL_CALL_RE = /server\.tool\(\s*['"]([^'"]+)['"]\s*,\s*/g;
+// Locates server.tool( calls in sanitized source; name chars are blanked.
+const TOOL_CALL_RE = /server\.tool\(\s*['"][^'"]*['"]\s*,\s*/g;
+
+// Extracts the real tool name from source at the same position.
+const TOOL_NAME_RE = /^server\.tool\(\s*(['"])([^'"]+)\1\s*,\s*/;
 
 // Matches an options object as the next token
 const OPTIONS_OBJ_RE = /^\{/;
 
 /**
- * Replace comment and template-literal content with spaces so that match
- * indices remain valid for line-number computation. Newlines are preserved to
- * keep line counts accurate. Single- and double-quoted string contents are
- * intentionally kept — tool names live inside those strings.
+ * Replace comment, template-literal, and quoted-string content with spaces so
+ * that match indices remain valid for line-number computation. Newlines are
+ * preserved to keep line counts accurate.
  *
- * Template literal bodies are blanked to prevent fixture/test strings of the
- * form `server.tool('fake', ...)` from being treated as real declarations.
- * The `${...}` expression depth is tracked so the backtick that closes the
- * literal is identified correctly even when expressions contain braces.
+ * Blanking quoted-string contents prevents fixture code like
+ * `const src = "server.tool('fake', ...)"` from being matched as a real tool
+ * declaration. Since positions are preserved 1:1, the tool name is then read
+ * from the original source at the same index.
+ *
+ * Template literal `${...}` expression depth is tracked so the closing backtick
+ * is identified correctly even when expressions contain braces.
  */
 function sanitizeComments(source: string): string {
   let out = '';
@@ -42,6 +47,25 @@ function sanitizeComments(source: string): string {
       }
       out += '  ';
       i += 2;
+    } else if (source[i] === '"' || source[i] === "'") {
+      const q = source[i]!;
+      out += q;
+      i++;
+      while (i < source.length) {
+        const ch = source[i]!;
+        if (ch === '\\') {
+          out += '  ';
+          i += 2;
+          continue;
+        }
+        if (ch === q) {
+          out += q;
+          i++;
+          break;
+        }
+        out += ch === '\n' ? '\n' : ' ';
+        i++;
+      }
     } else if (source[i] === '`') {
       out += '`';
       i++;
@@ -93,7 +117,11 @@ export function discoverTools(file: string, source: string): DiscoveryResult {
   const sanitized = sanitizeComments(source);
 
   for (const match of sanitized.matchAll(TOOL_CALL_RE)) {
-    const name = match[1]!;
+    // Tool name chars are blanked in sanitized — read the real name from source.
+    const nameMatch = source.slice(match.index!).match(TOOL_NAME_RE);
+    if (!nameMatch) continue;
+    const name = nameMatch[2]!;
+
     const afterComma = sanitized.slice(match.index! + match[0].length).trimStart();
 
     if (!OPTIONS_OBJ_RE.test(afterComma)) {

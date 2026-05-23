@@ -87,4 +87,14 @@ server.tool('real_tool', { description: 'yes' }, schema, handler);
     expect(result.tools.has('commented_gap')).toBe(true);
     expect(result.warnings).toHaveLength(0);
   });
+
+  it('ignores server.tool() calls inside double-quoted string literals', () => {
+    const src = `
+const sample = "server.tool('string_tool', { description: 'fake' }, schema, handler);";
+server.tool('real_tool', { description: 'yes' }, schema, handler);
+`;
+    const result = discoverTools('test.ts', src);
+    expect(result.tools.has('string_tool')).toBe(false);
+    expect(result.tools.has('real_tool')).toBe(true);
+  });
 });

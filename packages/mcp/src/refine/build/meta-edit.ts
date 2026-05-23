@@ -1,5 +1,24 @@
 import type { RefineTag } from '@to-skills/core';
 
+/** Scan forward from `from`, skipping comments, and return the index of the first `{`. */
+function skipToOptionsOpen(source: string, from: number): number {
+  let i = from;
+  while (i < source.length) {
+    if (source[i] === '/' && source[i + 1] === '/') {
+      while (i < source.length && source[i] !== '\n') i++;
+    } else if (source[i] === '/' && source[i + 1] === '*') {
+      i += 2;
+      while (i < source.length && !(source[i] === '*' && source[i + 1] === '/')) i++;
+      if (i < source.length) i += 2;
+    } else if (source[i] === '{') {
+      return i;
+    } else {
+      i++;
+    }
+  }
+  return -1;
+}
+
 /**
  * Finds the index of the opening `{` of the options object in a `server.tool(...)` call.
  *
@@ -21,20 +40,10 @@ function findOptionsStart(source: string, toolName: string, hintLine: number): n
     // Fallback: search the entire source (useful for short fixtures)
     m = source.match(callRe);
     if (!m || m.index === undefined) return -1;
-    const afterMatch = m.index + m[0].length;
-    // Scan forward to find the opening {
-    for (let i = afterMatch; i < source.length; i++) {
-      if (source[i] === '{') return i;
-    }
-    return -1;
+    return skipToOptionsOpen(source, m.index + m[0].length);
   }
 
-  const afterMatch = offsetToWindow + m.index + m[0].length;
-  // Scan forward to find the opening {
-  for (let i = afterMatch; i < source.length; i++) {
-    if (source[i] === '{') return i;
-  }
-  return -1;
+  return skipToOptionsOpen(source, offsetToWindow + m.index + m[0].length);
 }
 
 /** Skip past a single- or double-quoted string literal; returns index after closing quote. */

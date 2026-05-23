@@ -103,6 +103,15 @@ describe('applyMetaEdit', () => {
     expect(result).toContain("useWhen: 'New value'");
   });
 
+  it('handles an inline comment with a brace before the options object', () => {
+    const src = `server.tool('list_dir', /* note: {example} */ { description: 'Lists' }, schema, handler);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');
+    expect(result).toContain('_meta:');
+    expect(result).toContain("useWhen: 'When listing'");
+    // The comment brace must not be treated as the options object open
+    expect(result).toContain('description:');
+  });
+
   it('inserts into an empty _meta object without a leading comma', () => {
     const src = `server.tool(
   'list_dir',
