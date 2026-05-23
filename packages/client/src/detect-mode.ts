@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 async function hasMcpSdkDep(cwd: string): Promise<boolean> {
   try {
@@ -42,8 +42,25 @@ async function hasMcpConfig(cwd: string): Promise<boolean> {
   return false;
 }
 
-export async function detectRefineMode(cwd: string): Promise<'build' | 'runtime' | 'ambiguous'> {
-  const [hasBuild, hasRuntime] = await Promise.all([hasMcpSdkDep(cwd), hasMcpConfig(cwd)]);
+const RUNTIME_CONFIG_BASENAMES = new Set(['mcp.json', 'claude_desktop_config.json']);
+
+/**
+ * Detect refine mode from project context.
+ *
+ * @param cwd - directory to inspect for build/runtime signals
+ * @param mcpConfigPath - optional path to the --mcp config file; if its
+ *   basename is a known runtime config filename the file itself is treated
+ *   as an additional runtime signal, allowing detection to work when the
+ *   config lives outside the cwd ancestor chain (e.g. a desktop config dir).
+ */
+export async function detectRefineMode(
+  cwd: string,
+  mcpConfigPath?: string
+): Promise<'build' | 'runtime' | 'ambiguous'> {
+  const mcpFileIsRuntime =
+    mcpConfigPath !== undefined && RUNTIME_CONFIG_BASENAMES.has(basename(mcpConfigPath));
+  const [hasBuild, hasRuntimeFromCwd] = await Promise.all([hasMcpSdkDep(cwd), hasMcpConfig(cwd)]);
+  const hasRuntime = hasRuntimeFromCwd || mcpFileIsRuntime;
   if (hasBuild && !hasRuntime) return 'build';
   if (hasRuntime && !hasBuild) return 'runtime';
   return 'ambiguous';

@@ -57,4 +57,23 @@ describe('detectRefineMode', () => {
     );
     expect(await detectRefineMode(tmpDir)).toBe('build');
   });
+
+  it('returns runtime when mcpConfigPath is a known runtime config filename', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    // No mcp.json in cwd, no package.json — but --mcp points to a desktop config
+    expect(
+      await detectRefineMode(tmpDir, '/Users/example/.config/claude/claude_desktop_config.json')
+    ).toBe('runtime');
+  });
+
+  it('returns ambiguous when cwd has MCP SDK dep AND mcpConfigPath is a runtime config', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' } })
+    );
+    expect(
+      await detectRefineMode(tmpDir, '/Users/example/.config/claude/claude_desktop_config.json')
+    ).toBe('ambiguous');
+  });
 });

@@ -52,7 +52,7 @@ export function buildRefineCommand(): Command {
           process.exitCode = 1;
           return;
         } else {
-          const detected = await detectRefineMode(process.cwd());
+          const detected = await detectRefineMode(process.cwd(), opts.mcp);
           if (detected === 'ambiguous') {
             console.error(`Cannot determine refine mode.
 Use --mode build  (TypeScript MCP server you own)

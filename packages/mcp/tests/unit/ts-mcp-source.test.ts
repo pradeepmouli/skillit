@@ -76,6 +76,28 @@ describe('TypeScriptMcpRefineSource.applyFixes', () => {
     expect(updated).toContain("useWhen: 'Reading a file'");
   });
 
+  it('skips a tool name that appears in multiple source files', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'ts-mcp-src-'));
+    const fileA = join(tmpDir, 'server-a.ts');
+    const fileB = join(tmpDir, 'server-b.ts');
+    const toolDecl = `server.tool(\n  'shared_tool',\n  { description: 'dup' },\n  schema,\n  handler\n);\n`;
+    await writeFile(fileA, toolDecl);
+    await writeFile(fileB, toolDecl);
+
+    const source = new TypeScriptMcpRefineSource({
+      transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
+      sourceGlob: join(tmpDir, '*.ts')
+    });
+
+    await source.applyFixes([{ toolName: 'shared_tool', tag: 'useWhen', value: 'x' }]);
+
+    // Neither file should be modified — the tool is ambiguous
+    const contentsA = await readFile(fileA, 'utf8');
+    const contentsB = await readFile(fileB, 'utf8');
+    expect(contentsA).toBe(toolDecl);
+    expect(contentsB).toBe(toolDecl);
+  });
+
   it('does not modify files when tool not found', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'ts-mcp-src-'));
     const sourceFile = join(tmpDir, 'server.ts');

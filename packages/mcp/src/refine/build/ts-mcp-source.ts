@@ -31,12 +31,23 @@ export class TypeScriptMcpRefineSource implements RefineSource {
     }
 
     const allTools = new Map<string, { file: string; line: number }>();
+    const seenNames = new Set<string>();
     const allWarnings: string[] = [];
 
     for (const file of sourceFiles) {
       const source = await readFile(file, 'utf8');
       const { tools, warnings } = discoverTools(file, source);
-      for (const [name, loc] of tools) allTools.set(name, loc);
+      for (const [name, loc] of tools) {
+        if (seenNames.has(name)) {
+          allWarnings.push(
+            `tool '${name}' found in multiple source files; skipping to avoid ambiguity.`
+          );
+          allTools.delete(name);
+        } else {
+          seenNames.add(name);
+          allTools.set(name, loc);
+        }
+      }
       allWarnings.push(...warnings);
     }
 
