@@ -160,7 +160,7 @@ function readToolMetadata(tool: McpToolListEntry): {
 
   for (const key of ['useWhen', 'avoidWhen', 'pitfalls', 'remarks', 'example'] as const) {
     const val = (meta as Record<string, unknown>)[key];
-    if (typeof val !== 'string' || val.length === 0) continue; // silently skip non-strings and empty strings
+    if (typeof val !== 'string' || !val.trim()) continue;
     tags[key] = val;
     toSkills[key] = [val];
   }
@@ -173,13 +173,6 @@ function readToolMetadata(tool: McpToolListEntry): {
     tags,
     ...(Object.keys(toSkills).length > 0 ? { mcpMetadata: { toSkills } } : {})
   };
-}
-
-/** Return a human-friendly type label for diagnostic messages. */
-function typeOfValue(v: unknown): string {
-  if (v === null) return 'null';
-  if (Array.isArray(v)) return 'array';
-  return typeof v;
 }
 
 /**
