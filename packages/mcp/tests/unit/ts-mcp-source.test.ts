@@ -1,0 +1,61 @@
+import { TypeScriptMcpRefineSource } from '../../src/refine/build/ts-mcp-source.js';
+import { writeFile, readFile, mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+
+// Mock extractMcpSkill so we don't need a live server for the unit test
+vi.mock('../../src/extract.js', () => ({
+  extractMcpSkill: vi.fn().mockResolvedValue({
+    name: 'fixture',
+    functions: [],
+    packageDescription: '',
+    examples: []
+  })
+}));
+
+let tmpDir: string;
+
+afterEach(async () => {
+  if (tmpDir) await rm(tmpDir, { recursive: true, force: true });
+});
+
+describe('TypeScriptMcpRefineSource.applyFixes', () => {
+  it('writes _meta.useWhen into a matching source file', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'ts-mcp-src-'));
+    const sourceFile = join(tmpDir, 'server.ts');
+    await writeFile(
+      sourceFile,
+      `server.tool(\n  'list_dir',\n  { description: 'Lists a directory' },\n  schema,\n  handler\n);\n`
+    );
+
+    const source = new TypeScriptMcpRefineSource({
+      transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
+      sourceGlob: join(tmpDir, '*.ts')
+    });
+
+    await source.applyFixes([
+      { toolName: 'list_dir', tag: 'useWhen', value: 'When listing directory contents' }
+    ]);
+
+    const updated = await readFile(sourceFile, 'utf8');
+    expect(updated).toContain("useWhen: 'When listing directory contents'");
+  });
+
+  it('does not modify files when tool not found', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'ts-mcp-src-'));
+    const sourceFile = join(tmpDir, 'server.ts');
+    const original = `server.tool(\n  'other_tool',\n  { description: 'other' },\n  schema,\n  handler\n);\n`;
+    await writeFile(sourceFile, original);
+
+    const source = new TypeScriptMcpRefineSource({
+      transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
+      sourceGlob: join(tmpDir, '*.ts')
+    });
+
+    await source.applyFixes([{ toolName: 'missing_tool', tag: 'useWhen', value: 'x' }]);
+
+    const unchanged = await readFile(sourceFile, 'utf8');
+    expect(unchanged).toBe(original);
+  });
+});
