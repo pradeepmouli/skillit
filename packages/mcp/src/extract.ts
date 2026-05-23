@@ -498,16 +498,16 @@ function collectMetaEnrichment(
   const pitfalls: string[] = [];
 
   const serverUseWhen = serverMeta['useWhen'];
-  if (Array.isArray(serverUseWhen)) {
-    for (const v of serverUseWhen) if (typeof v === 'string' && v.length > 0) useWhen.push(v);
+  if (typeof serverUseWhen === 'string' && serverUseWhen.trim()) {
+    useWhen.push(serverUseWhen);
   }
   const serverAvoidWhen = serverMeta['avoidWhen'];
-  if (Array.isArray(serverAvoidWhen)) {
-    for (const v of serverAvoidWhen) if (typeof v === 'string' && v.length > 0) avoidWhen.push(v);
+  if (typeof serverAvoidWhen === 'string' && serverAvoidWhen.trim()) {
+    avoidWhen.push(serverAvoidWhen);
   }
   const serverPitfalls = serverMeta['pitfalls'];
-  if (Array.isArray(serverPitfalls)) {
-    for (const v of serverPitfalls) if (typeof v === 'string' && v.length > 0) pitfalls.push(v);
+  if (typeof serverPitfalls === 'string' && serverPitfalls.trim()) {
+    pitfalls.push(serverPitfalls);
   }
 
   // Per-tool aggregation. Typed MCP metadata is preferred; tags stay as a
@@ -542,16 +542,14 @@ function pushLines(
 }
 
 /**
- * Pluck `_meta.toSkills` off the SDK's `serverInfo` (Implementation), guarding
+ * Pluck `_meta` off the SDK's `serverInfo` (Implementation), guarding
  * each layer against malformed shapes. Returns an empty object on absence.
  */
 function readServerMetaToSkills(serverInfo: unknown): Record<string, unknown> {
   if (typeof serverInfo !== 'object' || serverInfo === null) return {};
   const meta = (serverInfo as { _meta?: unknown })._meta;
   if (typeof meta !== 'object' || meta === null) return {};
-  const toSkills = (meta as { toSkills?: unknown }).toSkills;
-  if (typeof toSkills !== 'object' || toSkills === null || Array.isArray(toSkills)) return {};
-  return toSkills as Record<string, unknown>;
+  return meta as Record<string, unknown>;
 }
 
 /**

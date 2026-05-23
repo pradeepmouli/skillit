@@ -1,13 +1,14 @@
-// Unit tests for `_meta.toSkills` annotation enrichment (Phase 9 / US7 — T102).
+// Unit tests for `_meta` annotation enrichment (Phase 9 / US7 — T102).
 //
 // Two-layer coverage:
 //
-//  1. `listTools` (tools.ts) — reads each tool's `_meta.toSkills.{useWhen,
-//     avoidWhen, pitfalls}` and projects it onto `ExtractedFunction.tags`.
-//     Tested with the same mock-client pattern used in `introspect-tools.test.ts`.
+//  1. `listTools` (tools.ts) — reads each tool's flat `_meta.{useWhen,
+//     avoidWhen, pitfalls}` string fields and projects them onto
+//     `ExtractedFunction.tags`. Tested with the same mock-client pattern
+//     used in `introspect-tools.test.ts`.
 //
-//  2. `extractMcpSkill` (extract.ts) — reads `serverInfo._meta.toSkills` and
-//     aggregates per-tool meta into the skill-level arrays. Tested via the
+//  2. `extractMcpSkill` (extract.ts) — reads `serverInfo._meta` flat strings
+//     and aggregates per-tool meta into the skill-level arrays. Tested via the
 //     same SDK-mock pattern used in `extract.test.ts` so we can drive
 //     getServerVersion() with arbitrary `_meta` payloads.
 //
@@ -254,10 +255,8 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
-        toSkills: {
-          remarks: 'This server is best for X.',
-          packageDescription: 'Tools for X management.'
-        }
+        remarks: 'This server is best for X.',
+        packageDescription: 'Tools for X management.'
       }
     };
 
@@ -271,9 +270,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
-        toSkills: {
-          useWhen: ['Server-wide trigger A', 'Server-wide trigger B']
-        }
+        useWhen: 'Server-wide trigger A'
       }
     };
     state.listToolsImpl = async () => ({
@@ -282,7 +279,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
           name: 't1',
           description: '',
           inputSchema: { type: 'object' },
-          _meta: { toSkills: { useWhen: ['Tool-specific trigger C'] } }
+          _meta: { useWhen: 'Tool-specific trigger C' }
         },
         {
           name: 't2',
@@ -293,11 +290,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     });
 
     const skill = await extractMcpSkill(baseStdio);
-    expect(skill.useWhen).toEqual([
-      'Server-wide trigger A',
-      'Server-wide trigger B',
-      'Tool-specific trigger C'
-    ]);
+    expect(skill.useWhen).toEqual(['Server-wide trigger A', 'Tool-specific trigger C']);
   });
 
   it('aggregates avoidWhen and pitfalls onto skill arrays', async () => {
@@ -305,10 +298,8 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
-        toSkills: {
-          avoidWhen: ['Avoid scenario X'],
-          pitfalls: ['NEVER pass null']
-        }
+        avoidWhen: 'Avoid scenario X',
+        pitfalls: 'NEVER pass null'
       }
     };
     state.listToolsImpl = async () => ({
@@ -318,10 +309,8 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
           description: '',
           inputSchema: { type: 'object' },
           _meta: {
-            toSkills: {
-              avoidWhen: ['Avoid Y for tool t1'],
-              pitfalls: ['NEVER pass empty array to t1']
-            }
+            avoidWhen: 'Avoid Y for tool t1',
+            pitfalls: 'NEVER pass empty array to t1'
           }
         }
       ]
@@ -332,11 +321,11 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     expect(skill.pitfalls).toEqual(['NEVER pass null', 'NEVER pass empty array to t1']);
   });
 
-  it('leaves IR fields unset when _meta.toSkills is empty', async () => {
+  it('leaves IR fields unset when _meta is empty', async () => {
     state.serverInfo = {
       name: 'meta-test',
       version: '1.0.0',
-      _meta: { toSkills: {} }
+      _meta: {}
     };
 
     const skill = await extractMcpSkill(baseStdio);
@@ -360,11 +349,11 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     expect(skill.remarks).toBeUndefined();
   });
 
-  it('silently rejects malformed server-level useWhen (non-array)', async () => {
+  it('silently rejects non-string server-level useWhen', async () => {
     state.serverInfo = {
       name: 'meta-test',
       version: '1.0.0',
-      _meta: { toSkills: { useWhen: 'should-be-array' } }
+      _meta: { useWhen: 42 as unknown as string }
     };
 
     const skill = await extractMcpSkill(baseStdio);

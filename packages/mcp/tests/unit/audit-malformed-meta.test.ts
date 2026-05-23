@@ -1,20 +1,14 @@
 /**
- * Unit tests (T046, US6) for the M3 sub-rule that surfaces malformed
- * `_meta.toSkills` annotations as warning-severity audit issues
- * (FR-H010 / data-model.md §8).
+ * Unit tests for the M3 audit rule behavior with flat `_meta` format.
  *
  * Two layers of coverage:
  *
- *  1. **Audit layer** — given an `ExtractedSkill` whose function carries the
- *     `tags.metaToSkillsMalformed` sentinel, `runMcpAudit` (and the M3 rule
- *     directly) emit a warning per offending tool with a `/malformed _meta\.toSkills/`
- *     message and `location.tool`.
+ *  1. **Audit layer** — verifies that `runM3` does NOT emit malformed-meta
+ *     warnings in the new flat format (no malformed detection in rule-m3).
  *
- *  2. **Introspector layer** — given an MCP server returning a tool with a
- *     wrong-shape `_meta.toSkills`, `listTools` writes the sentinel onto
- *     `ExtractedFunction.tags.metaToSkillsMalformed`. This is the contract
- *     the audit layer relies on; covered with the same mock-client pattern
- *     used elsewhere in `tests/unit/`.
+ *  2. **Introspector layer** — given an MCP server returning a tool with flat
+ *     `_meta` string fields, `listTools` reads them correctly without setting
+ *     a `metaToSkillsMalformed` sentinel.
  */
 
 import type { ExtractedFunction, ExtractedSkill } from '@to-skills/core';
@@ -27,7 +21,6 @@ import type {
 } from '../../src/introspect/client-types.js';
 import { listTools } from '../../src/introspect/tools.js';
 import { runM3 } from '../../src/audit/rule-m3.js';
-import { runMcpAudit } from '../../src/audit/rules.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -83,34 +76,7 @@ function makeClient(tools: McpToolListEntry[]): McpClient {
 // Audit layer
 // ---------------------------------------------------------------------------
 
-describe('audit rule M3 — malformed _meta.toSkills sub-rule (US6)', () => {
-  it('emits a warning when a tool has tags.metaToSkillsMalformed set', () => {
-    const sk = skill({
-      functions: [
-        fn({
-          name: 'badTool',
-          tags: {
-            useWhen: 'When testing',
-            metaToSkillsMalformed: 'useWhen must be string[], got string'
-          }
-        })
-      ]
-    });
-
-    const issues = runM3(sk);
-    const malformed = issues.filter((i) => /malformed _meta\.toSkills/.test(i.message));
-    expect(malformed).toHaveLength(1);
-    expect(malformed[0]).toMatchObject({
-      code: 'M3',
-      severity: 'warning',
-      location: { tool: 'badTool' }
-    });
-    expect(malformed[0]!.message).toContain('useWhen must be string[], got string');
-    expect(malformed[0]!.suggestion).toBe(
-      'Change to array: _meta.toSkills.useWhen = ["[scenario]"]'
-    );
-  });
-
+describe('audit rule M3 — malformed-meta warnings (flat format)', () => {
   it('emits no malformed-meta warning when the sentinel is absent', () => {
     const sk = skill({
       functions: [fn({ name: 'cleanTool', tags: { useWhen: 'When testing' } })]
@@ -120,57 +86,24 @@ describe('audit rule M3 — malformed _meta.toSkills sub-rule (US6)', () => {
     expect(issues.some((i) => /malformed _meta\.toSkills/.test(i.message))).toBe(false);
   });
 
-  it('emits one warning per malformed tool when multiple tools are affected', () => {
+  it('emits no malformed-meta warning even when metaToSkillsMalformed tag is present (flat format drops sentinel)', () => {
+    // In the new flat format, the introspector no longer plants a malformed
+    // sentinel — bad values are silently skipped. This test confirms the audit
+    // rule does not accidentally emit a warning if a legacy tag exists.
     const sk = skill({
       functions: [
         fn({
-          name: 'badA',
+          name: 'legacyTool',
           tags: {
             useWhen: 'When testing',
-            metaToSkillsMalformed: 'useWhen must be string[], got number'
-          }
-        }),
-        fn({
-          name: 'badB',
-          tags: {
-            useWhen: 'When testing',
-            metaToSkillsMalformed: 'avoidWhen contains non-string entries'
-          }
-        }),
-        fn({ name: 'okC', tags: { useWhen: 'When testing' } })
-      ]
-    });
-
-    const issues = runM3(sk);
-    const malformed = issues.filter((i) => /malformed _meta\.toSkills/.test(i.message));
-    expect(malformed).toHaveLength(2);
-    expect(malformed.map((i) => i.location?.tool)).toEqual(['badA', 'badB']);
-    expect(malformed[0]!.suggestion).toMatch(/useWhen|Fix _meta\.toSkills shape/);
-    expect(malformed[1]!.suggestion).toMatch(/Fix _meta\.toSkills shape/);
-  });
-
-  it('flows through runMcpAudit with the expected sort order (warnings)', () => {
-    const sk = skill({
-      functions: [
-        fn({
-          name: 'alpha',
-          tags: {
-            useWhen: 'When testing',
-            metaToSkillsMalformed: 'pitfalls contains empty strings'
+            metaToSkillsMalformed: 'legacy sentinel from old format'
           }
         })
       ]
     });
 
-    const issues = runMcpAudit(sk);
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatchObject({
-      code: 'M3',
-      severity: 'warning',
-      location: { tool: 'alpha' }
-    });
-    expect(issues[0]!.message).toMatch(/malformed _meta\.toSkills/);
-    expect(issues[0]!.suggestion).toMatch(/Fix _meta\.toSkills shape/);
+    const issues = runM3(sk);
+    expect(issues.some((i) => /malformed _meta\.toSkills/.test(i.message))).toBe(false);
   });
 });
 
