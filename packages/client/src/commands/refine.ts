@@ -24,7 +24,7 @@ export function buildRefineCommand(): Command {
     .description('Autonomously improve a skill via the audit→draft→review loop')
     .requiredOption('--mcp <path>', 'path to mcp.json or MCP config file')
     .option('--server <name>', 'server name within the config (defaults to first enabled)')
-    .option('--overlay <path>', 'path to write the _meta.toSkills overlay JSON')
+    .option('--overlay <path>', 'path to overlay JSON file (runtime mode only)')
     .option('--mode <mode>', 'refine mode: build or runtime (auto-detected if omitted)')
     .option('--source-glob <glob>', 'glob pattern for TypeScript source files (build mode)')
     .option('--max-iterations <n>', 'iteration cap (default 5)', '5')

@@ -48,4 +48,26 @@ describe('discoverTools', () => {
     expect(result.tools.size).toBe(0);
     expect(result.warnings).toHaveLength(0);
   });
+
+  it('ignores server.tool() calls inside line comments', () => {
+    const src = `
+// server.tool('commented_out', { description: 'nope' }, schema, handler);
+server.tool('real_tool', { description: 'yes' }, schema, handler);
+`;
+    const result = discoverTools('test.ts', src);
+    expect(result.tools.has('commented_out')).toBe(false);
+    expect(result.tools.has('real_tool')).toBe(true);
+  });
+
+  it('ignores server.tool() calls inside block comments', () => {
+    const src = `
+/*
+ * server.tool('in_block', { description: 'ignored' }, schema, handler);
+ */
+server.tool('real_tool', { description: 'yes' }, schema, handler);
+`;
+    const result = discoverTools('test.ts', src);
+    expect(result.tools.has('in_block')).toBe(false);
+    expect(result.tools.has('real_tool')).toBe(true);
+  });
 });

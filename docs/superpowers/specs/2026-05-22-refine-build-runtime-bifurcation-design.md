@@ -25,7 +25,7 @@ distinction.
 
 1. Make build-time vs runtime a first-class concept across architecture, UX, and
    loop dispatch.
-2. Add a TypeScript MCP build path that writes `_meta.toSkills` annotations
+2. Add a TypeScript MCP build path that writes flat `_meta` annotations
    directly into tool definition source files.
 3. Single CLI entry point with smart context detection and an explicit override.
 4. Move shared JSDoc editing utility to `@to-skills/core` for use by all packages.
@@ -171,14 +171,14 @@ internal IR is unchanged; only the external wire/source format changes.
 
 ### `ts-mcp-source.ts` — `TypeScriptMcpRefineSource implements RefineSource`
 
-- `extract()` — spawns the server, calls `tools/list`, merges with any existing
-  `_meta.toSkills` already in the response (no overlay file in build mode).
+- `extract()` — spawns the server, calls `tools/list`, reads flat `_meta.*` fields
+  from the response (no overlay file in build mode).
 - `applyFixes(fixes)` — runs tool discovery, applies each fix via `meta-edit.ts`,
   writes modified files back. Reports which files were changed.
 - `auditContext()` — same as `McpRefineSource`.
 
 The loop closes naturally: write to source → server re-reads source at next
-start → `tools/list` returns updated `_meta.toSkills` → `extract()` picks it up.
+start → `tools/list` returns updated `_meta.*` → `extract()` picks it up.
 
 ---
 
@@ -231,8 +231,9 @@ package without creating a cross-package dependency on `@to-skills/typedoc`.
 - `tool-discovery.ts` — unit tests with fixture TypeScript source strings
   covering: positional pattern found, tool not found (graceful skip), multiple
   tools in one file.
-- `meta-edit.ts` — unit tests: insert new `_meta.toSkills`, update existing field,
-  add new field to existing `_meta.toSkills`, no-op when value unchanged.
+- `meta-edit.ts` — unit tests: insert new `_meta` block, update existing field,
+  add new field to existing `_meta`, no-op when tool not found, safe bail-out on
+  non-quoted existing values, no false match on `_metadata` property.
 - `detectRefineMode` — unit tests with temp directories: build signal only,
   runtime signal only, both signals, neither.
 - Integration: `TypeScriptMcpRefineSource` with a minimal fixture MCP server

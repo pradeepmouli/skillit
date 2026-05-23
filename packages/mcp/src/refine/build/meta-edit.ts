@@ -152,22 +152,24 @@ export function applyMetaEdit(
     while (valueStart < source.length && /\s/.test(source[valueStart]!)) valueStart++;
     let valueEnd = valueStart;
 
-    if (source[valueEnd] === "'" || source[valueEnd] === '"') {
-      const quoteChar = source[valueEnd]!;
-      valueEnd++; // skip opening quote
-      let innerEscaped = false;
-      while (valueEnd < source.length) {
-        const ch = source[valueEnd]!;
-        if (innerEscaped) {
-          innerEscaped = false;
-        } else if (ch === '\\') {
-          innerEscaped = true;
-        } else if (ch === quoteChar) {
-          valueEnd++; // include closing quote
-          break;
-        }
-        valueEnd++;
+    // Only replace quoted string literals. Non-quoted values (identifiers, template
+    // literals, computed expressions) are left untouched to avoid corrupting source.
+    if (source[valueEnd] !== "'" && source[valueEnd] !== '"') return source;
+
+    const quoteChar = source[valueEnd]!;
+    valueEnd++; // skip opening quote
+    let innerEscaped = false;
+    while (valueEnd < source.length) {
+      const ch = source[valueEnd]!;
+      if (innerEscaped) {
+        innerEscaped = false;
+      } else if (ch === '\\') {
+        innerEscaped = true;
+      } else if (ch === quoteChar) {
+        valueEnd++; // include closing quote
+        break;
       }
+      valueEnd++;
     }
 
     return source.slice(0, valueStart) + `'${escapedValue}'` + source.slice(valueEnd);

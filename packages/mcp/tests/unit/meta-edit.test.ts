@@ -42,6 +42,18 @@ describe('applyMetaEdit', () => {
     expect(result).toBe(BASE);
   });
 
+  it('returns source unchanged when existing tag value is not a quoted string', () => {
+    const src = `server.tool(
+  'list_dir',
+  { description: 'Lists', _meta: { useWhen: someVariable } },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'New value');
+    // Must not corrupt the source — bail out unchanged
+    expect(result).toBe(src);
+  });
+
   it('does not treat _metadata as _meta when inserting', () => {
     const src = `server.tool(
   'list_dir',
