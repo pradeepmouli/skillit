@@ -117,9 +117,6 @@ export function applyMetaEdit(
 
   if (!metaMatch || metaMatch.index === undefined) {
     // No _meta block — insert before the options closing }
-    const insertion = `\n    _meta: { ${tag}: '${escapedValue}' }`;
-    // Find the last character before the closing } (handle trailing whitespace/newlines)
-    const beforeClose = source.slice(optionsOpenIdx, optionsCloseIdx);
     // Determine indentation from the options object context
     const closeLineMatch = source.slice(0, optionsCloseIdx).match(/[^\n]*$/);
     const closeLinePrefix = closeLineMatch ? closeLineMatch[0] : '';
