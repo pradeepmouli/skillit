@@ -1,5 +1,5 @@
-// packages/typedoc/src/refine/jsdoc-edit.ts
-import type { RefineTag } from '@to-skills/core';
+// packages/core/src/refine/jsdoc-edit.ts
+import type { RefineTag } from './types.js';
 
 // Matches `export function <name>` or `export const <name>` (arrow fns, etc.)
 function exportRe(name: string): RegExp {
