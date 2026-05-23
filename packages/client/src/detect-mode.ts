@@ -2,8 +2,6 @@ import { access, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-const MCP_SDK_PACKAGES = ['@modelcontextprotocol/sdk', 'fastmcp'];
-
 async function hasMcpSdkDep(cwd: string): Promise<boolean> {
   try {
     const raw = await readFile(join(cwd, 'package.json'), 'utf8');
@@ -12,7 +10,9 @@ async function hasMcpSdkDep(cwd: string): Promise<boolean> {
       ...(pkg['dependencies'] as Record<string, string> | undefined),
       ...(pkg['devDependencies'] as Record<string, string> | undefined)
     };
-    return MCP_SDK_PACKAGES.some((name) => name in deps);
+    return Object.keys(deps).some(
+      (dep) => dep.startsWith('@modelcontextprotocol/') || dep === 'fastmcp'
+    );
   } catch {
     return false;
   }

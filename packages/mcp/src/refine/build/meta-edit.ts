@@ -122,7 +122,11 @@ export function applyMetaEdit(
     const closeLinePrefix = closeLineMatch ? closeLineMatch[0] : '';
     const indent = closeLinePrefix.match(/^\s*/)?.[0] ?? '';
 
-    const newInsertion = `\n${indent}  _meta: { ${tag}: '${escapedValue}' }`;
+    // Add a comma only when the object already has properties (non-empty body)
+    const existingBody = source.slice(optionsOpenIdx + 1, optionsCloseIdx).trimEnd();
+    const comma = existingBody.length > 0 && !existingBody.endsWith(',') ? ',' : '';
+
+    const newInsertion = `${comma}\n${indent}  _meta: { ${tag}: '${escapedValue}' }`;
     return (
       source.slice(0, optionsCloseIdx) +
       newInsertion +

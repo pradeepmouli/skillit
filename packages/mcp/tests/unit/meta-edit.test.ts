@@ -25,6 +25,20 @@ describe('applyMetaEdit', () => {
     expect(result).toContain("useWhen: 'When listing dir contents'");
   });
 
+  it('inserts a comma before _meta when the options object has existing properties', () => {
+    const result = applyMetaEdit(BASE, 'list_dir', 1, 'useWhen', 'When listing dir contents');
+    // The comma must appear between 'description' and '_meta'
+    expect(result).toMatch(/description:[^}]+,\s*\n\s*_meta:/);
+  });
+
+  it('does not insert a comma when the options object is empty', () => {
+    const src = `server.tool('empty_tool', {}, schema, handler);`;
+    const result = applyMetaEdit(src, 'empty_tool', 1, 'useWhen', 'x');
+    expect(result).toContain("_meta: { useWhen: 'x' }");
+    // No leading comma inside the braces
+    expect(result).not.toMatch(/\{,/);
+  });
+
   it('updates an existing _meta field', () => {
     const result = applyMetaEdit(WITH_META, 'list_dir', 1, 'useWhen', 'New value');
     expect(result).toContain("useWhen: 'New value'");

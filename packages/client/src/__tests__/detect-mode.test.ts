@@ -48,4 +48,13 @@ describe('detectRefineMode', () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
     expect(await detectRefineMode(tmpDir)).toBe('ambiguous');
   });
+
+  it('returns build when package.json has a @modelcontextprotocol/server-* package', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ dependencies: { '@modelcontextprotocol/server-node': '^1.0.0' } })
+    );
+    expect(await detectRefineMode(tmpDir)).toBe('build');
+  });
 });
