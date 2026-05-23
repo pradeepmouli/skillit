@@ -366,7 +366,7 @@ function buildImprovements(
       suggestions.push({
         gain: 8,
         imp: {
-          suggestion: 'Add @never to key exports (+8 on D3)',
+          suggestion: 'Add @pitfalls (never-do) annotation to key exports (+8 on D3)',
           points: 8,
           dimension: 'D3',
           targets: targets && targets.length > 0 ? targets : undefined
