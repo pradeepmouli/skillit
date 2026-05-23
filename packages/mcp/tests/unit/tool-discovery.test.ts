@@ -70,4 +70,21 @@ server.tool('real_tool', { description: 'yes' }, schema, handler);
     expect(result.tools.has('in_block')).toBe(false);
     expect(result.tools.has('real_tool')).toBe(true);
   });
+
+  it('ignores server.tool() calls inside template literals (fixture strings)', () => {
+    const src = `
+const fixture = \`server.tool('fixture_tool', { description: 'fake' }, schema, handler);\`;
+server.tool('real_tool', { description: 'yes' }, schema, handler);
+`;
+    const result = discoverTools('test.ts', src);
+    expect(result.tools.has('fixture_tool')).toBe(false);
+    expect(result.tools.has('real_tool')).toBe(true);
+  });
+
+  it('detects options object when a block comment appears between name and options', () => {
+    const src = `server.tool('commented_gap', /* opts */ { description: 'x' }, schema, handler);`;
+    const result = discoverTools('test.ts', src);
+    expect(result.tools.has('commented_gap')).toBe(true);
+    expect(result.warnings).toHaveLength(0);
+  });
 });

@@ -217,6 +217,8 @@ export function applyMetaEdit(
   }
 
   // Tag does not exist in _meta — insert before the closing }
-  const insertText = `, ${tag}: '${escapedValue}'`;
+  const metaBody = source.slice(metaBraceOpenIdx + 1, metaBraceCloseIdx).trimEnd();
+  const prefix = metaBody.length > 0 ? ', ' : ' ';
+  const insertText = `${prefix}${tag}: '${escapedValue}'`;
   return source.slice(0, metaBraceCloseIdx) + insertText + source.slice(metaBraceCloseIdx);
 }

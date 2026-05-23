@@ -15,14 +15,15 @@ const TOOL_CALL_RE = /server\.tool\(\s*['"]([^'"]+)['"]\s*,\s*/g;
 const OPTIONS_OBJ_RE = /^\{/;
 
 /**
- * Replace line and block comment content with same-length spaces so that
- * match indices remain valid for line-number computation. Newlines inside
- * block comments are preserved to keep line counts accurate. String literal
- * contents are intentionally NOT stripped — tool names live inside strings.
+ * Replace comment and template-literal content with spaces so that match
+ * indices remain valid for line-number computation. Newlines are preserved to
+ * keep line counts accurate. Single- and double-quoted string contents are
+ * intentionally kept — tool names live inside those strings.
  *
- * Limitation: a `//` inside a string literal triggers erroneous stripping of
- * the rest of that line. This edge case is rare enough in practice (the regex
- * already requires the specific pattern `server.tool(`) that it's acceptable.
+ * Template literal bodies are blanked to prevent fixture/test strings of the
+ * form `server.tool('fake', ...)` from being treated as real declarations.
+ * The `${...}` expression depth is tracked so the backtick that closes the
+ * literal is identified correctly even when expressions contain braces.
  */
 function sanitizeComments(source: string): string {
   let out = '';
@@ -41,6 +42,43 @@ function sanitizeComments(source: string): string {
       }
       out += '  ';
       i += 2;
+    } else if (source[i] === '`') {
+      out += '`';
+      i++;
+      let exprDepth = 0;
+      while (i < source.length) {
+        const ch = source[i]!;
+        if (ch === '\\') {
+          out += '  ';
+          i += 2;
+          continue;
+        }
+        if (exprDepth === 0 && ch === '`') {
+          out += '`';
+          i++;
+          break;
+        }
+        if (ch === '$' && source[i + 1] === '{') {
+          exprDepth++;
+          out += '${';
+          i += 2;
+          continue;
+        }
+        if (exprDepth > 0 && ch === '{') {
+          exprDepth++;
+          out += ' ';
+          i++;
+          continue;
+        }
+        if (exprDepth > 0 && ch === '}') {
+          exprDepth--;
+          out += exprDepth === 0 ? '}' : ' ';
+          i++;
+          continue;
+        }
+        out += ch === '\n' ? '\n' : ' ';
+        i++;
+      }
     } else {
       out += source[i]!;
       i++;
@@ -56,7 +94,7 @@ export function discoverTools(file: string, source: string): DiscoveryResult {
 
   for (const match of sanitized.matchAll(TOOL_CALL_RE)) {
     const name = match[1]!;
-    const afterComma = source.slice(match.index! + match[0].length).trimStart();
+    const afterComma = sanitized.slice(match.index! + match[0].length).trimStart();
 
     if (!OPTIONS_OBJ_RE.test(afterComma)) {
       warnings.push(

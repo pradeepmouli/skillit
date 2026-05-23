@@ -102,4 +102,17 @@ describe('applyMetaEdit', () => {
     // The space after 'useWhen:' must be preserved
     expect(result).toContain("useWhen: 'New value'");
   });
+
+  it('inserts into an empty _meta object without a leading comma', () => {
+    const src = `server.tool(
+  'list_dir',
+  { description: 'Lists', _meta: {} },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');
+    expect(result).toContain("useWhen: 'When listing'");
+    // Must not produce invalid syntax like {, useWhen:
+    expect(result).not.toMatch(/\{,/);
+  });
 });
