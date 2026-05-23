@@ -41,4 +41,25 @@ describe('applyMetaEdit', () => {
     const result = applyMetaEdit(BASE, 'missing_tool', 1, 'useWhen', 'x');
     expect(result).toBe(BASE);
   });
+
+  it('does not treat _metadata as _meta when inserting', () => {
+    const src = `server.tool(
+  'list_dir',
+  { description: 'Lists', _metadata: { foo: 'bar' } },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');
+    // Should add a proper _meta block, not treat _metadata as _meta
+    expect(result).toContain('_meta:');
+    expect(result).toContain("useWhen: 'When listing'");
+    // _metadata must remain untouched
+    expect(result).toContain("_metadata: { foo: 'bar' }");
+  });
+
+  it('preserves whitespace between : and value when updating an existing tag', () => {
+    const result = applyMetaEdit(WITH_META, 'list_dir', 1, 'useWhen', 'New value');
+    // The space after 'useWhen:' must be preserved
+    expect(result).toContain("useWhen: 'New value'");
+  });
 });

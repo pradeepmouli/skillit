@@ -112,8 +112,8 @@ export function applyMetaEdit(
   // Escape the value for use in a single-quoted JS string (escape backslashes and single quotes)
   const escapedValue = value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-  // Check if _meta exists inside the options object
-  const metaMatch = optionsContent.match(/_meta\s*:\s*\{/);
+  // Check if _meta exists inside the options object (word-boundary prevents matching _metadata)
+  const metaMatch = optionsContent.match(/_meta\b\s*:\s*\{/);
 
   if (!metaMatch || metaMatch.index === undefined) {
     // No _meta block — insert before the options closing }
@@ -147,12 +147,10 @@ export function applyMetaEdit(
   if (tagMatch && tagMatch.index !== undefined) {
     // Tag exists — find and replace its value
     const tagAbsoluteIdx = metaBraceOpenIdx + tagMatch.index + tagMatch[0].length;
-    // The value starts at tagAbsoluteIdx; find where it ends (string literal)
-    const valueStart = tagAbsoluteIdx;
+    // Skip leading whitespace so we replace only the string literal, not the space after ':'
+    let valueStart = tagAbsoluteIdx;
+    while (valueStart < source.length && /\s/.test(source[valueStart]!)) valueStart++;
     let valueEnd = valueStart;
-
-    // Skip leading whitespace
-    while (valueEnd < source.length && /\s/.test(source[valueEnd]!)) valueEnd++;
 
     if (source[valueEnd] === "'" || source[valueEnd] === '"') {
       const quoteChar = source[valueEnd]!;

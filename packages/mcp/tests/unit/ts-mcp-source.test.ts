@@ -42,6 +42,40 @@ describe('TypeScriptMcpRefineSource.applyFixes', () => {
     expect(updated).toContain("useWhen: 'When listing directory contents'");
   });
 
+  it('applies two fixes targeting the same file correctly', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'ts-mcp-src-'));
+    const sourceFile = join(tmpDir, 'server.ts');
+    await writeFile(
+      sourceFile,
+      [
+        `server.tool(`,
+        `  'list_dir',`,
+        `  { description: 'Lists a directory' },`,
+        `  schema, handler`,
+        `);`,
+        `server.tool(`,
+        `  'read_file',`,
+        `  { description: 'Reads a file' },`,
+        `  schema, handler`,
+        `);`
+      ].join('\n') + '\n'
+    );
+
+    const source = new TypeScriptMcpRefineSource({
+      transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
+      sourceGlob: join(tmpDir, '*.ts')
+    });
+
+    await source.applyFixes([
+      { toolName: 'list_dir', tag: 'useWhen', value: 'Listing contents' },
+      { toolName: 'read_file', tag: 'useWhen', value: 'Reading a file' }
+    ]);
+
+    const updated = await readFile(sourceFile, 'utf8');
+    expect(updated).toContain("useWhen: 'Listing contents'");
+    expect(updated).toContain("useWhen: 'Reading a file'");
+  });
+
   it('does not modify files when tool not found', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'ts-mcp-src-'));
     const sourceFile = join(tmpDir, 'server.ts');
