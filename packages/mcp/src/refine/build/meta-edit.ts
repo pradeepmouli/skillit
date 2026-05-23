@@ -37,52 +37,89 @@ function findOptionsStart(source: string, toolName: string, hintLine: number): n
   return -1;
 }
 
-/**
- * Finds the index of the closing `}` that matches the opening `{` at `openIdx`.
- *
- * Tracks brace depth while skipping characters inside string literals.
- */
-function findMatchingClose(source: string, openIdx: number): number {
-  let depth = 0;
-  let inString = false;
-  let stringChar = '';
-  let escaped = false;
-
-  for (let i = openIdx; i < source.length; i++) {
-    const ch = source[i]!;
-
-    if (escaped) {
-      escaped = false;
+/** Skip past a single- or double-quoted string literal; returns index after closing quote. */
+function skipQuotedString(source: string, openIdx: number): number {
+  const q = source[openIdx]!;
+  let i = openIdx + 1;
+  while (i < source.length) {
+    if (source[i] === '\\') {
+      i += 2;
       continue;
     }
+    if (source[i] === q) return i + 1;
+    i++;
+  }
+  return source.length;
+}
 
-    if (ch === '\\' && inString) {
-      escaped = true;
+/** Skip past a template literal (backtick string), including `${...}` expressions. */
+function skipTemplateLiteral(source: string, openIdx: number): number {
+  let i = openIdx + 1; // past opening backtick
+  while (i < source.length) {
+    if (source[i] === '\\') {
+      i += 2;
       continue;
     }
-
-    if (inString) {
-      if (ch === stringChar) {
-        inString = false;
-        stringChar = '';
+    if (source[i] === '`') return i + 1; // past closing backtick
+    if (source[i] === '$' && source[i + 1] === '{') {
+      i += 2; // skip '${'
+      let depth = 1;
+      while (i < source.length) {
+        if (source[i] === '\\') {
+          i += 2;
+          continue;
+        }
+        if (source[i] === '"' || source[i] === "'") {
+          i = skipQuotedString(source, i);
+          continue;
+        }
+        if (source[i] === '`') {
+          i = skipTemplateLiteral(source, i);
+          continue;
+        }
+        if (source[i] === '{') depth++;
+        else if (source[i] === '}') {
+          depth--;
+          if (depth === 0) {
+            i++;
+            break;
+          }
+        }
+        i++;
       }
       continue;
     }
+    i++;
+  }
+  return source.length;
+}
 
+/**
+ * Finds the index of the closing `}` that matches the opening `{` at `openIdx`.
+ *
+ * Tracks brace depth while skipping single-quoted, double-quoted, and backtick
+ * template literal strings (including `${...}` expressions inside templates).
+ */
+function findMatchingClose(source: string, openIdx: number): number {
+  let depth = 0;
+  let i = openIdx;
+  while (i < source.length) {
+    const ch = source[i]!;
     if (ch === '"' || ch === "'") {
-      inString = true;
-      stringChar = ch;
+      i = skipQuotedString(source, i);
       continue;
     }
-
-    if (ch === '{') {
-      depth++;
-    } else if (ch === '}') {
+    if (ch === '`') {
+      i = skipTemplateLiteral(source, i);
+      continue;
+    }
+    if (ch === '{') depth++;
+    else if (ch === '}') {
       depth--;
       if (depth === 0) return i;
     }
+    i++;
   }
-
   return -1;
 }
 

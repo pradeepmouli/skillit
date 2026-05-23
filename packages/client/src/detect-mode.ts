@@ -2,6 +2,17 @@ import { access, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 
+function isMcpServerDep(dep: string): boolean {
+  // Match server-implementation packages only. Excludes purely consumer-side
+  // packages such as @modelcontextprotocol/inspector or @modelcontextprotocol/client-*
+  // which do not imply the project has editable server source files.
+  return (
+    dep === '@modelcontextprotocol/sdk' ||
+    dep.startsWith('@modelcontextprotocol/server-') ||
+    dep === 'fastmcp'
+  );
+}
+
 async function hasMcpSdkDep(cwd: string): Promise<boolean> {
   try {
     const raw = await readFile(join(cwd, 'package.json'), 'utf8');
@@ -10,9 +21,7 @@ async function hasMcpSdkDep(cwd: string): Promise<boolean> {
       ...(pkg['dependencies'] as Record<string, string> | undefined),
       ...(pkg['devDependencies'] as Record<string, string> | undefined)
     };
-    return Object.keys(deps).some(
-      (dep) => dep.startsWith('@modelcontextprotocol/') || dep === 'fastmcp'
-    );
+    return Object.keys(deps).some(isMcpServerDep);
   } catch {
     return false;
   }

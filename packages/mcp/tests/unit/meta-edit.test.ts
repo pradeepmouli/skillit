@@ -68,6 +68,20 @@ describe('applyMetaEdit', () => {
     expect(result).toBe(src);
   });
 
+  it('handles template literals with ${...} in options without corrupting braces', () => {
+    const src = `server.tool(
+  'list_dir',
+  { description: \`Lists \${something} directory\` },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');
+    expect(result).toContain('_meta:');
+    expect(result).toContain("useWhen: 'When listing'");
+    // Original description must be untouched
+    expect(result).toContain('`Lists ${something} directory`');
+  });
+
   it('does not treat _metadata as _meta when inserting', () => {
     const src = `server.tool(
   'list_dir',

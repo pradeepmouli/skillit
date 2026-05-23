@@ -66,6 +66,16 @@ describe('detectRefineMode', () => {
     ).toBe('runtime');
   });
 
+  it('returns ambiguous (not build) when package.json only has @modelcontextprotocol/inspector', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ dependencies: { '@modelcontextprotocol/inspector': '^1.0.0' } })
+    );
+    // inspector is a consumer-only tool — should not signal build mode
+    expect(await detectRefineMode(tmpDir)).toBe('ambiguous');
+  });
+
   it('returns ambiguous when cwd has MCP SDK dep AND mcpConfigPath is a runtime config', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
     await writeFile(
