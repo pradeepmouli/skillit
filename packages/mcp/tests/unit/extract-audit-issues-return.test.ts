@@ -142,9 +142,7 @@ describe('extractMcpSkill — auditIssues return value (US3, FR-H006)', () => {
             required: ['email']
           },
           _meta: {
-            toSkills: {
-              useWhen: ['user wants to create a new user account']
-            }
+            useWhen: 'user wants to create a new user account'
           }
         }
       ]

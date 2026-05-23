@@ -46,29 +46,27 @@ function makeClient(tools: McpToolListEntry[]): McpClient {
 }
 
 describe('listTools — _meta.toSkills (per-tool)', () => {
-  it('projects useWhen/avoidWhen/pitfalls onto tags as newline-joined strings', async () => {
+  it('reads flat string fields from _meta and stores as single-element arrays', async () => {
     const client = makeClient([
       {
         name: 'search',
         description: 'Search',
         inputSchema: { type: 'object' },
         _meta: {
-          toSkills: {
-            useWhen: ['use this for X', 'use for Y'],
-            avoidWhen: ['avoid for Z'],
-            pitfalls: ['NEVER pass a regex with backreferences']
-          }
+          useWhen: 'use this for X',
+          avoidWhen: 'avoid for Z',
+          pitfalls: 'NEVER pass a regex with backreferences'
         }
       }
     ]);
 
     const fns = await listTools(client);
     expect(fns).toHaveLength(1);
-    expect(fns[0]!.tags.useWhen).toBe('use this for X\nuse for Y');
+    expect(fns[0]!.tags.useWhen).toBe('use this for X');
     expect(fns[0]!.tags.avoidWhen).toBe('avoid for Z');
     expect(fns[0]!.tags.pitfalls).toBe('NEVER pass a regex with backreferences');
     expect(fns[0]!.mcpMetadata?.toSkills).toEqual({
-      useWhen: ['use this for X', 'use for Y'],
+      useWhen: ['use this for X'],
       avoidWhen: ['avoid for Z'],
       pitfalls: ['NEVER pass a regex with backreferences']
     });
@@ -85,54 +83,45 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     expect(fns[0]!.tags).toEqual({});
   });
 
-  it('flags wrong-typed _meta.toSkills.useWhen (e.g. number) as malformed (US6)', async () => {
+  it('silently skips non-string values for known fields', async () => {
     const client = makeClient([
       {
         name: 'bad-shape',
         description: '',
         inputSchema: { type: 'object' },
-        // useWhen should be string[] — number gets the malformed sentinel
-        // (US6, FR-H010); see audit-malformed-meta.test.ts for full coverage.
-        _meta: { toSkills: { useWhen: 42 as unknown as string[] } }
+        // Non-string useWhen is silently skipped — no malformed sentinel in new format.
+        _meta: { useWhen: 42 as unknown as string }
       }
     ]);
 
     const fns = await listTools(client);
     expect(fns[0]!.tags.useWhen).toBeUndefined();
     expect(fns[0]!.tags.hasMetaToSkills).toBeUndefined();
-    expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen must be string[], got number');
-    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
-      'useWhen must be string[], got number'
-    );
+    expect(fns[0]!.tags['metaToSkillsMalformed']).toBeUndefined();
+    expect(fns[0]!.mcpMetadata?.toSkills).toBeUndefined();
   });
 
-  it('flags non-string entries in a useWhen array as malformed (US6)', async () => {
-    // Pre-US6 this case partially salvaged the valid entries; per FR-H010 the
-    // shape mismatch now surfaces a warning instead of silently filtering.
+  it('silently skips empty string values (treated as absent)', async () => {
     const client = makeClient([
       {
-        name: 'mixed',
+        name: 'empty-strings',
         description: '',
         inputSchema: { type: 'object' },
-        _meta: { toSkills: { useWhen: ['valid', 7 as unknown as string, '', 'also valid'] } }
+        _meta: { useWhen: '' }
       }
     ]);
 
     const fns = await listTools(client);
-    expect(fns[0]!.tags.useWhen).toBeUndefined();
-    expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen contains non-string entries');
-    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
-      'useWhen contains non-string entries'
-    );
+    expect(fns[0]!.tags).toEqual({});
   });
 
-  it('treats empty _meta.toSkills as no-op (no IR fields, no marker)', async () => {
+  it('treats _meta with no recognized fields as no-op (no IR fields, no marker)', async () => {
     const client = makeClient([
       {
         name: 'empty-meta',
         description: '',
         inputSchema: { type: 'object' },
-        _meta: { toSkills: {} }
+        _meta: {}
       }
     ]);
 
@@ -153,7 +142,7 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
           properties: { self: { $ref: '#/$defs/Self' } },
           $defs: { Self: { $ref: '#/$defs/Self' } }
         },
-        _meta: { toSkills: { useWhen: ['still annotated'] } }
+        _meta: { useWhen: 'still annotated' }
       }
     ]);
 
