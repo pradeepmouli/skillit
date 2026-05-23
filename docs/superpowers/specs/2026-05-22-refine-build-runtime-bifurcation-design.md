@@ -144,12 +144,10 @@ String-based editor (no full AST dependency). Given a source file, a tool name,
 and a `DraftedFix`, it:
 
 1. Finds the `server.tool('tool-name', ...)` call at the discovered line.
-2. Locates or creates the `_meta.toSkills` property in the options object
-   (second argument).
-3. Updates the specific field (`useWhen`, `avoidWhen`, `pitfalls`, `remarks`,
-   `example`).
+2. Locates or creates the `_meta` property in the options object (second argument).
+3. Sets the field directly on `_meta` — no `toSkills` nesting.
 
-Result in source:
+**`_meta` format** — flat, strings (congruent with JSDoc tag semantics):
 
 ```typescript
 server.tool(
@@ -157,16 +155,19 @@ server.tool(
   {
     description: 'Lists files in a directory',
     _meta: {
-      toSkills: {
-        useWhen: ['When listing directory contents to find files'],
-        avoidWhen: ['When paths contain symlinks that may loop']
-      }
+      useWhen: 'When listing directory contents to find files',
+      avoidWhen: 'When paths contain symlinks that may loop'
     }
   },
   schema,
   handler
 );
 ```
+
+This replaces the previous `_meta.toSkills.*` nesting entirely. Extraction adapters
+read `_meta.useWhen` etc. directly from `tools/list` responses and map them into
+the internal `mcpMetadata.toSkills` representation on `ExtractedSkill` — the
+internal IR is unchanged; only the external wire/source format changes.
 
 ### `ts-mcp-source.ts` — `TypeScriptMcpRefineSource implements RefineSource`
 
