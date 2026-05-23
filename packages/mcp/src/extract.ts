@@ -383,12 +383,11 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
   const resources = capabilities.resources ? await listResources(introspectClient) : undefined;
   const prompts = capabilities.prompts ? await listPrompts(introspectClient) : undefined;
 
-  // Annotation enrichment via `_meta.toSkills`. Server- and
-  // tool-level metadata produced by `_meta.toSkills.{useWhen, avoidWhen,
-  // pitfalls, remarks, packageDescription}` is read here and projected onto
-  // the skill so the core renderer's existing "When to Use" / "NEVER" /
-  // remarks sections light up automatically. Strictly additive: malformed or
-  // absent metadata leaves the skill unchanged.
+  // Annotation enrichment via flat `_meta`. Server- and tool-level metadata
+  // in `_meta.{useWhen, avoidWhen, pitfalls, remarks, packageDescription}`
+  // is read here and projected onto the skill so the core renderer's existing
+  // "When to Use" / "NEVER" / remarks sections light up automatically.
+  // Strictly additive: absent or wrong-type metadata leaves the skill unchanged.
   const metaEnrichment = collectMetaEnrichment(serverInfo, functions);
   const skillWithoutAudit: ExtractedSkill = {
     name: skillName,
@@ -445,14 +444,14 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
 }
 
 /**
- * Project `_meta.toSkills` (server-level + per-tool aggregate) onto the skill.
+ * Project flat `_meta` (server-level + per-tool aggregate) onto the skill.
  *
- * Server-level fields read off `serverInfo._meta.toSkills`:
+ * Server-level fields read off `serverInfo._meta` (flat strings):
  *  - `remarks: string`             → `skill.remarks`
  *  - `packageDescription: string`  → `skill.packageDescription`
- *  - `useWhen: string[]`           → seed for `skill.useWhen`
- *  - `avoidWhen: string[]`         → seed for `skill.avoidWhen`
- *  - `pitfalls: string[]`          → seed for `skill.pitfalls`
+ *  - `useWhen: string`             → seeds `skill.useWhen`
+ *  - `avoidWhen: string`           → seeds `skill.avoidWhen`
+ *  - `pitfalls: string`            → seeds `skill.pitfalls`
  *
  * @remarks
  * **SDK 1.29.0 strips server-level `_meta`.** The SDK's `ImplementationSchema`
@@ -464,15 +463,15 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
  * Per-tool meta uses the looser `Tool` schema and is unaffected — works today.
  * The unit tests bypass the SDK via vi.mock, so they exercise both layers.
  *
- * Per-tool meta is then aggregated on top: each function's
- * `tags.useWhen|avoidWhen|pitfalls` (joined with `\n` per `readToolMetaTags`
- * in tools.ts) is split back into individual lines and pushed into the
- * skill-level arrays. The renderer iterates these arrays directly to emit the
- * corresponding sections.
+ * Per-tool meta is aggregated on top via `pushLines`. The primary path reads
+ * `fn.mcpMetadata.toSkills.{useWhen,avoidWhen,pitfalls}` (each a
+ * single-element `string[]` set by `readToolMetadata` in tools.ts). The
+ * fallback path splits `fn.tags[key]` on `\n` for compatibility with older
+ * ExtractedFunction producers that never set `mcpMetadata`.
  *
- * All inputs are validated for type before consumption — wrong types or
- * non-string array entries are silently dropped so a malformed annotation
- * cannot crash a healthy extract.
+ * All inputs are validated for type before consumption — absent or wrong-type
+ * values are silently dropped so a malformed annotation cannot crash a healthy
+ * extract.
  */
 function collectMetaEnrichment(
   serverInfo: unknown,
