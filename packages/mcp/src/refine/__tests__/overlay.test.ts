@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { emptyOverlay, readOverlay, writeOverlay, applyFixToOverlay } from '../overlay.js';
+import { emptyOverlay, readOverlay, writeOverlay, applyFixToOverlay } from '../runtime/overlay.js';
 
 let tmp = '';
 afterEach(() => {
