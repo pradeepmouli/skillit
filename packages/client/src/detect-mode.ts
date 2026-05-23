@@ -14,17 +14,23 @@ function isMcpServerDep(dep: string): boolean {
 }
 
 async function hasMcpSdkDep(cwd: string): Promise<boolean> {
-  try {
-    const raw = await readFile(join(cwd, 'package.json'), 'utf8');
-    const pkg = JSON.parse(raw) as Record<string, unknown>;
-    const deps = {
-      ...(pkg['dependencies'] as Record<string, string> | undefined),
-      ...(pkg['devDependencies'] as Record<string, string> | undefined)
-    };
-    return Object.keys(deps).some(isMcpServerDep);
-  } catch {
-    return false;
+  const home = homedir();
+  let dir = cwd;
+  while (dir !== home && dir !== dirname(dir)) {
+    try {
+      const raw = await readFile(join(dir, 'package.json'), 'utf8');
+      const pkg = JSON.parse(raw) as Record<string, unknown>;
+      const deps = {
+        ...(pkg['dependencies'] as Record<string, string> | undefined),
+        ...(pkg['devDependencies'] as Record<string, string> | undefined)
+      };
+      if (Object.keys(deps).some(isMcpServerDep)) return true;
+    } catch {
+      // no package.json or parse error in this dir; keep walking
+    }
+    dir = dirname(dir);
   }
+  return false;
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -51,24 +57,36 @@ async function hasMcpConfig(cwd: string): Promise<boolean> {
   return false;
 }
 
-const RUNTIME_CONFIG_BASENAMES = new Set(['mcp.json', 'claude_desktop_config.json']);
+const KNOWN_RUNTIME_BASENAMES = new Set(['mcp.json', 'claude_desktop_config.json']);
+
+async function isMcpRuntimeConfigFile(path: string): Promise<boolean> {
+  if (KNOWN_RUNTIME_BASENAMES.has(basename(path))) return true;
+  try {
+    const raw = await readFile(path, 'utf8');
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return 'mcpServers' in parsed;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Detect refine mode from project context.
  *
  * @param cwd - directory to inspect for build/runtime signals
  * @param mcpConfigPath - optional path to the --mcp config file; if its
- *   basename is a known runtime config filename the file itself is treated
- *   as an additional runtime signal, allowing detection to work when the
- *   config lives outside the cwd ancestor chain (e.g. a desktop config dir).
+ *   basename is a known runtime config filename, or its contents contain a
+ *   top-level `mcpServers` key, it is treated as an additional runtime signal.
  */
 export async function detectRefineMode(
   cwd: string,
   mcpConfigPath?: string
 ): Promise<'build' | 'runtime' | 'ambiguous'> {
-  const mcpFileIsRuntime =
-    mcpConfigPath !== undefined && RUNTIME_CONFIG_BASENAMES.has(basename(mcpConfigPath));
-  const [hasBuild, hasRuntimeFromCwd] = await Promise.all([hasMcpSdkDep(cwd), hasMcpConfig(cwd)]);
+  const [hasBuild, hasRuntimeFromCwd, mcpFileIsRuntime] = await Promise.all([
+    hasMcpSdkDep(cwd),
+    hasMcpConfig(cwd),
+    mcpConfigPath !== undefined ? isMcpRuntimeConfigFile(mcpConfigPath) : Promise.resolve(false)
+  ]);
   const hasRuntime = hasRuntimeFromCwd || mcpFileIsRuntime;
   if (hasBuild && !hasRuntime) return 'build';
   if (hasRuntime && !hasBuild) return 'runtime';

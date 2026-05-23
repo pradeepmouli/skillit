@@ -86,4 +86,29 @@ describe('detectRefineMode', () => {
       await detectRefineMode(tmpDir, '/Users/example/.config/claude/claude_desktop_config.json')
     ).toBe('ambiguous');
   });
+
+  it('returns build when package.json is in an ancestor directory (monorepo nested cwd)', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' } })
+    );
+    const nested = join(tmpDir, 'packages', 'my-server', 'src');
+    await mkdir(nested, { recursive: true });
+    expect(await detectRefineMode(nested)).toBe('build');
+  });
+
+  it('returns runtime when mcpConfigPath contains mcpServers key (custom basename)', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    const configPath = join(tmpDir, 'my-custom-config.json');
+    await writeFile(configPath, JSON.stringify({ mcpServers: { myServer: {} } }));
+    expect(await detectRefineMode(tmpDir, configPath)).toBe('runtime');
+  });
+
+  it('returns ambiguous when mcpConfigPath has unknown basename and no mcpServers key', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-'));
+    const configPath = join(tmpDir, 'settings.json');
+    await writeFile(configPath, JSON.stringify({ someOtherKey: true }));
+    expect(await detectRefineMode(tmpDir, configPath)).toBe('ambiguous');
+  });
 });
