@@ -103,6 +103,21 @@ describe('applyMetaEdit', () => {
     expect(result).toContain("useWhen: 'New value'");
   });
 
+  it('handles a line comment containing } inside options without corrupting brace depth', () => {
+    const src = `server.tool(
+  'list_dir',
+  {
+    description: 'Lists', // returns }
+  },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');
+    expect(result).toContain('_meta:');
+    expect(result).toContain("useWhen: 'When listing'");
+    expect(result).toContain('description:');
+  });
+
   it('escapes newlines and tabs in value so the output is a valid single-quoted string', () => {
     const result = applyMetaEdit(BASE, 'list_dir', 1, 'useWhen', 'line1\nline2\ttabbed');
     // Must not contain a raw newline or tab inside the string literal

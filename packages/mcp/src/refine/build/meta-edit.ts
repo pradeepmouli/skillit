@@ -26,7 +26,7 @@ function skipToOptionsOpen(source: string, from: number): number {
  */
 function findOptionsStart(source: string, toolName: string, hintLine: number): number {
   const escaped = toolName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const callRe = new RegExp(`server\\.tool\\(\\s*['"]${escaped}['"]\\s*,\\s*`);
+  const callRe = new RegExp(`\\bserver\\.tool\\(\\s*['"]${escaped}['"]\\s*,\\s*`);
 
   const lines = source.split('\n');
   const windowStart = Math.max(0, hintLine - 3);
@@ -107,13 +107,25 @@ function skipTemplateLiteral(source: string, openIdx: number): number {
  * Finds the index of the closing `}` that matches the opening `{` at `openIdx`.
  *
  * Tracks brace depth while skipping single-quoted, double-quoted, and backtick
- * template literal strings (including `${...}` expressions inside templates).
+ * template literal strings (including `${...}` expressions inside templates),
+ * as well as line (//) and block (slash-star) comments whose braces must not
+ * be counted as structural.
  */
 function findMatchingClose(source: string, openIdx: number): number {
   let depth = 0;
   let i = openIdx;
   while (i < source.length) {
     const ch = source[i]!;
+    if (ch === '/' && source[i + 1] === '/') {
+      while (i < source.length && source[i] !== '\n') i++;
+      continue;
+    }
+    if (ch === '/' && source[i + 1] === '*') {
+      i += 2;
+      while (i < source.length && !(source[i] === '*' && source[i + 1] === '/')) i++;
+      if (i < source.length) i += 2;
+      continue;
+    }
     if (ch === '"' || ch === "'") {
       i = skipQuotedString(source, i);
       continue;

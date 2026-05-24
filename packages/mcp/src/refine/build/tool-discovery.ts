@@ -9,10 +9,11 @@ export interface DiscoveryResult {
 }
 
 // Locates server.tool( calls in sanitized source; name chars are blanked.
-const TOOL_CALL_RE = /server\.tool\(\s*['"][^'"]*['"]\s*,\s*/g;
+// \b prevents matching on myserver.tool( or getServer.tool( substrings.
+const TOOL_CALL_RE = /\bserver\.tool\(\s*['"][^'"]*['"]\s*,\s*/g;
 
 // Extracts the real tool name from source at the same position.
-const TOOL_NAME_RE = /^server\.tool\(\s*(['"])([^'"]+)\1\s*,\s*/;
+const TOOL_NAME_RE = /^\bserver\.tool\(\s*(['"])([^'"]+)\1\s*,\s*/;
 
 // Matches an options object as the next token
 const OPTIONS_OBJ_RE = /^\{/;

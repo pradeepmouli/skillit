@@ -88,6 +88,16 @@ server.tool('real_tool', { description: 'yes' }, schema, handler);
     expect(result.warnings).toHaveLength(0);
   });
 
+  it('does not match server.tool( as a suffix of a longer identifier', () => {
+    const src = `
+myserver.tool('suffix_tool', { description: 'fake' }, schema, handler);
+server.tool('real_tool', { description: 'yes' }, schema, handler);
+`;
+    const result = discoverTools('test.ts', src);
+    expect(result.tools.has('suffix_tool')).toBe(false);
+    expect(result.tools.has('real_tool')).toBe(true);
+  });
+
   it('ignores server.tool() calls inside double-quoted string literals', () => {
     const src = `
 const sample = "server.tool('string_tool', { description: 'fake' }, schema, handler);";
