@@ -1,13 +1,14 @@
-// Unit tests for `_meta.toSkills` annotation enrichment (Phase 9 / US7 — T102).
+// Unit tests for `_meta` annotation enrichment (Phase 9 / US7 — T102).
 //
 // Two-layer coverage:
 //
-//  1. `listTools` (tools.ts) — reads each tool's `_meta.toSkills.{useWhen,
-//     avoidWhen, pitfalls}` and projects it onto `ExtractedFunction.tags`.
-//     Tested with the same mock-client pattern used in `introspect-tools.test.ts`.
+//  1. `listTools` (tools.ts) — reads each tool's flat `_meta.{useWhen,
+//     avoidWhen, pitfalls}` string fields and projects them onto
+//     `ExtractedFunction.tags`. Tested with the same mock-client pattern
+//     used in `introspect-tools.test.ts`.
 //
-//  2. `extractMcpSkill` (extract.ts) — reads `serverInfo._meta.toSkills` and
-//     aggregates per-tool meta into the skill-level arrays. Tested via the
+//  2. `extractMcpSkill` (extract.ts) — reads `serverInfo._meta` flat strings
+//     and aggregates per-tool meta into the skill-level arrays. Tested via the
 //     same SDK-mock pattern used in `extract.test.ts` so we can drive
 //     getServerVersion() with arbitrary `_meta` payloads.
 //
@@ -46,29 +47,27 @@ function makeClient(tools: McpToolListEntry[]): McpClient {
 }
 
 describe('listTools — _meta.toSkills (per-tool)', () => {
-  it('projects useWhen/avoidWhen/pitfalls onto tags as newline-joined strings', async () => {
+  it('reads flat string fields from _meta and stores as single-element arrays', async () => {
     const client = makeClient([
       {
         name: 'search',
         description: 'Search',
         inputSchema: { type: 'object' },
         _meta: {
-          toSkills: {
-            useWhen: ['use this for X', 'use for Y'],
-            avoidWhen: ['avoid for Z'],
-            pitfalls: ['NEVER pass a regex with backreferences']
-          }
+          useWhen: 'use this for X',
+          avoidWhen: 'avoid for Z',
+          pitfalls: 'NEVER pass a regex with backreferences'
         }
       }
     ]);
 
     const fns = await listTools(client);
     expect(fns).toHaveLength(1);
-    expect(fns[0]!.tags.useWhen).toBe('use this for X\nuse for Y');
+    expect(fns[0]!.tags.useWhen).toBe('use this for X');
     expect(fns[0]!.tags.avoidWhen).toBe('avoid for Z');
     expect(fns[0]!.tags.pitfalls).toBe('NEVER pass a regex with backreferences');
     expect(fns[0]!.mcpMetadata?.toSkills).toEqual({
-      useWhen: ['use this for X', 'use for Y'],
+      useWhen: ['use this for X'],
       avoidWhen: ['avoid for Z'],
       pitfalls: ['NEVER pass a regex with backreferences']
     });
@@ -85,54 +84,45 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     expect(fns[0]!.tags).toEqual({});
   });
 
-  it('flags wrong-typed _meta.toSkills.useWhen (e.g. number) as malformed (US6)', async () => {
+  it('silently skips non-string values for known fields', async () => {
     const client = makeClient([
       {
         name: 'bad-shape',
         description: '',
         inputSchema: { type: 'object' },
-        // useWhen should be string[] — number gets the malformed sentinel
-        // (US6, FR-H010); see audit-malformed-meta.test.ts for full coverage.
-        _meta: { toSkills: { useWhen: 42 as unknown as string[] } }
+        // Non-string useWhen is silently skipped — no malformed sentinel in new format.
+        _meta: { useWhen: 42 as unknown as string }
       }
     ]);
 
     const fns = await listTools(client);
     expect(fns[0]!.tags.useWhen).toBeUndefined();
     expect(fns[0]!.tags.hasMetaToSkills).toBeUndefined();
-    expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen must be string[], got number');
-    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
-      'useWhen must be string[], got number'
-    );
+    expect(fns[0]!.tags['metaToSkillsMalformed']).toBeUndefined();
+    expect(fns[0]!.mcpMetadata?.toSkills).toBeUndefined();
   });
 
-  it('flags non-string entries in a useWhen array as malformed (US6)', async () => {
-    // Pre-US6 this case partially salvaged the valid entries; per FR-H010 the
-    // shape mismatch now surfaces a warning instead of silently filtering.
+  it('silently skips empty string values (treated as absent)', async () => {
     const client = makeClient([
       {
-        name: 'mixed',
+        name: 'empty-strings',
         description: '',
         inputSchema: { type: 'object' },
-        _meta: { toSkills: { useWhen: ['valid', 7 as unknown as string, '', 'also valid'] } }
+        _meta: { useWhen: '' }
       }
     ]);
 
     const fns = await listTools(client);
-    expect(fns[0]!.tags.useWhen).toBeUndefined();
-    expect(fns[0]!.tags.metaToSkillsMalformed).toBe('useWhen contains non-string entries');
-    expect(fns[0]!.mcpMetadata?.toSkills?.malformedReason).toBe(
-      'useWhen contains non-string entries'
-    );
+    expect(fns[0]!.tags).toEqual({});
   });
 
-  it('treats empty _meta.toSkills as no-op (no IR fields, no marker)', async () => {
+  it('treats _meta with no recognized fields as no-op (no IR fields, no marker)', async () => {
     const client = makeClient([
       {
         name: 'empty-meta',
         description: '',
         inputSchema: { type: 'object' },
-        _meta: { toSkills: {} }
+        _meta: {}
       }
     ]);
 
@@ -153,7 +143,7 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
           properties: { self: { $ref: '#/$defs/Self' } },
           $defs: { Self: { $ref: '#/$defs/Self' } }
         },
-        _meta: { toSkills: { useWhen: ['still annotated'] } }
+        _meta: { useWhen: 'still annotated' }
       }
     ]);
 
@@ -265,10 +255,8 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
-        toSkills: {
-          remarks: 'This server is best for X.',
-          packageDescription: 'Tools for X management.'
-        }
+        remarks: 'This server is best for X.',
+        packageDescription: 'Tools for X management.'
       }
     };
 
@@ -282,9 +270,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
-        toSkills: {
-          useWhen: ['Server-wide trigger A', 'Server-wide trigger B']
-        }
+        useWhen: 'Server-wide trigger A'
       }
     };
     state.listToolsImpl = async () => ({
@@ -293,7 +279,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
           name: 't1',
           description: '',
           inputSchema: { type: 'object' },
-          _meta: { toSkills: { useWhen: ['Tool-specific trigger C'] } }
+          _meta: { useWhen: 'Tool-specific trigger C' }
         },
         {
           name: 't2',
@@ -304,11 +290,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     });
 
     const skill = await extractMcpSkill(baseStdio);
-    expect(skill.useWhen).toEqual([
-      'Server-wide trigger A',
-      'Server-wide trigger B',
-      'Tool-specific trigger C'
-    ]);
+    expect(skill.useWhen).toEqual(['Server-wide trigger A', 'Tool-specific trigger C']);
   });
 
   it('aggregates avoidWhen and pitfalls onto skill arrays', async () => {
@@ -316,10 +298,8 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
-        toSkills: {
-          avoidWhen: ['Avoid scenario X'],
-          pitfalls: ['NEVER pass null']
-        }
+        avoidWhen: 'Avoid scenario X',
+        pitfalls: 'NEVER pass null'
       }
     };
     state.listToolsImpl = async () => ({
@@ -329,10 +309,8 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
           description: '',
           inputSchema: { type: 'object' },
           _meta: {
-            toSkills: {
-              avoidWhen: ['Avoid Y for tool t1'],
-              pitfalls: ['NEVER pass empty array to t1']
-            }
+            avoidWhen: 'Avoid Y for tool t1',
+            pitfalls: 'NEVER pass empty array to t1'
           }
         }
       ]
@@ -343,11 +321,11 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     expect(skill.pitfalls).toEqual(['NEVER pass null', 'NEVER pass empty array to t1']);
   });
 
-  it('leaves IR fields unset when _meta.toSkills is empty', async () => {
+  it('leaves IR fields unset when _meta is empty', async () => {
     state.serverInfo = {
       name: 'meta-test',
       version: '1.0.0',
-      _meta: { toSkills: {} }
+      _meta: {}
     };
 
     const skill = await extractMcpSkill(baseStdio);
@@ -371,11 +349,11 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     expect(skill.remarks).toBeUndefined();
   });
 
-  it('silently rejects malformed server-level useWhen (non-array)', async () => {
+  it('silently rejects non-string server-level useWhen', async () => {
     state.serverInfo = {
       name: 'meta-test',
       version: '1.0.0',
-      _meta: { toSkills: { useWhen: 'should-be-array' } }
+      _meta: { useWhen: 42 as unknown as string }
     };
 
     const skill = await extractMcpSkill(baseStdio);

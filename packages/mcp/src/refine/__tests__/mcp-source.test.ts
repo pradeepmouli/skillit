@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { McpRefineSource } from '../mcp-source.js';
+import { McpRefineSource } from '../runtime/mcp-source.js';
 import type { ExtractedSkill } from '@to-skills/core';
 
 let tmp = '';

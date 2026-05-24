@@ -35,12 +35,7 @@ import { type NormalizedBundleEntry, readBundleConfig } from './bundle/config.js
 import { McpError } from './errors.js';
 import { extractMcpSkill } from './extract.js';
 import { renderLlmsTxt } from './render/llms-txt.js';
-import type {
-  AuditIssue,
-  BundleResult,
-  McpBundleOptions,
-  WrittenSkill
-} from './types.js';
+import type { AuditIssue, BundleResult, McpBundleOptions, WrittenSkill } from './types.js';
 import type { InvocationTarget } from './adapter/types.js';
 
 /**

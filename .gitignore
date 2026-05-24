@@ -1,6 +1,9 @@
 node_modules/
 dist/
 build/
+# Source directory for the MCP build-mode refine path (not a compiled output)
+!packages/mcp/src/refine/build/
+!packages/mcp/src/refine/build/**
 coverage/
 .coverage/
 *.log

@@ -26,13 +26,13 @@ import { resolveSchema } from './schema.js';
  * `parameters` without an error — the absence of a schema is a valid signal
  * that the tool takes no input.
  *
- * Tool metadata: `_meta.toSkills.{useWhen, avoidWhen, pitfalls}` is read from
- * each tool's `_meta` envelope and stored in
- * `ExtractedFunction.mcpMetadata.toSkills`. For compatibility with existing
- * renderer paths it is also projected onto `ExtractedFunction.tags` as
- * newline-joined strings plus a `hasMetaToSkills` marker. Skill-level
- * aggregation (`ExtractedSkill.useWhen` etc.) happens in `extract.ts`, which
- * also reads server-level `_meta.toSkills`.
+ * Tool metadata: flat string fields (`useWhen`, `avoidWhen`, `pitfalls`,
+ * `remarks`, `example`) are read directly from each tool's `_meta` envelope
+ * and stored in `ExtractedFunction.mcpMetadata.toSkills` as single-element
+ * arrays. For compatibility with existing renderer paths they are also
+ * projected onto `ExtractedFunction.tags` as plain strings plus a
+ * `hasMetaToSkills` marker. Skill-level aggregation (`ExtractedSkill.useWhen`
+ * etc.) happens in `extract.ts`, which also reads server-level `_meta`.
  *
  * @param client structural MCP client (real SDK `Client` or a test mock)
  * @returns one `ExtractedFunction` per tool, in the order returned by the server
@@ -128,112 +128,51 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
 }
 
 /**
- * Read `_meta.toSkills.{useWhen, avoidWhen, pitfalls}` off a tool entry and
- * return structured MCP metadata plus a compatibility tag projection.
+ * Read flat string fields (`useWhen`, `avoidWhen`, `pitfalls`, `remarks`,
+ * `example`) directly from `tool._meta` and return structured MCP metadata
+ * plus a compatibility tag projection.
  *
- * The MCP spec reserves the `_meta` envelope for extension namespaces; this
- * helper looks for the `toSkills` namespace specifically. Per US7 the values
- * are arrays of strings, so we keep them losslessly on
- * `ExtractedFunction.mcpMetadata.toSkills` and also join them with newlines in
- * the compatibility tag projection.
- *
- * **Malformed handling (US6, FR-H010).** When a recognized field has the
- * wrong shape (non-array, contains non-string entries, contains empty
- * strings), or when `_meta.toSkills` itself is non-object, we write a
- * sentinel tag `metaToSkillsMalformed = <reason>` instead of (or in
- * addition to) the field. The audit rule M3 detects this sentinel and
- * surfaces a warning so authors get a diagnostic — silently dropping
- * malformed annotations is the historical behavior we are replacing.
+ * The new flat format replaces the old nested `_meta.toSkills` object. Each
+ * field is a plain string on `_meta` directly. Non-string values are silently
+ * skipped — the new format has no malformed sentinel; callers rely on the
+ * presence/absence of populated fields.
  *
  * We do NOT throw — this is an additive feature and a healthy extract must
  * never crash because of bad annotation data.
  *
- * `hasMetaToSkills='true'` is set when at least one valid field was
- * populated AND no malformed reason was recorded. Mixed cases (one valid
- * field, one malformed) keep the malformed sentinel and skip the marker;
- * the audit warning is the canonical signal in that case.
+ * `hasMetaToSkills='true'` is set when at least one valid field was populated.
  */
 function readToolMetadata(tool: McpToolListEntry): {
   tags: Record<string, string>;
   mcpMetadata?: ExtractedFunction['mcpMetadata'];
 } {
   const tags: Record<string, string> = {};
-  const meta = tool._meta?.['toSkills'];
-  if (meta === undefined) return { tags }; // absence is fine
-  if (!isPlainObject(meta)) {
-    tags['metaToSkillsMalformed'] = `toSkills must be object, got ${typeOfValue(meta)}`;
-    return {
-      tags,
-      mcpMetadata: {
-        toSkills: { malformedReason: tags['metaToSkillsMalformed'] }
-      }
-    };
-  }
+  const meta = tool._meta;
+  if (!isPlainObject(meta)) return { tags }; // absence (or non-object) is fine
 
-  const malformedReasons: string[] = [];
   const toSkills: {
     useWhen?: string[];
     avoidWhen?: string[];
     pitfalls?: string[];
+    remarks?: string[];
+    example?: string[];
   } = {};
-  for (const key of ['useWhen', 'avoidWhen', 'pitfalls'] as const) {
-    const raw = (meta as Record<string, unknown>)[key];
-    if (raw === undefined) continue; // absence is fine
-    if (!Array.isArray(raw)) {
-      malformedReasons.push(`${key} must be string[], got ${typeOfValue(raw)}`);
-      continue;
-    }
-    const allStrings = raw.every((v) => typeof v === 'string');
-    if (!allStrings) {
-      malformedReasons.push(`${key} contains non-string entries`);
-      continue;
-    }
-    const allNonEmpty = raw.every((v) => typeof v === 'string' && v.length > 0);
-    if (!allNonEmpty) {
-      malformedReasons.push(`${key} contains empty strings`);
-      continue;
-    }
-    if (raw.length === 0) continue; // empty array is OK (treated as absent)
-    const values = raw as string[];
-    tags[key] = values.join('\n');
-    toSkills[key] = values;
+
+  for (const key of ['useWhen', 'avoidWhen', 'pitfalls', 'remarks', 'example'] as const) {
+    const val = (meta as Record<string, unknown>)[key];
+    if (typeof val !== 'string' || !val.trim()) continue;
+    tags[key] = val;
+    toSkills[key] = [val];
   }
 
-  if (malformedReasons.length > 0) {
-    tags['metaToSkillsMalformed'] = malformedReasons.join('; ');
-  }
-  // Marker only fires for clean populated metadata. Mixed (some valid, some
-  // malformed) cases prefer the explicit malformed sentinel.
-  if (
-    !tags['metaToSkillsMalformed'] &&
-    (tags['useWhen'] !== undefined ||
-      tags['avoidWhen'] !== undefined ||
-      tags['pitfalls'] !== undefined)
-  ) {
+  if (Object.keys(toSkills).length > 0) {
     tags['hasMetaToSkills'] = 'true';
   }
+
   return {
     tags,
-    ...(Object.keys(toSkills).length > 0 || malformedReasons.length > 0
-      ? {
-          mcpMetadata: {
-            toSkills: {
-              ...toSkills,
-              ...(malformedReasons.length > 0
-                ? { malformedReason: malformedReasons.join('; ') }
-                : {})
-            }
-          }
-        }
-      : {})
+    ...(Object.keys(toSkills).length > 0 ? { mcpMetadata: { toSkills } } : {})
   };
-}
-
-/** Return a human-friendly type label for diagnostic messages. */
-function typeOfValue(v: unknown): string {
-  if (v === null) return 'null';
-  if (Array.isArray(v)) return 'array';
-  return typeof v;
 }
 
 /**
