@@ -41,6 +41,63 @@ See [`packages/mcp/README.md`](packages/mcp/README.md) for install, extract,
 bundle, config-file batch mode (`mcp.json` / `claude_desktop_config.json`), and
 programmatic API details.
 
+### Refine: autonomous annotation loop
+
+`to-skills refine` runs an audit → draft → review loop that iteratively improves
+the `useWhen` / `avoidWhen` annotations in your generated skills. On each pass it
+asks an LLM to evaluate the current guidance, proposes improvements, and applies
+them — no manual editing required.
+
+Two modes depending on whether you own the server's source:
+
+**Build mode** — for TypeScript MCP servers you own. `refine` writes annotations
+directly into source as `_meta` fields on each `server.tool(...)` call:
+
+```typescript
+server.tool(
+  'read_file',
+  {
+    description: 'Read a file',
+    _meta: { useWhen: 'After listing a directory to inspect a specific file' }
+  },
+  schema,
+  handler
+);
+```
+
+```bash
+# Auto-detected when @modelcontextprotocol/sdk appears in package.json
+npx to-skills-mcp refine
+
+# Explicit
+npx to-skills-mcp refine --mode build
+```
+
+**Runtime mode** — for any MCP server, including ones you don't own. `refine`
+writes an overlay JSON file that `extract` / `bundle` merges at render time:
+
+```bash
+# Auto-detected when --mcp points to mcp.json / claude_desktop_config.json
+npx to-skills-mcp refine --mcp ~/.config/claude/mcp.json
+
+# Refine only a subset of tools
+npx to-skills-mcp refine --mode runtime --mcp ./mcp.json --items filesystem,github
+```
+
+**Auto-detection** checks for an SDK dependency (build signal) and a runtime
+config path (runtime signal). When both are present the command is ambiguous —
+pass `--mode` explicitly.
+
+Key flags:
+
+| Flag                    | Default   | Description                                        |
+| ----------------------- | --------- | -------------------------------------------------- |
+| `--mode build\|runtime` | auto      | Override auto-detection                            |
+| `--mcp <path>`          | —         | Path to `mcp.json` or `claude_desktop_config.json` |
+| `--source-glob <glob>`  | `**/*.ts` | Glob for TypeScript files to scan (build mode)     |
+| `--max-iterations <n>`  | `3`       | Maximum refinement passes per tool                 |
+| `--items <names>`       | all       | Comma-separated tool names to refine               |
+
 ## Why Inline?
 
 When an agent updates your code, inline docs update atomically. There's no separate file to remember, no coordination problem, no drift. The agent edits ONE location and the truth propagates mechanically.
