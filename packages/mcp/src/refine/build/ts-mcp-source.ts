@@ -25,8 +25,11 @@ export class TypeScriptMcpRefineSource implements RefineSource {
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {
+    const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.cache']);
     const sourceFiles: string[] = [];
-    for await (const file of glob(this.opts.sourceGlob)) {
+    for await (const file of glob(this.opts.sourceGlob, {
+      exclude: (f) => f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_DIRS.has(seg))
+    })) {
       sourceFiles.push(file);
     }
 
