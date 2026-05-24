@@ -180,8 +180,13 @@ export function applyMetaEdit(
 
   const optionsContent = source.slice(optionsOpenIdx, optionsCloseIdx + 1);
 
-  // Escape the value for use in a single-quoted JS string (escape backslashes and single quotes)
-  const escapedValue = value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  // Escape the value for use in a single-quoted JS string literal
+  const escapedValue = value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
 
   // Check if _meta exists inside the options object (word-boundary prevents matching _metadata)
   const metaMatch = optionsContent.match(/_meta\b\s*:\s*\{/);

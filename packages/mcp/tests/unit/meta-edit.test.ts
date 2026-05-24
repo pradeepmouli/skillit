@@ -103,6 +103,13 @@ describe('applyMetaEdit', () => {
     expect(result).toContain("useWhen: 'New value'");
   });
 
+  it('escapes newlines and tabs in value so the output is a valid single-quoted string', () => {
+    const result = applyMetaEdit(BASE, 'list_dir', 1, 'useWhen', 'line1\nline2\ttabbed');
+    // Must not contain a raw newline or tab inside the string literal
+    expect(result).toContain("useWhen: 'line1\\nline2\\ttabbed'");
+    expect(result).not.toMatch(/useWhen: '[^']*\n/);
+  });
+
   it('does not insert a double comma when options body has a trailing block comment after comma', () => {
     const src = `server.tool(
   'list_dir',
