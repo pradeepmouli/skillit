@@ -103,6 +103,30 @@ describe('applyMetaEdit', () => {
     expect(result).toContain("useWhen: 'New value'");
   });
 
+  it('does not insert a double comma when options body has a trailing block comment after comma', () => {
+    const src = `server.tool(
+  'list_dir',
+  { description: 'Lists', /* trailing */ },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');
+    expect(result).toContain('_meta:');
+    expect(result).not.toMatch(/,,/);
+  });
+
+  it('does not insert a double comma when _meta body already has a trailing comma', () => {
+    const src = `server.tool(
+  'list_dir',
+  { description: 'Lists', _meta: { useWhen: 'Old value', } },
+  schema,
+  handler
+);`;
+    const result = applyMetaEdit(src, 'list_dir', 1, 'avoidWhen', 'When paths loop');
+    expect(result).toContain("avoidWhen: 'When paths loop'");
+    expect(result).not.toMatch(/,,/);
+  });
+
   it('handles an inline comment with a brace before the options object', () => {
     const src = `server.tool('list_dir', /* note: {example} */ { description: 'Lists' }, schema, handler);`;
     const result = applyMetaEdit(src, 'list_dir', 1, 'useWhen', 'When listing');

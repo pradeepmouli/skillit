@@ -133,6 +133,31 @@ function findMatchingClose(source: string, openIdx: number): number {
 }
 
 /**
+ * Returns true when `body` (the text between object braces) ends with a comma,
+ * after stripping trailing whitespace, block comments, and line comments.
+ * Used to avoid inserting a double-comma before a new property.
+ */
+function endsWithComma(body: string): boolean {
+  let s = body;
+  let prev = '';
+  while (s !== prev) {
+    prev = s;
+    s = s.trimEnd();
+    if (s.endsWith('*/')) {
+      const start = s.lastIndexOf('/*');
+      if (start >= 0) s = s.slice(0, start);
+      continue;
+    }
+    const nl = s.lastIndexOf('\n');
+    const lastLine = s.slice(nl + 1).trimStart();
+    if (lastLine.startsWith('//')) {
+      s = nl >= 0 ? s.slice(0, nl) : '';
+    }
+  }
+  return s.endsWith(',');
+}
+
+/**
  * Applies a `_meta` field edit to a `server.tool(...)` call in TypeScript source.
  *
  * - If no `_meta` block exists in the options object, one is inserted.
@@ -169,8 +194,10 @@ export function applyMetaEdit(
     const indent = closeLinePrefix.match(/^\s*/)?.[0] ?? '';
 
     // Add a comma only when the object already has properties (non-empty body)
+    // endsWithComma strips trailing comments before checking to avoid a double-comma
+    // when the body ends with something like: description: 'x', /* note */
     const existingBody = source.slice(optionsOpenIdx + 1, optionsCloseIdx).trimEnd();
-    const comma = existingBody.length > 0 && !existingBody.endsWith(',') ? ',' : '';
+    const comma = existingBody.length > 0 && !endsWithComma(existingBody) ? ',' : '';
 
     const newInsertion = `${comma}\n${indent}  _meta: { ${tag}: '${escapedValue}' }`;
     return (
@@ -227,7 +254,7 @@ export function applyMetaEdit(
 
   // Tag does not exist in _meta — insert before the closing }
   const metaBody = source.slice(metaBraceOpenIdx + 1, metaBraceCloseIdx).trimEnd();
-  const prefix = metaBody.length > 0 ? ', ' : ' ';
+  const prefix = metaBody.length === 0 ? ' ' : endsWithComma(metaBody) ? '' : ', ';
   const insertText = `${prefix}${tag}: '${escapedValue}'`;
   return source.slice(0, metaBraceCloseIdx) + insertText + source.slice(metaBraceCloseIdx);
 }
