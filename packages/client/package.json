@@ -21,7 +21,7 @@
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.97.1",
+    "@anthropic-ai/sdk": "^0.100.0",
     "@to-skills/core": "workspace:*",
     "@to-skills/mcp": "workspace:*",
     "commander": "^14.0.3"
