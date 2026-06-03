@@ -999,6 +999,46 @@ describe('W7: @useWhen on at least one export', () => {
     );
     expect(passing).toHaveLength(1);
   });
+
+  it('passes when a configSurface carries useWhen (no top-level useWhen)', () => {
+    const passing = getPassing(
+      makeSkill({
+        useWhen: undefined,
+        configSurfaces: [
+          {
+            name: 'build',
+            description: 'Build the project',
+            sourceType: 'cli',
+            options: [],
+            useWhen: ['when bundling for production']
+          }
+        ]
+      }),
+      makeContext(),
+      'W7'
+    );
+    expect(passing).toHaveLength(1);
+  });
+
+  it('fails when neither top-level nor configSurface carries useWhen', () => {
+    const issues = getIssues(
+      makeSkill({
+        useWhen: undefined,
+        configSurfaces: [
+          {
+            name: 'build',
+            description: 'Build the project',
+            sourceType: 'cli',
+            options: [],
+            useWhen: []
+          }
+        ]
+      }),
+      makeContext(),
+      'W7'
+    );
+    expect(issues).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1030,6 +1070,46 @@ describe('W8: @avoidWhen on at least one export', () => {
   it('passes with multiple avoidWhen entries', () => {
     const passing = getPassing(makeSkill({ avoidWhen: ['case A', 'case B'] }), makeContext(), 'W8');
     expect(passing).toHaveLength(1);
+  });
+
+  it('passes when a configSurface carries avoidWhen (no top-level avoidWhen)', () => {
+    const passing = getPassing(
+      makeSkill({
+        avoidWhen: undefined,
+        configSurfaces: [
+          {
+            name: 'build',
+            description: 'Build the project',
+            sourceType: 'cli',
+            options: [],
+            avoidWhen: ['when in watch mode']
+          }
+        ]
+      }),
+      makeContext(),
+      'W8'
+    );
+    expect(passing).toHaveLength(1);
+  });
+
+  it('fails when neither top-level nor configSurface carries avoidWhen', () => {
+    const issues = getIssues(
+      makeSkill({
+        avoidWhen: undefined,
+        configSurfaces: [
+          {
+            name: 'build',
+            description: 'Build the project',
+            sourceType: 'cli',
+            options: [],
+            avoidWhen: []
+          }
+        ]
+      }),
+      makeContext(),
+      'W8'
+    );
+    expect(issues).toHaveLength(1);
   });
 });
 
@@ -1066,6 +1146,46 @@ describe('W9: @never on at least one export', () => {
       'W9'
     );
     expect(passing).toHaveLength(1);
+  });
+
+  it('passes when a configSurface carries pitfalls (no top-level pitfalls)', () => {
+    const passing = getPassing(
+      makeSkill({
+        pitfalls: undefined,
+        configSurfaces: [
+          {
+            name: 'build',
+            description: 'Build the project',
+            sourceType: 'cli',
+            options: [],
+            pitfalls: ['never run with --force in CI']
+          }
+        ]
+      }),
+      makeContext(),
+      'W9'
+    );
+    expect(passing).toHaveLength(1);
+  });
+
+  it('fails when neither top-level nor configSurface carries pitfalls', () => {
+    const issues = getIssues(
+      makeSkill({
+        pitfalls: undefined,
+        configSurfaces: [
+          {
+            name: 'build',
+            description: 'Build the project',
+            sourceType: 'cli',
+            options: [],
+            pitfalls: []
+          }
+        ]
+      }),
+      makeContext(),
+      'W9'
+    );
+    expect(issues).toHaveLength(1);
   });
 });
 
