@@ -148,9 +148,12 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
         throw new Error(`Install failed (${reason}). Run it manually:\n  ${command}`);
       }
 
-      // 4. Generate the initial skill — CLI path only this pass.
-      const outDir = join(cwd, opts.out);
+      // 4 + 5. Generate + refine — CLI-first: only the cli source is fully
+      // automated this pass. For mcp/typedoc, skip both and print actionable
+      // next-step guidance rather than silently no-opping (refine needs
+      // source-specific flags like --mcp that init can't supply yet).
       if (nature === 'cli') {
+        const outDir = join(cwd, opts.out);
         const name = skillNameFrom(await readPackageName(cwd));
         await generateSkill({
           cwd,
@@ -159,18 +162,17 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
           outDir,
           ...(opts.program !== undefined ? { program: opts.program } : {})
         });
+        await runRefine({
+          source: nature,
+          ...(opts.program !== undefined ? { program: opts.program } : {}),
+          maxIterations: '5',
+          items: '5'
+        });
       } else {
+        const extra = nature === 'mcp' ? ' [--mcp <path>]' : '';
         console.log(
-          `Skipping generate: only the cli source generates an initial skill this pass (refine extracts live for ${nature}).`
+          `Installed ${pkg}. Skill generation + refine for the ${nature} source isn't automated yet — run: to-skills refine --source ${nature}${extra}`
         );
       }
-
-      // 5. Dispatch refine for the resolved source.
-      await runRefine({
-        source: nature,
-        ...(opts.program !== undefined ? { program: opts.program } : {}),
-        maxIterations: '5',
-        items: '5'
-      });
     });
 }

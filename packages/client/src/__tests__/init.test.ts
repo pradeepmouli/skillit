@@ -31,6 +31,21 @@ async function writeCliFixture(): Promise<string> {
   return process.cwd();
 }
 
+/** An mcp-nature project (no commander/yargs, no loadable bin). */
+async function writeMcpFixture(): Promise<string> {
+  tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
+  await writeFile(
+    join(tmpDir, 'package.json'),
+    JSON.stringify({
+      name: 'my-server',
+      dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' }
+    })
+  );
+  await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+  process.chdir(tmpDir);
+  return process.cwd();
+}
+
 interface InstallCall {
   pkg: string;
   pm: string;
@@ -114,5 +129,34 @@ describe('buildInitCommand', () => {
     await expect(run(deps)).rejects.toThrow(/pnpm add -D @to-skills\/cli/);
     expect(generate).not.toHaveBeenCalled();
     expect(refine).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid --source value', async () => {
+    await writeCliFixture();
+    const { deps } = makeStubs();
+    await expect(run(deps, ['--source', 'bogus'])).rejects.toThrow(/cli\|mcp\|typedoc/);
+  });
+
+  it('installs @to-skills/mcp but skips generate + refine for an mcp project', async () => {
+    await writeMcpFixture();
+    const { deps, installCalls, generateCalls, refineCalls } = makeStubs();
+    // Override console.log directly: vitest's console interceptor bypasses
+    // vi.spyOn(console, 'log') here, so capture via a plain reassignment.
+    const logged: string[] = [];
+    const originalLog = console.log;
+    console.log = (...args: unknown[]): void => {
+      logged.push(String(args[0]));
+    };
+    try {
+      await run(deps);
+    } finally {
+      console.log = originalLog;
+    }
+    expect(installCalls).toHaveLength(1);
+    expect(installCalls[0]!.pkg).toBe('@to-skills/mcp');
+    // CLI-first: no auto generate or refine for the mcp source this pass.
+    expect(generateCalls).toHaveLength(0);
+    expect(refineCalls).toHaveLength(0);
+    expect(logged.join('\n')).toMatch(/to-skills refine --source mcp/);
   });
 });
