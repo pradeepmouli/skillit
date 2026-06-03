@@ -36,10 +36,7 @@ const failingEstimate = (): SkillJudgeEstimate => ({
 // ─── Stubs ───────────────────────────────────────────────────────────────────
 
 /** A source that exposes guidance() returning RUBRIC-XYZ */
-function makeSourceWithGuidance(): RefineSource & {
-  draftRequests: DraftRequest[];
-  reviewRequests: ReviewRequest[];
-} {
+function makeSourceWithGuidance(): RefineSource {
   // We capture requests via a recording model; the source itself just provides guidance.
   return {
     extract: async () => baseSkill(),
