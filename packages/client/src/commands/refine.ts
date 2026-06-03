@@ -82,6 +82,111 @@ Pass ${SOURCE_FORM} to choose one.`
   return { kind };
 }
 
+/** Parsed options for the `refine` action / {@link runRefineCommand}. */
+export interface RefineCommandOpts {
+  source?: string;
+  program?: string;
+  mcp?: string;
+  server?: string;
+  overlay?: string;
+  mode?: string;
+  sourceGlob?: string;
+  maxIterations: string;
+  items: string;
+}
+
+/**
+ * The body of the `refine` command action, extracted so it can be reused
+ * programmatically (e.g. by `to-skills init`) without argv gymnastics. Sets
+ * `process.exitCode` and writes progress/errors to the console exactly as the
+ * CLI does.
+ */
+export async function runRefineCommand(opts: RefineCommandOpts): Promise<void> {
+  const cwd = process.cwd();
+  const maxIterations = parsePositiveInt(opts.maxIterations, '--max-iterations');
+  const itemsPerIteration = parsePositiveInt(opts.items, '--items');
+
+  const candidates = await detectInstalledSources(cwd);
+  const detected = classifyRefineSources(candidates);
+  const resolution = resolveRefineSource(opts, detected, candidates);
+  if ('error' in resolution) {
+    console.error(resolution.error);
+    process.exitCode = 1;
+    return;
+  }
+
+  let source: RefineSource;
+  let reportInPlace = false;
+
+  if (resolution.kind === 'cli') {
+    const program = await loadProgram({ program: opts.program, cwd });
+    const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
+    source = new CliRefineSource({ program, sourceGlob, cwd });
+    reportInPlace = true;
+  } else {
+    // mcp source: --mcp guaranteed present by resolveRefineSource.
+    const mcpPath = opts.mcp!;
+    const overlayPath = opts.overlay ?? join(cwd, '.to-skills-overlay.json');
+
+    let mode: 'build' | 'runtime';
+    if (opts.mode === 'build' || opts.mode === 'runtime') {
+      mode = opts.mode;
+    } else if (opts.mode !== undefined) {
+      console.error(`Invalid --mode value: ${opts.mode}. Use 'build' or 'runtime'.`);
+      process.exitCode = 1;
+      return;
+    } else {
+      const detectedMode = await detectRefineMode(cwd, mcpPath);
+      if (detectedMode === 'ambiguous') {
+        console.error(`Cannot determine refine mode.
+Use --mode build  (TypeScript MCP server you own)
+     --mode runtime  (consuming project, any MCP server)`);
+        process.exitCode = 1;
+        return;
+      }
+      mode = detectedMode;
+    }
+
+    if (mode === 'build') {
+      console.log('Refining in build mode (TypeScript MCP)');
+    } else {
+      console.log('Refining in runtime mode (overlay)');
+    }
+
+    const entries = await readMcpConfigFile(mcpPath);
+    const entry = opts.server
+      ? entries.find((e) => e.name === opts.server)
+      : entries.find((e) => !e.disabled);
+    if (!entry) {
+      const name = opts.server ? `"${opts.server}"` : 'any enabled server';
+      throw new Error(`Could not find ${name} in ${mcpPath}`);
+    }
+
+    if (mode === 'build') {
+      const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
+      source = new TypeScriptMcpRefineSource({
+        transport: entry.transport,
+        sourceGlob
+      });
+      reportInPlace = true;
+    } else {
+      source = new McpRefineSource({
+        overlayPath,
+        extract: () => extractMcpSkill({ transport: entry.transport })
+      });
+    }
+
+    const result = await runRefine(source, maxIterations, itemsPerIteration);
+    reportResult(result, { reportInPlace, overlayPath });
+    process.exitCode = result.passed ? 0 : 1;
+    return;
+  }
+
+  const result = await runRefine(source, maxIterations, itemsPerIteration);
+  reportResult(result, { reportInPlace });
+  process.exitCode = result.passed ? 0 : 1;
+}
+
 export function buildRefineCommand(): Command {
   return new Command('refine')
     .description('Autonomously improve a skill via the audit→draft→review loop')
@@ -94,103 +199,7 @@ export function buildRefineCommand(): Command {
     .option('--source-glob <glob>', 'glob pattern for TypeScript source files')
     .option('--max-iterations <n>', 'iteration cap (default 5)', '5')
     .option('--items <n>', 'work items per iteration (default 5)', '5')
-    .action(
-      async (opts: {
-        source?: string;
-        program?: string;
-        mcp?: string;
-        server?: string;
-        overlay?: string;
-        mode?: string;
-        sourceGlob?: string;
-        maxIterations: string;
-        items: string;
-      }) => {
-        const cwd = process.cwd();
-        const maxIterations = parsePositiveInt(opts.maxIterations, '--max-iterations');
-        const itemsPerIteration = parsePositiveInt(opts.items, '--items');
-
-        const candidates = await detectInstalledSources(cwd);
-        const detected = classifyRefineSources(candidates);
-        const resolution = resolveRefineSource(opts, detected, candidates);
-        if ('error' in resolution) {
-          console.error(resolution.error);
-          process.exitCode = 1;
-          return;
-        }
-
-        let source: RefineSource;
-        let reportInPlace = false;
-
-        if (resolution.kind === 'cli') {
-          const program = await loadProgram({ program: opts.program, cwd });
-          const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
-          source = new CliRefineSource({ program, sourceGlob, cwd });
-          reportInPlace = true;
-        } else {
-          // mcp source: --mcp guaranteed present by resolveRefineSource.
-          const mcpPath = opts.mcp!;
-          const overlayPath = opts.overlay ?? join(cwd, '.to-skills-overlay.json');
-
-          let mode: 'build' | 'runtime';
-          if (opts.mode === 'build' || opts.mode === 'runtime') {
-            mode = opts.mode;
-          } else if (opts.mode !== undefined) {
-            console.error(`Invalid --mode value: ${opts.mode}. Use 'build' or 'runtime'.`);
-            process.exitCode = 1;
-            return;
-          } else {
-            const detectedMode = await detectRefineMode(cwd, mcpPath);
-            if (detectedMode === 'ambiguous') {
-              console.error(`Cannot determine refine mode.
-Use --mode build  (TypeScript MCP server you own)
-     --mode runtime  (consuming project, any MCP server)`);
-              process.exitCode = 1;
-              return;
-            }
-            mode = detectedMode;
-          }
-
-          if (mode === 'build') {
-            console.log('Refining in build mode (TypeScript MCP)');
-          } else {
-            console.log('Refining in runtime mode (overlay)');
-          }
-
-          const entries = await readMcpConfigFile(mcpPath);
-          const entry = opts.server
-            ? entries.find((e) => e.name === opts.server)
-            : entries.find((e) => !e.disabled);
-          if (!entry) {
-            const name = opts.server ? `"${opts.server}"` : 'any enabled server';
-            throw new Error(`Could not find ${name} in ${mcpPath}`);
-          }
-
-          if (mode === 'build') {
-            const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
-            source = new TypeScriptMcpRefineSource({
-              transport: entry.transport,
-              sourceGlob
-            });
-            reportInPlace = true;
-          } else {
-            source = new McpRefineSource({
-              overlayPath,
-              extract: () => extractMcpSkill({ transport: entry.transport })
-            });
-          }
-
-          const result = await runRefine(source, maxIterations, itemsPerIteration);
-          reportResult(result, { reportInPlace, overlayPath });
-          process.exitCode = result.passed ? 0 : 1;
-          return;
-        }
-
-        const result = await runRefine(source, maxIterations, itemsPerIteration);
-        reportResult(result, { reportInPlace });
-        process.exitCode = result.passed ? 0 : 1;
-      }
-    );
+    .action((opts: RefineCommandOpts) => runRefineCommand(opts));
 }
 
 function runRefine(

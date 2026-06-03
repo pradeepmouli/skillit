@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // packages/client/src/bin.ts
 import { Command } from 'commander';
+import { buildInitCommand } from './commands/init.js';
 import { buildRefineCommand } from './commands/refine.js';
 
 const program = new Command('to-skills').description('to-skills CLI').version('0.1.0');
 
+program.addCommand(buildInitCommand());
 program.addCommand(buildRefineCommand());
 
 program.parseAsync(process.argv).catch((err: unknown) => {
