@@ -1,6 +1,7 @@
 // packages/core/src/refine/__tests__/ast-edit.test.ts
 import { describe, it, expect } from 'vitest';
 import { upsertJsDocTag, readJsDocTags } from '../ast-edit.js';
+import type { RefineTag } from '../types.js';
 
 describe('upsertJsDocTag', () => {
   it('creates a JSDoc block when the export has none', () => {
@@ -16,6 +17,8 @@ describe('upsertJsDocTag', () => {
     const out = upsertJsDocTag(src, 'parse', 'pitfalls', 'NEVER trust input');
     expect(out).toContain('* Parse.');
     expect(out).toContain('@pitfalls NEVER trust input');
+    // Exact alignment: the appended line must keep the surrounding ` * ` indent
+    expect(out).toMatch(/\n \* @pitfalls NEVER trust input\n/);
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
   });
 
@@ -28,6 +31,20 @@ describe('upsertJsDocTag', () => {
     const src = `export interface GenOptions {\n  grammar: string;\n}\n`;
     const out = upsertJsDocTag(src, 'GenOptions', 'useWhen', 'Generating');
     expect(out).toContain('@useWhen Generating');
+  });
+
+  it('annotates an enum declaration', () => {
+    const src = `export enum Color {\n  Red,\n  Green\n}\n`;
+    const out = upsertJsDocTag(src, 'Color', 'useWhen', 'Picking a color');
+    expect(out).toContain('@useWhen Picking a color');
+    expect(out.indexOf('/**')).toBeLessThan(out.indexOf('export enum Color'));
+  });
+
+  it('annotates an abstract class declaration', () => {
+    const src = `export abstract class Base {}\n`;
+    const out = upsertJsDocTag(src, 'Base', 'useWhen', 'Subclassing');
+    expect(out).toContain('@useWhen Subclassing');
+    expect(out.indexOf('/**')).toBeLessThan(out.indexOf('export abstract class Base'));
   });
 
   it('returns source unchanged when the declaration is absent', () => {
@@ -62,5 +79,20 @@ describe('readJsDocTags', () => {
   it('parses multiple tags', () => {
     const src = `/**\n * @useWhen Foo\n * @pitfalls Bar\n */\nexport function f() {}\n`;
     expect(readJsDocTags(src, 'f')).toEqual({ useWhen: 'Foo', pitfalls: 'Bar' });
+  });
+
+  it('round-trips every RefineTag value', () => {
+    const allTags: readonly RefineTag[] = [
+      'useWhen',
+      'avoidWhen',
+      'pitfalls',
+      'remarks',
+      'example'
+    ];
+    for (const tag of allTags) {
+      const content = `value-for-${tag}`;
+      const src = upsertJsDocTag(`export function f() {}\n`, 'f', tag, content);
+      expect(readJsDocTags(src, 'f')).toEqual({ [tag]: content });
+    }
   });
 });

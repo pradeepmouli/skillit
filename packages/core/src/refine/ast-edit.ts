@@ -3,13 +3,23 @@ import { parse, Lang } from '@ast-grep/napi';
 import type { SgNode } from '@ast-grep/napi';
 import type { RefineTag } from './types.js';
 
-const REFINE_TAGS: ReadonlyArray<RefineTag> = [
+// `satisfies` ensures every listed value is a valid RefineTag. The
+// `MissingTags` assertion below makes the inverse hold too: if a value is added
+// to the RefineTag union but not to this list, compilation fails — so the
+// round-trip / readJsDocTags coverage can never silently miss a tag.
+const REFINE_TAGS = [
   'useWhen',
   'avoidWhen',
   'pitfalls',
   'remarks',
   'example'
-];
+] as const satisfies readonly RefineTag[];
+
+// Compile-time exhaustiveness guard: `MissingTags` must be `never`. If a value
+// is added to RefineTag but not to REFINE_TAGS, this assignment fails to type.
+type MissingTags = Exclude<RefineTag, (typeof REFINE_TAGS)[number]>;
+const _exhaustive: never = undefined as MissingTags;
+void _exhaustive;
 
 /**
  * Find the export_statement node whose exported name matches `declName`.
@@ -27,7 +37,9 @@ function findExportStatement(root: SgNode, declName: string): SgNode | undefined
       if (
         k === 'function_declaration' ||
         k === 'class_declaration' ||
+        k === 'abstract_class_declaration' ||
         k === 'interface_declaration' ||
+        k === 'enum_declaration' ||
         k === 'type_alias_declaration'
       ) {
         const nameNode = inner.field('name');
@@ -91,7 +103,8 @@ export function upsertJsDocTag(
     const linePrefix = beforeClose.match(/([^\n]*)$/)?.[1] ?? ' ';
 
     const merged =
-      block.slice(0, closeOffset - linePrefix.length) + `* ${tagText}\n${linePrefix}*/`;
+      block.slice(0, closeOffset - linePrefix.length) +
+      `${linePrefix}* ${tagText}\n${linePrefix}*/`;
 
     return root.commitEdits([jsdocNode.replace(merged)]);
   }
