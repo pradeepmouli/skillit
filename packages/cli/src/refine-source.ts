@@ -120,6 +120,9 @@ export class CliRefineSource implements RefineSource {
       const next = upsertJsDocTag(src, iface, fix.tag, fix.value);
       if (next !== src) {
         await writeFile(file, next, 'utf8');
+        // Keep the in-memory map current so subsequent fixes targeting the
+        // same file build on this edit instead of clobbering it.
+        sources.set(file, next);
       }
     }
   }

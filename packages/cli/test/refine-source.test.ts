@@ -60,6 +60,26 @@ describe('CliRefineSource', () => {
     expect(written).toContain('@useWhen When X');
   });
 
+  it('applyFixes() persists multiple tags targeting the same interface', async () => {
+    const file = path.join(cwd, 'options.ts');
+    writeFileSync(file, `export interface GenOptions {\n  out: string;\n}\n`, 'utf8');
+
+    const source = new CliRefineSource({
+      program: makeProgram(),
+      sourceGlob: path.join(cwd, '**/*.ts'),
+      cwd
+    });
+
+    await source.applyFixes([
+      { toolName: 'gen', tag: 'useWhen', value: 'When X' },
+      { toolName: 'gen', tag: 'avoidWhen', value: 'Avoid Y' }
+    ]);
+
+    const written = readFileSync(file, 'utf8');
+    expect(written).toContain('@useWhen When X');
+    expect(written).toContain('@avoidWhen Avoid Y');
+  });
+
   it('applyFixes() warns and changes nothing when no matching interface exists', async () => {
     const file = path.join(cwd, 'options.ts');
     const original = `export interface GenOptions {\n  out: string;\n}\n`;
