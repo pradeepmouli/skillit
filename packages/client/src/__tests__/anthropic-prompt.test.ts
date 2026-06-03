@@ -50,6 +50,15 @@ describe('buildDraftPrompt', () => {
     expect(prompt).toContain('tool_a');
     expect(prompt).toContain('@useWhen');
   });
+
+  it('uses source-neutral framing (no hardcoded MCP) and keeps guidance', () => {
+    const req = baseDraftReq({ guidance: 'CLI conventions: use --flag syntax.' });
+    const prompt = buildDraftPrompt(req);
+    expect(prompt).not.toContain('MCP');
+    expect(prompt).toContain('skill annotations for "my-tool"');
+    expect(prompt).toContain('Conventions');
+    expect(prompt).toContain('CLI conventions: use --flag syntax.');
+  });
 });
 
 describe('buildReviewPrompt', () => {

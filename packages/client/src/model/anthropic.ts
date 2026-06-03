@@ -54,7 +54,7 @@ export function parseReviewVerdict(text: string): ReviewResult {
 
 export function buildDraftPrompt(req: DraftRequest): string {
   const parts = [
-    `You are improving MCP tool annotations for the skill "${req.skill.name}".`,
+    `You are improving skill annotations for "${req.skill.name}".`,
     `Tool: ${req.toolName}`,
     `Tag to fill: @${req.tag}`,
     `Guidance: ${req.suggestion}`,
