@@ -92,12 +92,30 @@ describe('buildInitCommand', () => {
     expect(installCalls[0]!.cwd).toBe(dir);
   });
 
-  it('generates the initial skill into <cwd>/skills', async () => {
+  it('generates the skill into <cwd>/skills before and after refine', async () => {
     const dir = await writeCliFixture();
     const { deps, generateCalls } = makeStubs();
     await run(deps);
-    expect(generateCalls).toHaveLength(1);
+    // Generated once before refine (initial) and once after (reflecting the
+    // freshly-written JSDoc), both into the same out dir.
+    expect(generateCalls).toHaveLength(2);
     expect(generateCalls[0]!.outDir).toBe(join(dir, 'skills'));
+    expect(generateCalls[1]!.outDir).toBe(join(dir, 'skills'));
+  });
+
+  it('runs refine between the initial generate and the post-refine regenerate', async () => {
+    await writeCliFixture();
+    const order: string[] = [];
+    const { deps } = makeStubs({
+      generateSkill: async () => {
+        order.push('generate');
+      },
+      runRefine: async () => {
+        order.push('refine');
+      }
+    });
+    await run(deps);
+    expect(order).toEqual(['generate', 'refine', 'generate']);
   });
 
   it('dispatches refine with the cli source', async () => {

@@ -155,19 +155,24 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
       if (nature === 'cli') {
         const outDir = join(cwd, opts.out);
         const name = skillNameFrom(await readPackageName(cwd));
-        await generateSkill({
+        const generateOpts: GenerateSkillOpts = {
           cwd,
           nature,
           name,
           outDir,
           ...(opts.program !== undefined ? { program: opts.program } : {})
-        });
+        };
+        await generateSkill(generateOpts);
         await runRefine({
           source: nature,
           ...(opts.program !== undefined ? { program: opts.program } : {}),
           maxIterations: '5',
           items: '5'
         });
+        // refine only writes JSDoc back into source files; regenerate so the
+        // on-disk skill reflects the freshly-written annotations. Runs only
+        // after a successful refine (a refine throw propagates above).
+        await generateSkill(generateOpts);
       } else {
         const extra = nature === 'mcp' ? ' [--mcp <path>]' : '';
         console.log(
