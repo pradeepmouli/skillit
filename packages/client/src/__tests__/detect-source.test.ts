@@ -7,6 +7,7 @@ import {
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 let tmpDir: string;
@@ -100,6 +101,30 @@ describe('detectProjectNature', () => {
       dependencies: { commander: '^14.0.0', '@modelcontextprotocol/sdk': '^1.0.0' }
     });
     expect(await detectProjectNature(dir)).toBe('cli');
+  });
+
+  it('returns cli when a loadable bin exports a commander Command (no dep)', async () => {
+    // The bin fixture lives in-workspace so its `commander` import resolves;
+    // the temp dir only holds a package.json pointing `bin` at it.
+    const binPath = fileURLToPath(new URL('./fixtures/bin-with-program.mjs', import.meta.url));
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'bin-only', bin: binPath })
+    );
+    expect(await detectProjectNature(tmpDir)).toBe('cli');
+  });
+
+  it('falls through to mcp when the bin does not load a commander Command', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({
+        name: 'mcp-no-bin',
+        dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' }
+      })
+    );
+    expect(await detectProjectNature(tmpDir)).toBe('mcp');
   });
 
   it('returns typedoc for a plain TS library', async () => {
