@@ -99,6 +99,33 @@ describe('CLI surface already annotated with useWhen is excluded', () => {
 });
 
 // ---------------------------------------------------------------------------
+// A CLI surface with an EMPTY useWhen array is still a gap
+// ---------------------------------------------------------------------------
+
+describe('CLI surface with empty useWhen array is treated as a gap', () => {
+  const audit = makeAuditResult([]);
+  const skill = makeCLISkill({
+    configSurfaces: [
+      {
+        name: 'gen',
+        description: 'Generate output',
+        sourceType: 'cli',
+        options: [],
+        useWhen: [] // empty array = no guidance = still a gap
+      }
+    ]
+  });
+  const estimate = estimateSkillJudgeScore(audit, skill);
+
+  it('@useWhen improvement includes "gen" command target despite empty array', () => {
+    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    expect(useWhenImp).toBeDefined();
+    const target = useWhenImp?.targets?.find((t) => t.name === 'gen' && t.kind === 'command');
+    expect(target).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Non-CLI surfaces (config, env) are NOT included as command targets
 // ---------------------------------------------------------------------------
 
@@ -138,10 +165,11 @@ describe('non-regression: class/function targets still resolved when present', (
       {
         name: 'doThing',
         description: 'Does a thing',
+        signature: '',
         parameters: [],
         returnType: 'void',
-        tags: {},
-        isExported: true
+        examples: [],
+        tags: {}
       }
     ],
     classes: [],

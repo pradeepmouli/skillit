@@ -275,7 +275,10 @@ function targetsForMissingTag(
 
   const cliTargets: ImprovementTarget[] = CLI_SURFACE_TAGS.has(tag as CliTag)
     ? (skill.configSurfaces ?? [])
-        .filter((s) => s.sourceType === 'cli' && !(s[tag as CliTag] as string[] | undefined))
+        // Empty array = no content = a gap, so treat it the same as a missing tag.
+        .filter(
+          (s) => s.sourceType === 'cli' && !(s[tag as CliTag] as string[] | undefined)?.length
+        )
         .slice(0, maxFunctions)
         .map((s) => ({ file: '', name: s.name, kind: 'command' }))
     : [];
