@@ -89,4 +89,14 @@ describe('buildReviewPrompt', () => {
     expect(prompt).toContain('@useWhen');
     expect(prompt).toContain('Use this tool when listing files');
   });
+
+  it('uses source-neutral framing (no hardcoded MCP) and keeps guidance + JSON instruction', () => {
+    const req = baseReviewReq({ guidance: 'CLI conventions: use --flag syntax.' });
+    const prompt = buildReviewPrompt(req);
+    expect(prompt).not.toContain('MCP');
+    expect(prompt).toContain('skill annotation draft for "my-tool"');
+    expect(prompt).toContain('Conventions');
+    expect(prompt).toContain('CLI conventions: use --flag syntax.');
+    expect(prompt).toContain('Respond with JSON only');
+  });
 });

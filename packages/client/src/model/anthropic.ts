@@ -69,7 +69,7 @@ export function buildDraftPrompt(req: DraftRequest): string {
 
 export function buildReviewPrompt(req: ReviewRequest): string {
   const parts = [
-    `You are reviewing an MCP tool annotation draft.`,
+    `You are reviewing a skill annotation draft for "${req.skill.name}".`,
     `Tool: ${req.toolName}, Tag: @${req.tag}`,
     `Guidance the drafter was given: ${req.suggestion}`,
     `Draft:\n${req.draft}`
