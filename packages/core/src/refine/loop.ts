@@ -41,6 +41,7 @@ export async function refineSkill(
   const passingSet = new Set(passingGrades);
   const iterations: RefineIteration[] = [];
   let skill = await source.extract();
+  const guidance = await source.guidance?.();
   let estimate = scoreSkill(skill);
 
   if (passingSet.has(estimate.grade)) {
@@ -77,14 +78,16 @@ export async function refineSkill(
         tag: item.tag,
         suggestion: item.improvement.suggestion,
         currentValue,
-        skill
+        skill,
+        guidance
       });
       const review = await model.review({
         toolName: item.toolName,
         tag: item.tag,
         draft,
         suggestion: item.improvement.suggestion,
-        skill
+        skill,
+        guidance
       });
       if (review.verdict === 'revise') {
         draft = await model.draft({
@@ -92,7 +95,8 @@ export async function refineSkill(
           tag: item.tag,
           suggestion: review.feedback,
           currentValue: draft,
-          skill
+          skill,
+          guidance
         });
       }
       fixes.push({ toolName: item.toolName, tag: item.tag, value: draft });
