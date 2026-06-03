@@ -184,6 +184,40 @@ describe('CliRefineSource', () => {
     expect(lines.join('')).toContain('DbMigrateOptions');
   });
 
+  it('extract() re-hydrates tags onto a colon-namespaced command and emits no stray config surface', async () => {
+    const program = new Command().name('demo');
+    program
+      .command('db:migrate')
+      .description('Run migrations')
+      .option('--to <ver>', 'Target version');
+
+    const file = path.join(cwd, 'options.ts');
+    writeFileSync(
+      file,
+      `/**\n * @useWhen When migrating the database\n */\nexport interface DbMigrateOptions {\n  to: string;\n}\n`,
+      'utf8'
+    );
+
+    const source = new CliRefineSource({
+      program,
+      sourceGlob: path.join(cwd, '**/*.ts'),
+      cwd
+    });
+
+    const skill = await source.extract();
+    const cliSurface = skill.configSurfaces?.find(
+      (s) => s.sourceType === 'cli' && s.name === 'db:migrate'
+    );
+    expect(cliSurface).toBeDefined();
+    expect(cliSurface?.useWhen).toContain('When migrating the database');
+
+    // No stray sourceType:'config' surface named after the interface.
+    const stray = skill.configSurfaces?.find(
+      (s) => s.sourceType === 'config' && s.name === 'DbMigrateOptions'
+    );
+    expect(stray).toBeUndefined();
+  });
+
   it('guidance() returns the bundled CLI conventions skill', async () => {
     const source = new CliRefineSource({
       program: makeProgram(),

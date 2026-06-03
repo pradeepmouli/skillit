@@ -55,10 +55,15 @@ export class CliRefineSource implements RefineSource {
       const iface = this.interfaceName(surface.name);
       const tags = this.readTagsAcross(iface, sources);
 
+      // Key the correlation-input surface by the COMMAND name (not the
+      // interface name) so `extractCliSkill`'s `<command>`/`<command>options`
+      // lookup matches colon-namespaced commands (e.g. `db:migrate`). Mark it
+      // `cli` so it is correlated onto the command surface rather than emitted
+      // as a separate 0-option `config` surface.
       const configSurface: ExtractedConfigSurface = {
-        name: iface,
+        name: surface.name,
         description: '',
-        sourceType: 'config',
+        sourceType: 'cli',
         options: []
       };
       let hasContent = false;
