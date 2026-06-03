@@ -19,6 +19,13 @@ describe('loadProgram', () => {
     expect(program.name()).toBe('fixture-tool');
   });
 
+  it('wraps explicit --program import failures, naming the file and guidance', async () => {
+    const cwd = fileURLToPath(new URL('.', import.meta.url));
+    await expect(
+      loadProgram({ program: 'fixtures/does-not-exist.mjs#buildProgram', cwd })
+    ).rejects.toThrow(/does-not-exist\.mjs[\s\S]*--program/);
+  });
+
   it('auto-finds the program from package.json bin (program export)', async () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), 'to-skills-loader-'));
     try {

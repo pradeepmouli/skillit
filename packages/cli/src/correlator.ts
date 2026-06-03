@@ -56,6 +56,20 @@ export function correlateFlags(
     useWhen: cliSurface.useWhen ?? configSurface.useWhen,
     avoidWhen: cliSurface.avoidWhen ?? configSurface.avoidWhen,
     pitfalls: cliSurface.pitfalls ?? configSurface.pitfalls,
-    remarks: cliSurface.remarks ?? configSurface.remarks
+    remarks: cliSurface.remarks ?? configSurface.remarks,
+    // A config-provided usage example (e.g. from JSDoc @example) is preferred
+    // over commander's synthesized boilerplate (`[options]`, `[options] <args>`).
+    usage: isBoilerplateUsage(cliSurface.usage)
+      ? (configSurface.usage ?? cliSurface.usage)
+      : (cliSurface.usage ?? configSurface.usage)
   };
+}
+
+/**
+ * Whether a usage string is commander's synthesized default (no authored
+ * example), e.g. `[options]`, `[options] [command]`, `[options] <file>`.
+ */
+function isBoilerplateUsage(usage: string | undefined): boolean {
+  if (usage === undefined) return true;
+  return usage.match(/^\[options\]([\s]+[<[].*)?$/) !== null;
 }

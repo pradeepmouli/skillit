@@ -12,6 +12,10 @@ export interface LoadProgramOptions {
 
 const LOAD_ERROR = 'Could not load a commander program; pass --program <file#export>';
 
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 /**
  * Resolves a candidate export into a commander {@link Command}.
  *
@@ -56,10 +60,20 @@ export async function loadProgram(opts: LoadProgramOptions): Promise<Command> {
       throw new Error(LOAD_ERROR);
     }
     const absPath = path.resolve(opts.cwd, file);
-    const mod = await importModule(absPath);
+    let mod: Record<string, unknown>;
+    try {
+      mod = await importModule(absPath);
+    } catch (cause) {
+      throw new Error(
+        `Could not import '${absPath}'; pass --program <file#export>: ${messageOf(cause)}`,
+        { cause }
+      );
+    }
     const command = await resolveCommand(mod[exportName]);
     if (!command) {
-      throw new Error(LOAD_ERROR);
+      throw new Error(
+        `Export '${exportName}' from '${absPath}' is not a commander Command or factory; pass --program <file#export>`
+      );
     }
     return command;
   }

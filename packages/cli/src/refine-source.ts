@@ -36,10 +36,10 @@ export interface CliRefineSourceOptions {
 export class CliRefineSource implements RefineSource {
   constructor(private readonly opts: CliRefineSourceOptions) {}
 
-  /** Maps a command name to its options-interface name, e.g. `add-remote` → `AddRemoteOptions`. */
+  /** Maps a command name to its options-interface name, e.g. `add-remote` → `AddRemoteOptions`, `db:migrate` → `DbMigrateOptions`. */
   private interfaceName(command: string): string {
     const pascal = command
-      .split(/[-_\s]+/)
+      .split(/[-_:.\s]+/)
       .filter((part) => part.length > 0)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join('');
@@ -48,20 +48,12 @@ export class CliRefineSource implements RefineSource {
 
   async extract(): Promise<ExtractedSkill> {
     const surfaces = introspectCommander(this.opts.program);
-    const files = await this.sourceFiles();
-
-    const sources = new Map<string, string>();
-    for (const file of files) {
-      sources.set(file, await readFile(file, 'utf8'));
-    }
+    const sources = await this.readSources();
 
     const configSurfaces: ExtractedConfigSurface[] = [];
     for (const surface of surfaces) {
       const iface = this.interfaceName(surface.name);
       const tags = this.readTagsAcross(iface, sources);
-      if (Object.keys(tags).length === 0) {
-        continue;
-      }
 
       const configSurface: ExtractedConfigSurface = {
         name: iface,
@@ -69,12 +61,33 @@ export class CliRefineSource implements RefineSource {
         sourceType: 'config',
         options: []
       };
-      if (tags.useWhen !== undefined) configSurface.useWhen = [tags.useWhen];
-      if (tags.avoidWhen !== undefined) configSurface.avoidWhen = [tags.avoidWhen];
-      if (tags.pitfalls !== undefined) configSurface.pitfalls = [tags.pitfalls];
-      if (tags.remarks !== undefined) configSurface.remarks = tags.remarks;
+      let hasContent = false;
+      if (tags.useWhen !== undefined) {
+        configSurface.useWhen = [tags.useWhen];
+        hasContent = true;
+      }
+      if (tags.avoidWhen !== undefined) {
+        configSurface.avoidWhen = [tags.avoidWhen];
+        hasContent = true;
+      }
+      if (tags.pitfalls !== undefined) {
+        configSurface.pitfalls = [tags.pitfalls];
+        hasContent = true;
+      }
+      if (tags.remarks !== undefined) {
+        configSurface.remarks = tags.remarks;
+        hasContent = true;
+      }
+      if (tags.example !== undefined) {
+        configSurface.usage = tags.example;
+        hasContent = true;
+      }
 
-      configSurfaces.push(configSurface);
+      // Only emit a surface when at least one consumed field is populated;
+      // a truly-empty read contributes nothing but noise.
+      if (hasContent) {
+        configSurfaces.push(configSurface);
+      }
     }
 
     return extractCliSkill({ program: this.opts.program, configSurfaces });
@@ -92,18 +105,18 @@ export class CliRefineSource implements RefineSource {
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {
-    const files = await this.sourceFiles();
+    const sources = await this.readSources();
 
     for (const fix of fixes) {
       const iface = this.interfaceName(fix.toolName);
-      const file = await this.findInterfaceFile(iface, files);
+      const file = this.findInterfaceFile(iface, sources);
       if (!file) {
         process.stderr.write(
           `[to-skills] no ${iface} interface for command '${fix.toolName}'; skipped ${fix.tag}\n`
         );
         continue;
       }
-      const src = await readFile(file, 'utf8');
+      const src = sources.get(file)!;
       const next = upsertJsDocTag(src, iface, fix.tag, fix.value);
       if (next !== src) {
         await writeFile(file, next, 'utf8');
@@ -117,7 +130,7 @@ export class CliRefineSource implements RefineSource {
     sources: Map<string, string>
   ): Partial<Record<RefineTag, string>> {
     for (const src of sources.values()) {
-      if (!src.includes(`interface ${iface}`)) {
+      if (!fileDeclaresInterface(src, iface)) {
         continue;
       }
       const tags = readOptionsTags(iface, src);
@@ -128,23 +141,36 @@ export class CliRefineSource implements RefineSource {
     return {};
   }
 
-  private async sourceFiles(): Promise<string[]> {
-    const files: string[] = [];
+  /** Globs the source files once and returns a file → contents map. */
+  private async readSources(): Promise<Map<string, string>> {
+    const sources = new Map<string, string>();
     for await (const file of glob(this.opts.sourceGlob, {
       exclude: (f) => f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_DIRS.has(seg))
     })) {
-      files.push(file);
+      sources.set(file, await readFile(file, 'utf8'));
     }
-    return files;
+    return sources;
   }
 
-  private async findInterfaceFile(iface: string, files: string[]): Promise<string | undefined> {
-    for (const file of files) {
-      const contents = await readFile(file, 'utf8');
-      if (contents.includes(`interface ${iface}`)) {
+  private findInterfaceFile(iface: string, sources: Map<string, string>): string | undefined {
+    for (const [file, contents] of sources) {
+      if (fileDeclaresInterface(contents, iface)) {
         return file;
       }
     }
     return undefined;
   }
+}
+
+/**
+ * Returns whether `src` declares the interface named exactly `iface`.
+ *
+ * Matches on identifier boundaries so the probe for `GenOptions` does not
+ * spuriously match `interface GenOptionsExtra`. Shared by file-selection
+ * (`findInterfaceFile`) and tag-reading (`readTagsAcross`) so both agree on
+ * what counts as the interface.
+ */
+function fileDeclaresInterface(src: string, iface: string): boolean {
+  const escaped = iface.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return src.match(new RegExp(String.raw`\binterface\s+${escaped}\b`)) !== null;
 }
