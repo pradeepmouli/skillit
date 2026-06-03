@@ -146,8 +146,8 @@ Key flags:
 | `--mode build\|runtime`        | auto      | Override auto-detection                              |
 | `--mcp <path>`                 | —         | Path to `mcp.json` or `claude_desktop_config.json`   |
 | `--source-glob <glob>`         | `**/*.ts` | Glob for TypeScript files to scan (build mode)       |
-| `--max-iterations <n>`         | `3`       | Maximum refinement passes per tool                   |
-| `--items <names>`              | all       | Comma-separated tool names to refine                 |
+| `--max-iterations <n>`         | `5`       | Iteration cap for the audit→draft→review loop        |
+| `--items <n>`                  | `5`       | Work items per iteration                             |
 
 ## Why Inline?
 
