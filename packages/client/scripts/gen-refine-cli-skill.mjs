@@ -1,15 +1,28 @@
 // Dogfood: generate a skill for the `to-skills` CLI binary (the `refine` command)
 // using @to-skills/cli's own commander introspection.
 //
-// Run from the repo root:  node packages/client/scripts/gen-refine-cli-skill.mjs
+// Run via the package script (builds first):  pnpm --filter @to-skills/client gen-cli-skill
+// Or directly, after building @to-skills/client:  node packages/client/scripts/gen-refine-cli-skill.mjs
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { Command } from 'commander';
 import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
-import { buildRefineCommand } from '../dist/commands/refine.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../..');
+
+// This script reads the refine command from build output. `dist/` is not in the
+// repo by default, so fail with an actionable message rather than a raw
+// ERR_MODULE_NOT_FOUND when it is missing or stale.
+const refineDist = resolve(here, '../dist/commands/refine.js');
+if (!existsSync(refineDist)) {
+  console.error(
+    `Cannot find ${refineDist}.\nBuild @to-skills/client first:  pnpm --filter @to-skills/client build`
+  );
+  process.exit(1);
+}
+const { buildRefineCommand } = await import(refineDist);
 
 // Reconstruct the same program shape that packages/client/src/bin.ts ships.
 const program = new Command('to-skills').description('to-skills CLI').version('0.1.0');

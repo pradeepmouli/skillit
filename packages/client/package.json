@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "tsgo -p tsconfig.build.json",
-    "gen-cli-skill": "node scripts/gen-refine-cli-skill.mjs",
+    "gen-cli-skill": "pnpm build && node scripts/gen-refine-cli-skill.mjs",
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {

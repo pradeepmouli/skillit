@@ -38,11 +38,12 @@ function extractCommand(cmd: any, parentName: string): ExtractedConfigSurface {
       cliShort: opt.short ?? undefined,
       type: inferType(opt.flags ?? ''),
       description: opt.description ?? '',
-      // commander's `opt.required` means the option's VALUE is required when the
-      // flag is present (`<x>` vs `[x]`) — it is true for any value-taking flag.
-      // Whether the option itself must be supplied is `opt.mandatory`, set only
-      // by `.requiredOption()`. Use mandatory so optional `--flag <value>` opts
-      // are not mismarked as required.
+      // commander's `opt.required` only describes the VALUE syntax: it is true for
+      // `--flag <x>` (value required when the flag is present) and false for
+      // `--flag [x]` (value optional). It says nothing about whether the option
+      // itself must be supplied — that is `opt.mandatory`, set only by
+      // `.requiredOption()`. Use mandatory so optional `--flag <value>` opts are
+      // not mismarked as required.
       required: !!opt.mandatory
     };
 
