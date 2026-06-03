@@ -268,7 +268,19 @@ function targetsForMissingTag(
     .slice(0, maxFunctions)
     .map((f) => ({ file: fileForModule(f.sourceModule), name: f.name, kind: 'function' }));
 
-  return [...classTargets, ...fnTargets];
+  // CLI command surfaces also carry useWhen / avoidWhen / pitfalls.
+  // Only emit targets for the tags that ExtractedConfigSurface actually holds.
+  const CLI_SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'pitfalls'] as const);
+  type CliTag = 'useWhen' | 'avoidWhen' | 'pitfalls';
+
+  const cliTargets: ImprovementTarget[] = CLI_SURFACE_TAGS.has(tag as CliTag)
+    ? (skill.configSurfaces ?? [])
+        .filter((s) => s.sourceType === 'cli' && !(s[tag as CliTag] as string[] | undefined))
+        .slice(0, maxFunctions)
+        .map((s) => ({ file: '', name: s.name, kind: 'command' }))
+    : [];
+
+  return [...classTargets, ...fnTargets, ...cliTargets];
 }
 
 /** Functions with 3+ parameters missing @remarks, sorted by source tree depth. */
