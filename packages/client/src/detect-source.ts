@@ -1,8 +1,27 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export type RefineSourceKind = 'cli' | 'mcp' | 'typedoc';
 export type DetectedRefineSource = RefineSourceKind | 'ambiguous' | 'none';
+
+/**
+ * Read the union of `dependencies` + `devDependencies` from `<cwd>/package.json`.
+ * Missing or unreadable `package.json` → `{}` (never throws). Single source of
+ * truth for dependency reads across detection helpers.
+ */
+async function readDeps(cwd: string): Promise<Record<string, string>> {
+  try {
+    const raw = await readFile(join(cwd, 'package.json'), 'utf8');
+    const pkg = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      ...(pkg['dependencies'] as Record<string, string> | undefined),
+      ...(pkg['devDependencies'] as Record<string, string> | undefined)
+    };
+  } catch {
+    return {};
+  }
+}
 
 /** Map an installed package name to its refine source kind, if any. */
 function packageToSource(dep: string): RefineSourceKind | undefined {
@@ -25,17 +44,7 @@ const SOURCE_ORDER: readonly RefineSourceKind[] = ['cli', 'mcp', 'typedoc'];
  * is derived from it.
  */
 export async function detectInstalledSources(cwd: string): Promise<RefineSourceKind[]> {
-  let deps: Record<string, string>;
-  try {
-    const raw = await readFile(join(cwd, 'package.json'), 'utf8');
-    const pkg = JSON.parse(raw) as Record<string, unknown>;
-    deps = {
-      ...(pkg['dependencies'] as Record<string, string> | undefined),
-      ...(pkg['devDependencies'] as Record<string, string> | undefined)
-    };
-  } catch {
-    return [];
-  }
+  const deps = await readDeps(cwd);
 
   const sources = new Set<RefineSourceKind>();
   for (const dep of Object.keys(deps)) {
@@ -66,4 +75,30 @@ export function classifyRefineSources(sources: readonly RefineSourceKind[]): Det
  */
 export async function detectRefineSource(cwd: string): Promise<DetectedRefineSource> {
   return classifyRefineSources(await detectInstalledSources(cwd));
+}
+
+/**
+ * Detect the nature of the project at `cwd` from its `package.json` deps:
+ * - has `commander` or `yargs` → `'cli'`
+ * - else has `@modelcontextprotocol/sdk` → `'mcp'`
+ * - else → `'typedoc'` (safe default for a plain TS library)
+ *
+ * Missing or unreadable `package.json` → `'typedoc'` (never throws). The `cli`
+ * check is evaluated first, then `mcp`, then the `typedoc` default.
+ */
+export async function detectProjectNature(cwd: string): Promise<RefineSourceKind> {
+  const deps = await readDeps(cwd);
+  if ('commander' in deps || 'yargs' in deps) return 'cli';
+  if ('@modelcontextprotocol/sdk' in deps) return 'mcp';
+  return 'typedoc';
+}
+
+/**
+ * Detect the package manager for `cwd` by lockfile presence:
+ * `pnpm-lock.yaml` → `'pnpm'`, `yarn.lock` → `'yarn'`, else `'npm'`.
+ */
+export function detectPackageManager(cwd: string): 'pnpm' | 'yarn' | 'npm' {
+  if (existsSync(join(cwd, 'pnpm-lock.yaml'))) return 'pnpm';
+  if (existsSync(join(cwd, 'yarn.lock'))) return 'yarn';
+  return 'npm';
 }

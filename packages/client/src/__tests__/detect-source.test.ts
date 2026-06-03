@@ -1,4 +1,9 @@
-import { detectInstalledSources, detectRefineSource } from '../detect-source.js';
+import {
+  detectInstalledSources,
+  detectPackageManager,
+  detectProjectNature,
+  detectRefineSource
+} from '../detect-source.js';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -71,5 +76,58 @@ describe('detectInstalledSources', () => {
   it('returns an empty list when package.json is missing or unreadable', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
     expect(await detectInstalledSources(tmpDir)).toEqual([]);
+  });
+});
+
+describe('detectProjectNature', () => {
+  it('returns cli when commander is a dependency', async () => {
+    const dir = await writePkg({ dependencies: { commander: '^14.0.0' } });
+    expect(await detectProjectNature(dir)).toBe('cli');
+  });
+
+  it('returns cli when yargs is a dependency', async () => {
+    const dir = await writePkg({ dependencies: { yargs: '^17.0.0' } });
+    expect(await detectProjectNature(dir)).toBe('cli');
+  });
+
+  it('returns mcp when @modelcontextprotocol/sdk is a dependency', async () => {
+    const dir = await writePkg({ dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' } });
+    expect(await detectProjectNature(dir)).toBe('mcp');
+  });
+
+  it('prefers cli over mcp when both indicators are present', async () => {
+    const dir = await writePkg({
+      dependencies: { commander: '^14.0.0', '@modelcontextprotocol/sdk': '^1.0.0' }
+    });
+    expect(await detectProjectNature(dir)).toBe('cli');
+  });
+
+  it('returns typedoc for a plain TS library', async () => {
+    const dir = await writePkg({ dependencies: { zod: '^3.0.0' } });
+    expect(await detectProjectNature(dir)).toBe('typedoc');
+  });
+
+  it('returns typedoc when package.json is missing', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    expect(await detectProjectNature(tmpDir)).toBe('typedoc');
+  });
+});
+
+describe('detectPackageManager', () => {
+  it('returns pnpm when pnpm-lock.yaml is present', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+    expect(detectPackageManager(tmpDir)).toBe('pnpm');
+  });
+
+  it('returns yarn when yarn.lock is present', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    await writeFile(join(tmpDir, 'yarn.lock'), '');
+    expect(detectPackageManager(tmpDir)).toBe('yarn');
+  });
+
+  it('returns npm when no lockfile is present', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    expect(detectPackageManager(tmpDir)).toBe('npm');
   });
 });
