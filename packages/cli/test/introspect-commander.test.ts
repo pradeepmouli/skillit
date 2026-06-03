@@ -100,6 +100,19 @@ describe('introspectCommander', () => {
     expect(surfaces[0].options[0].required).toBe(false);
   });
 
+  it('does not mark an optional value-taking option as required', () => {
+    // Regression: commander sets opt.required=true for any `<value>` flag, even
+    // when the flag itself is optional. Only `.requiredOption()` (opt.mandatory)
+    // should map to required.
+    const program = new Command('mytool');
+    program.command('serve').description('Serve').option('--host <name>', 'Bind host');
+
+    const surfaces = introspectCommander(program);
+    const opt = surfaces[0].options[0];
+    expect(opt.name).toBe('host');
+    expect(opt.required).toBe(false);
+  });
+
   it('extracts default values stringified', () => {
     const program = new Command('mytool');
     program
