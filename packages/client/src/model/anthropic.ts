@@ -72,13 +72,15 @@ export function buildReviewPrompt(req: ReviewRequest): string {
     `You are reviewing an MCP tool annotation draft.`,
     `Tool: ${req.toolName}, Tag: @${req.tag}`,
     `Guidance the drafter was given: ${req.suggestion}`,
-    `Draft:\n${req.draft}`,
-    'Respond with JSON only: {"verdict":"accepted"|"revise","feedback":"..."}.',
-    'Accept if the draft meaningfully addresses the guidance. Revise if it is vague or incorrect.'
+    `Draft:\n${req.draft}`
   ];
   if (req.guidance) {
     parts.push(`Conventions (follow these):\n${req.guidance}`);
   }
+  parts.push(
+    'Respond with JSON only: {"verdict":"accepted"|"revise","feedback":"..."}.',
+    'Accept if the draft meaningfully addresses the guidance. Revise if it is vague or incorrect.'
+  );
   return parts.join('\n\n');
 }
 

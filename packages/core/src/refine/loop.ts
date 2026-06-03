@@ -45,7 +45,7 @@ export async function refineSkill(
   let estimate = scoreSkill(skill);
 
   if (passingSet.has(estimate.grade)) {
-    return finished('passed', skill, estimate, iterations);
+    return finished('passed', skill, estimate, iterations, guidance);
   }
 
   let prevTotal = estimate.total;
@@ -53,12 +53,12 @@ export async function refineSkill(
   for (let i = 0; i < maxIterations; i++) {
     // Plateau: if this isn't the last allowed iteration and score hasn't improved, stop early.
     if (i > 0 && i < maxIterations - 1 && estimate.total <= prevTotal) {
-      return finished('plateau', skill, estimate, iterations);
+      return finished('plateau', skill, estimate, iterations, guidance);
     }
 
     const workItems = selectWorkItems(estimate.improvements, itemsPerIteration);
     if (workItems.length === 0) {
-      return finished('no-improvements', skill, estimate, iterations);
+      return finished('no-improvements', skill, estimate, iterations, guidance);
     }
 
     const fixes: DraftedFix[] = [];
@@ -112,24 +112,26 @@ export async function refineSkill(
     onIteration?.(iteration);
 
     if (passingSet.has(estimate.grade)) {
-      return finished('passed', skill, estimate, iterations);
+      return finished('passed', skill, estimate, iterations, guidance);
     }
   }
 
-  return finished('max-iterations', skill, estimate, iterations);
+  return finished('max-iterations', skill, estimate, iterations, guidance);
 }
 
 function finished(
   stoppedReason: RefineStopReason,
   finalSkill: ExtractedSkill,
   finalEstimate: SkillJudgeEstimate,
-  iterations: readonly RefineIteration[]
+  iterations: readonly RefineIteration[],
+  guidance: string | undefined
 ): RefineResult {
   return {
     iterations,
     finalSkill,
     finalEstimate,
     passed: stoppedReason === 'passed',
-    stoppedReason
+    stoppedReason,
+    guidance
   };
 }

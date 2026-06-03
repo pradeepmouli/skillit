@@ -1,8 +1,7 @@
 // packages/client/src/__tests__/anthropic-prompt.test.ts
 import { describe, it, expect } from 'vitest';
 import { buildDraftPrompt, buildReviewPrompt } from '../model/anthropic.js';
-import type { DraftRequest, ReviewRequest } from '@to-skills/core';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@to-skills/core';
 
 const baseSkill = (): ExtractedSkill =>
   ({ name: 'my-tool', functions: [] }) as unknown as ExtractedSkill;
@@ -59,6 +58,7 @@ describe('buildReviewPrompt', () => {
     const prompt = buildReviewPrompt(req);
     expect(prompt).toContain('Conventions');
     expect(prompt).toContain('Always use active voice.');
+    expect(prompt.indexOf('Conventions')).toBeLessThan(prompt.indexOf('Respond with JSON only'));
   });
 
   it('does NOT include a Conventions section when guidance is undefined', () => {

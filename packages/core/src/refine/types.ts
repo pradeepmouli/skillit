@@ -81,4 +81,5 @@ export interface RefineResult {
   finalEstimate: SkillJudgeEstimate;
   passed: boolean;
   stoppedReason: RefineStopReason;
+  guidance: string | undefined;
 }

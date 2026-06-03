@@ -87,7 +87,7 @@ describe('refineSkill — guidance threading', () => {
     let scoreCall = 0;
     const scoreSkill = () => (scoreCall++ === 0 ? failingEstimate() : passingEstimate());
 
-    await refineSkill({ source, model, scoreSkill });
+    const result = await refineSkill({ source, model, scoreSkill });
 
     // Must have driven at least one draft and one review
     expect(model.draftRequests.length).toBeGreaterThan(0);
@@ -99,6 +99,9 @@ describe('refineSkill — guidance threading', () => {
     for (const req of model.reviewRequests) {
       expect(req.guidance).toBe('RUBRIC-XYZ');
     }
+
+    // The resolved guidance is recorded on the result for observability
+    expect(result.guidance).toBe('RUBRIC-XYZ');
   });
 
   it('leaves guidance undefined when source has no guidance() method — no throw', async () => {
@@ -108,7 +111,7 @@ describe('refineSkill — guidance threading', () => {
     let scoreCall = 0;
     const scoreSkill = () => (scoreCall++ === 0 ? failingEstimate() : passingEstimate());
 
-    await expect(refineSkill({ source, model, scoreSkill })).resolves.not.toThrow();
+    const result = await refineSkill({ source, model, scoreSkill });
 
     expect(model.draftRequests.length).toBeGreaterThan(0);
     expect(model.reviewRequests.length).toBeGreaterThan(0);
@@ -119,5 +122,8 @@ describe('refineSkill — guidance threading', () => {
     for (const req of model.reviewRequests) {
       expect(req.guidance).toBeUndefined();
     }
+
+    // No guidance source → result carries undefined
+    expect(result.guidance).toBeUndefined();
   });
 });
