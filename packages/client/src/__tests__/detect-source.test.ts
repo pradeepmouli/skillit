@@ -1,4 +1,4 @@
-import { detectRefineSource } from '../detect-source.js';
+import { detectInstalledSources, detectRefineSource } from '../detect-source.js';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -52,5 +52,24 @@ describe('detectRefineSource', () => {
   it('returns none when package.json is missing or unreadable', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
     expect(await detectRefineSource(tmpDir)).toBe('none');
+  });
+});
+
+describe('detectInstalledSources', () => {
+  it('returns the deduped candidate list in stable order', async () => {
+    const dir = await writePkg({
+      dependencies: { '@to-skills/mcp': 'workspace:*', '@to-skills/cli': 'workspace:*' }
+    });
+    expect(await detectInstalledSources(dir)).toEqual(['cli', 'mcp']);
+  });
+
+  it('returns an empty list when no source package is installed', async () => {
+    const dir = await writePkg({ dependencies: { commander: '^14.0.0' } });
+    expect(await detectInstalledSources(dir)).toEqual([]);
+  });
+
+  it('returns an empty list when package.json is missing or unreadable', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    expect(await detectInstalledSources(tmpDir)).toEqual([]);
   });
 });

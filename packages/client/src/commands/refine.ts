@@ -11,7 +11,8 @@ import { refineSkill, type RefineSource } from '@to-skills/core';
 import { AnthropicModelClient } from '../model/anthropic.js';
 import { detectRefineMode } from '../detect-mode.js';
 import {
-  detectRefineSource,
+  classifyRefineSources,
+  detectInstalledSources,
   type DetectedRefineSource,
   type RefineSourceKind
 } from '../detect-source.js';
@@ -44,10 +45,13 @@ const SOURCE_FORM = '--source <cli|mcp|typedoc>';
  *
  * @param opts - parsed `--source` / `--mcp` flags
  * @param detected - result of {@link detectRefineSource} for the cwd
+ * @param candidates - the raw installed source kinds (from
+ *   {@link detectInstalledSources}); named in the ambiguous error
  */
 export function resolveRefineSource(
   opts: RefineSourceResolveOpts,
-  detected: DetectedRefineSource
+  detected: DetectedRefineSource,
+  candidates: readonly RefineSourceKind[] = []
 ): RefineSourceResolution {
   let kind: RefineSourceKind;
   if (opts.source !== undefined) {
@@ -57,7 +61,7 @@ export function resolveRefineSource(
     kind = opts.source as RefineSourceKind;
   } else if (detected === 'ambiguous') {
     return {
-      error: `Cannot determine refine source: multiple @to-skills sources are installed.
+      error: `Cannot determine refine source: multiple @to-skills sources installed (found: ${candidates.join(', ')}).
 Pass ${SOURCE_FORM} to choose one.`
     };
   } else if (detected === 'none') {
@@ -106,8 +110,9 @@ export function buildRefineCommand(): Command {
         const maxIterations = parsePositiveInt(opts.maxIterations, '--max-iterations');
         const itemsPerIteration = parsePositiveInt(opts.items, '--items');
 
-        const detected = await detectRefineSource(cwd);
-        const resolution = resolveRefineSource(opts, detected);
+        const candidates = await detectInstalledSources(cwd);
+        const detected = classifyRefineSources(candidates);
+        const resolution = resolveRefineSource(opts, detected, candidates);
         if ('error' in resolution) {
           console.error(resolution.error);
           process.exitCode = 1;

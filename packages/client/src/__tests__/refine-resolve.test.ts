@@ -38,8 +38,12 @@ describe('resolveRefineSource', () => {
   });
 
   it('errors on ambiguous detection listing candidates and --source form', () => {
-    const res = resolveRefineSource({}, 'ambiguous');
-    expect('error' in res && res.error).toMatch(/--source <cli\|mcp\|typedoc>/);
+    const res = resolveRefineSource({}, 'ambiguous', ['cli', 'mcp']);
+    const error = 'error' in res ? res.error : '';
+    expect(error).toMatch(/--source <cli\|mcp\|typedoc>/);
+    expect(error).toMatch(/cli/);
+    expect(error).toMatch(/mcp/);
+    expect(error).toMatch(/found: cli, mcp/);
   });
 
   it('errors on no detected source with the --source form', () => {
