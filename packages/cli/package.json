@@ -48,7 +48,7 @@
     "@skillit/core": "workspace:*"
   },
   "devDependencies": {
-    "commander": "^14.0.3"
+    "commander": "^15.0.0"
   },
   "peerDependencies": {
     "commander": ">=12.0.0"
