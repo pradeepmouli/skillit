@@ -19,6 +19,7 @@ Rebrand the project from `@to-skills` to the newly-registered npm org `@skillit`
 7. **Repo:** rename `pradeepmouli/to-skills` → `pradeepmouli/skillit` (GitHub 301-redirects the old URL); update all in-repo `repository` URLs, README badges, CLAUDE.md, docs-site links.
 8. **Old npm packages:** `npm deprecate` each `@to-skills/*` + `typedoc-plugin-to-skills` with a "renamed to @skillit/\*" message. No forwarder/shim releases.
 9. **Pending version PR:** close `changeset-release/master` (#42) — it would publish the old scope.
+10. **Consumer config key:** the `package.json` config key `"to-skills"` (read by the MCP bundle as `pkg["to-skills"].mcp.skillName`) → `"skillit"`. Footprint: 4 literals in `packages/mcp/src/bundle/config.ts` (the key read + two `McpError` messages + a doc comment) and the contract doc `specs/001-mcp-extract-bundle/contracts/package-json-config.md`. Internal locals named `toSkills`/`toSkillsIndent` (e.g. in `core/src/writer.ts`) are cosmetic and out of scope — leave them unless trivially in the path of a rename-symbol pass.
 
 ## Migration mechanics
 
@@ -41,18 +42,20 @@ Today `@to-skills/mcp` builds its CLI inline in its `bin.ts` and ships the `to-s
 
 ## Components & files (by area)
 
-| Area                                                | Change                                                                  |
-| --------------------------------------------------- | ----------------------------------------------------------------------- |
-| All `packages/*/package.json`                       | `name`, `workspace:*` deps, `repository` URLs                           |
-| `packages/client/package.json`                      | `bin`: `{ "skillit": "./dist/bin.js" }`                                 |
-| `packages/mcp/package.json`                         | remove `bin`; keep library exports                                      |
-| `packages/client/src/bin.ts`                        | `new Command('skillit')`; `addCommand(buildMcpCommand())`               |
-| `packages/mcp/src/bin.ts` + new `commands/`         | extract `buildMcpCommand()`; bin.ts (if kept for internal use) calls it |
-| all `**/*.ts` imports                               | `@to-skills/*` → `@skillit/*` (ast-grep)                                |
-| `packages/{cli,mcp,typedoc-plugin,typedoc}/skills/` | `git mv` skill dirs to `skillit-*`; update loader URLs                  |
-| skill metadata / renderers                          | rebrand `name`/`keywords`/`description` strings                         |
-| `README.md`, `website/`, `CLAUDE.md`                | brand + URL updates                                                     |
-| `.changeset/`                                       | new changeset; close #42                                                |
+| Area                                                            | Change                                                                            |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| All `packages/*/package.json`                                   | `name`, `workspace:*` deps, `repository` URLs                                     |
+| `packages/client/package.json`                                  | `bin`: `{ "skillit": "./dist/bin.js" }`                                           |
+| `packages/mcp/package.json`                                     | remove `bin`; keep library exports                                                |
+| `packages/client/src/bin.ts`                                    | `new Command('skillit')`; `addCommand(buildMcpCommand())`                         |
+| `packages/mcp/src/bin.ts` + new `commands/`                     | extract `buildMcpCommand()`; bin.ts (if kept for internal use) calls it           |
+| all `**/*.ts` imports                                           | `@to-skills/*` → `@skillit/*` (ast-grep)                                          |
+| `packages/{cli,mcp,typedoc-plugin,typedoc}/skills/`             | `git mv` skill dirs to `skillit-*`; update loader URLs                            |
+| skill metadata / renderers                                      | rebrand `name`/`keywords`/`description` strings                                   |
+| `packages/mcp/src/bundle/config.ts`                             | config key `pkg['to-skills']` → `pkg['skillit']` + 2 error messages + doc comment |
+| `specs/001-mcp-extract-bundle/contracts/package-json-config.md` | rebrand the `to-skills.mcp` config schema → `skillit.mcp`                         |
+| `README.md`, `website/`, `CLAUDE.md`                            | brand + URL updates                                                               |
+| `.changeset/`                                                   | new changeset; close #42                                                          |
 
 ## Sequencing (chunks; gates green after each)
 
