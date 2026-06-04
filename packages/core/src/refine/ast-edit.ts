@@ -22,47 +22,67 @@ const _exhaustive: never = undefined as MissingTags;
 void _exhaustive;
 
 /**
- * Find the export_statement node whose exported name matches `declName`.
- * Handles: function_declaration, class_declaration, interface_declaration,
- * lexical_declaration (const/let with variable_declarator).
+ * True when `node` is a top-level declaration named `declName`.
+ * Handles: function_declaration, class_declaration, abstract_class_declaration,
+ * interface_declaration, enum_declaration, type_alias_declaration, and
+ * lexical_declaration / variable_declaration (const/let with variable_declarator).
  */
-function findExportStatement(root: SgNode, declName: string): SgNode | undefined {
-  for (const child of root.children()) {
-    if (child.kind() !== 'export_statement') continue;
-    // Look for the inner declaration (skip the 'export' keyword token)
-    for (const inner of child.children()) {
-      const k = inner.kind();
-      if (k === 'export') continue; // keyword token
-
-      if (
-        k === 'function_declaration' ||
-        k === 'class_declaration' ||
-        k === 'abstract_class_declaration' ||
-        k === 'interface_declaration' ||
-        k === 'enum_declaration' ||
-        k === 'type_alias_declaration'
-      ) {
-        const nameNode = inner.field('name');
-        if (nameNode && nameNode.text() === declName) return child;
-      } else if (k === 'lexical_declaration' || k === 'variable_declaration') {
-        for (const declarator of inner.children()) {
-          if (declarator.kind() !== 'variable_declarator') continue;
-          const nameNode = declarator.field('name');
-          if (nameNode && nameNode.text() === declName) return child;
-        }
-      }
+function declarationMatches(node: SgNode, declName: string): boolean {
+  const k = node.kind();
+  if (
+    k === 'function_declaration' ||
+    k === 'class_declaration' ||
+    k === 'abstract_class_declaration' ||
+    k === 'interface_declaration' ||
+    k === 'enum_declaration' ||
+    k === 'type_alias_declaration'
+  ) {
+    const nameNode = node.field('name');
+    return nameNode?.text() === declName;
+  }
+  if (k === 'lexical_declaration' || k === 'variable_declaration') {
+    for (const declarator of node.children()) {
+      if (declarator.kind() !== 'variable_declarator') continue;
+      const nameNode = declarator.field('name');
+      if (nameNode?.text() === declName) return true;
     }
+  }
+  return false;
+}
+
+/**
+ * Find the anchor node whose leading JSDoc should be read/edited for the
+ * top-level declaration named `declName`.
+ *
+ * - For an `export`-wrapped declaration, the anchor is the `export_statement`
+ *   node (so leading JSDoc attaches above the `export` keyword).
+ * - For a bare top-level declaration, the anchor is the declaration node itself.
+ *
+ * Returns `undefined` if no matching declaration exists.
+ */
+function findDeclaration(root: SgNode, declName: string): SgNode | undefined {
+  for (const child of root.children()) {
+    if (child.kind() === 'export_statement') {
+      // Look for the inner declaration (skip the 'export' keyword token).
+      for (const inner of child.children()) {
+        if (inner.kind() === 'export') continue; // keyword token
+        if (declarationMatches(inner, declName)) return child;
+      }
+      continue;
+    }
+    // Bare (non-exported) top-level declaration.
+    if (declarationMatches(child, declName)) return child;
   }
   return undefined;
 }
 
 /**
- * Returns the leading JSDoc comment node for a given export_statement node,
- * or undefined if none exists. A leading JSDoc must be the immediate previous
- * sibling and start with `/**`.
+ * Returns the leading JSDoc comment node for a given anchor node, or undefined
+ * if none exists. A leading JSDoc must be the immediate previous sibling and
+ * start with `/**`.
  */
-function leadingJsDoc(exportNode: SgNode): SgNode | undefined {
-  const prev = exportNode.prev();
+function leadingJsDoc(anchorNode: SgNode): SgNode | undefined {
+  const prev = anchorNode.prev();
   if (prev && prev.kind() === 'comment' && prev.text().startsWith('/**')) {
     return prev;
   }
@@ -86,11 +106,11 @@ export function upsertJsDocTag(
   content: string
 ): string {
   const root = parse(Lang.TypeScript, source).root();
-  const exportNode = findExportStatement(root, declName);
-  if (!exportNode) return source;
+  const anchorNode = findDeclaration(root, declName);
+  if (!anchorNode) return source;
 
   const tagText = `@${tag} ${content}`;
-  const jsdocNode = leadingJsDoc(exportNode);
+  const jsdocNode = leadingJsDoc(anchorNode);
 
   if (jsdocNode) {
     const block = jsdocNode.text();
@@ -109,10 +129,10 @@ export function upsertJsDocTag(
     return root.commitEdits([jsdocNode.replace(merged)]);
   }
 
-  // No existing JSDoc — create one before the export
-  const col = exportNode.range().start.column;
+  // No existing JSDoc — create one before the anchor node.
+  const col = anchorNode.range().start.column;
   const indent = ' '.repeat(col);
-  const at = exportNode.range().start.index;
+  const at = anchorNode.range().start.index;
   const blockText = `/**\n${indent} * ${tagText}\n${indent} */\n${indent}`;
   return source.slice(0, at) + blockText + source.slice(at);
 }
@@ -129,10 +149,10 @@ export function readJsDocTags(
   declName: string
 ): Partial<Record<RefineTag, string>> {
   const root = parse(Lang.TypeScript, source).root();
-  const exportNode = findExportStatement(root, declName);
-  if (!exportNode) return {};
+  const anchorNode = findDeclaration(root, declName);
+  if (!anchorNode) return {};
 
-  const jsdocNode = leadingJsDoc(exportNode);
+  const jsdocNode = leadingJsDoc(anchorNode);
   if (!jsdocNode) return {};
 
   const block = jsdocNode.text();

@@ -58,6 +58,23 @@ describe('upsertJsDocTag', () => {
     expect(out).toContain('@useWhen Y');
     expect(out.indexOf('@useWhen Y')).toBeGreaterThan(out.indexOf('// loadConfig is great'));
   });
+
+  it('inserts a JSDoc block above a non-exported interface', () => {
+    const src = `interface GenOptions {\n  grammar: string;\n}\n`;
+    const out = upsertJsDocTag(src, 'GenOptions', 'useWhen', 'Generating');
+    expect(out).toContain('@useWhen Generating');
+    // The tag must land immediately before the bare `interface GenOptions`.
+    expect(out.indexOf('/**')).toBeLessThan(out.indexOf('interface GenOptions'));
+    expect(out.indexOf('@useWhen Generating')).toBeLessThan(out.indexOf('interface GenOptions'));
+  });
+
+  it('merges a tag into an existing JSDoc block on a non-exported interface', () => {
+    const src = `/**\n * Options.\n */\ninterface GenOptions {\n  grammar: string;\n}\n`;
+    const out = upsertJsDocTag(src, 'GenOptions', 'pitfalls', 'NEVER trust input');
+    expect(out).toContain('* Options.');
+    expect(out).toContain('@pitfalls NEVER trust input');
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
 });
 
 describe('readJsDocTags', () => {
@@ -79,6 +96,11 @@ describe('readJsDocTags', () => {
   it('parses multiple tags', () => {
     const src = `/**\n * @useWhen Foo\n * @pitfalls Bar\n */\nexport function f() {}\n`;
     expect(readJsDocTags(src, 'f')).toEqual({ useWhen: 'Foo', pitfalls: 'Bar' });
+  });
+
+  it('reads a tag from a non-exported interface leading JSDoc', () => {
+    const src = `/**\n * @useWhen Generating\n */\ninterface GenOptions {\n  grammar: string;\n}\n`;
+    expect(readJsDocTags(src, 'GenOptions')).toEqual({ useWhen: 'Generating' });
   });
 
   it('round-trips every RefineTag value', () => {
