@@ -611,10 +611,20 @@ function checkW6(
 }
 
 // ---------------------------------------------------------------------------
+// Routing-tag credit: @useWhen/@avoidWhen/@never may live at the top level
+// (MCP/TypeDoc skills) OR on a CLI configSurface (CLI skills correlate them onto
+// `configSurfaces[].useWhen` etc.). Credit guidance found in either place.
+// ---------------------------------------------------------------------------
+function hasRoutingTag(skill: ExtractedSkill, tag: 'useWhen' | 'avoidWhen' | 'pitfalls'): boolean {
+  if ((skill[tag] ?? []).length > 0) return true;
+  return (skill.configSurfaces ?? []).some((surface) => (surface[tag] ?? []).length > 0);
+}
+
+// ---------------------------------------------------------------------------
 // W7: @useWhen on at least one export
 // ---------------------------------------------------------------------------
 function checkW7(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
-  const hasUseWhen = (skill.useWhen ?? []).length > 0;
+  const hasUseWhen = hasRoutingTag(skill, 'useWhen');
 
   if (!hasUseWhen) {
     issues.push(
@@ -637,7 +647,7 @@ function checkW7(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // W8: @avoidWhen on at least one export
 // ---------------------------------------------------------------------------
 function checkW8(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
-  const hasAvoidWhen = (skill.avoidWhen ?? []).length > 0;
+  const hasAvoidWhen = hasRoutingTag(skill, 'avoidWhen');
 
   if (!hasAvoidWhen) {
     issues.push(
@@ -660,7 +670,7 @@ function checkW8(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // W9: @never on at least one export
 // ---------------------------------------------------------------------------
 function checkW9(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
-  const hasPitfalls = (skill.pitfalls ?? []).length > 0;
+  const hasPitfalls = hasRoutingTag(skill, 'pitfalls');
 
   if (!hasPitfalls) {
     issues.push(

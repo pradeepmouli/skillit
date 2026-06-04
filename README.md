@@ -41,12 +41,61 @@ See [`packages/mcp/README.md`](packages/mcp/README.md) for install, extract,
 bundle, config-file batch mode (`mcp.json` / `claude_desktop_config.json`), and
 programmatic API details.
 
+### Init: detect → install → generate → refine
+
+`to-skills init` bootstraps a project in one step. It detects the project's
+nature, installs the matching `@to-skills/*` package with your package manager,
+generates an initial skill into `skills/`, then runs `refine` on it.
+
+```bash
+# Auto-detects nature and package manager
+npx to-skills init
+
+# Force the source kind, or point at a specific program entry
+npx to-skills init --source cli --program ./dist/cli.js#program
+
+# Generate into a custom directory (default: skills)
+npx to-skills init --out docs/skills
+```
+
+Detection:
+
+- **Nature** — `commander` / `yargs` dep → `cli`; `@modelcontextprotocol/sdk` →
+  `mcp`; otherwise a plain TS library → `typedoc`. Override with `--source`.
+- **Package** — `cli` → `@to-skills/cli`, `mcp` → `@to-skills/mcp`, `typedoc` →
+  `typedoc-plugin-to-skills`.
+- **Package manager** — `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, else npm.
+
+The initial generate step is implemented for the **cli** source this pass; for
+`mcp` / `typedoc` it is skipped (refine extracts live for mcp). If the install
+step fails, `init` prints the exact add command and stops before generate/refine.
+
+| Flag                           | Default  | Description                              |
+| ------------------------------ | -------- | ---------------------------------------- |
+| `--source <cli\|mcp\|typedoc>` | auto     | Override project-nature detection        |
+| `--program <file#export>`      | —        | Commander program entry (cli source)     |
+| `--out <dir>`                  | `skills` | Output directory for the generated skill |
+
 ### Refine: autonomous annotation loop
 
 `to-skills refine` runs an audit → draft → review loop that iteratively improves
 the `useWhen` / `avoidWhen` annotations in your generated skills. On each pass it
 asks an LLM to evaluate the current guidance, proposes improvements, and applies
 them — no manual editing required.
+
+Refine is **source-aware**. It auto-detects the source from the installed
+`@to-skills/*` package, or you can choose explicitly:
+
+```bash
+# CLI source — writes guidance back into the *Options interface JSDoc
+npx to-skills refine --source cli --program ./dist/cli.js#program
+
+# MCP source (see modes below)
+npx to-skills refine --source mcp --mcp ./mcp.json
+```
+
+For the **cli** source, refine writes annotations into the JSDoc of your typed
+`*Options` interface (e.g. `GenerateOptions`), correlated to each command's flags.
 
 Two modes depending on whether you own the server's source:
 
@@ -90,13 +139,15 @@ pass `--mode` explicitly.
 
 Key flags:
 
-| Flag                    | Default   | Description                                        |
-| ----------------------- | --------- | -------------------------------------------------- |
-| `--mode build\|runtime` | auto      | Override auto-detection                            |
-| `--mcp <path>`          | —         | Path to `mcp.json` or `claude_desktop_config.json` |
-| `--source-glob <glob>`  | `**/*.ts` | Glob for TypeScript files to scan (build mode)     |
-| `--max-iterations <n>`  | `3`       | Maximum refinement passes per tool                 |
-| `--items <names>`       | all       | Comma-separated tool names to refine               |
+| Flag                           | Default   | Description                                          |
+| ------------------------------ | --------- | ---------------------------------------------------- |
+| `--source <cli\|mcp\|typedoc>` | auto      | Refine source (auto-detected from installed package) |
+| `--program <file#export>`      | —         | Commander program entry (cli source)                 |
+| `--mode build\|runtime`        | auto      | Override auto-detection                              |
+| `--mcp <path>`                 | —         | Path to `mcp.json` or `claude_desktop_config.json`   |
+| `--source-glob <glob>`         | `**/*.ts` | Glob for TypeScript files to scan (build mode)       |
+| `--max-iterations <n>`         | `5`       | Iteration cap for the audit→draft→review loop        |
+| `--items <n>`                  | `5`       | Work items per iteration                             |
 
 ## Why Inline?
 

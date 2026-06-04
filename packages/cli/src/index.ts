@@ -24,3 +24,8 @@ export { runCliAudit } from './audit.js';
 export { extractCliSkill, writeCliSkill } from './extract.js';
 export type { CliExtractionOptions, CliWriteOptions } from './extract.js';
 export type { CliAuditIssue } from './audit.js';
+export { loadProgram } from './program-loader.js';
+export type { LoadProgramOptions } from './program-loader.js';
+export { readOptionsTags } from './options-jsdoc.js';
+export { CliRefineSource } from './refine-source.js';
+export type { CliRefineSourceOptions } from './refine-source.js';

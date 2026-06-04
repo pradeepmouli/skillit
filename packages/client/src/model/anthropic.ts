@@ -52,18 +52,43 @@ export function parseReviewVerdict(text: string): ReviewResult {
   }
 }
 
+export function buildDraftPrompt(req: DraftRequest): string {
+  const parts = [
+    `You are improving skill annotations for "${req.skill.name}".`,
+    `Tool: ${req.toolName}`,
+    `Tag to fill: @${req.tag}`,
+    `Guidance: ${req.suggestion}`,
+    req.currentValue ? `Current value:\n${req.currentValue}` : 'No current value.',
+    'Write only the annotation content — no code fences, no extra commentary.'
+  ];
+  if (req.guidance) {
+    parts.push(`Conventions (follow these):\n${req.guidance}`);
+  }
+  return parts.join('\n\n');
+}
+
+export function buildReviewPrompt(req: ReviewRequest): string {
+  const parts = [
+    `You are reviewing a skill annotation draft for "${req.skill.name}".`,
+    `Tool: ${req.toolName}, Tag: @${req.tag}`,
+    `Guidance the drafter was given: ${req.suggestion}`,
+    `Draft:\n${req.draft}`
+  ];
+  if (req.guidance) {
+    parts.push(`Conventions (follow these):\n${req.guidance}`);
+  }
+  parts.push(
+    'Respond with JSON only: {"verdict":"accepted"|"revise","feedback":"..."}.',
+    'Accept if the draft meaningfully addresses the guidance. Revise if it is vague or incorrect.'
+  );
+  return parts.join('\n\n');
+}
+
 export class AnthropicModelClient implements ModelClient {
   private client = new Anthropic();
 
   async draft(req: DraftRequest): Promise<string> {
-    const prompt = [
-      `You are improving MCP tool annotations for the skill "${req.skill.name}".`,
-      `Tool: ${req.toolName}`,
-      `Tag to fill: @${req.tag}`,
-      `Guidance: ${req.suggestion}`,
-      req.currentValue ? `Current value:\n${req.currentValue}` : 'No current value.',
-      'Write only the annotation content — no code fences, no extra commentary.'
-    ].join('\n\n');
+    const prompt = buildDraftPrompt(req);
 
     const msg = await this.client.messages.create({
       model: DRAFTER,
@@ -78,14 +103,7 @@ export class AnthropicModelClient implements ModelClient {
   }
 
   async review(req: ReviewRequest): Promise<ReviewResult> {
-    const prompt = [
-      `You are reviewing an MCP tool annotation draft.`,
-      `Tool: ${req.toolName}, Tag: @${req.tag}`,
-      `Guidance the drafter was given: ${req.suggestion}`,
-      `Draft:\n${req.draft}`,
-      'Respond with JSON only: {"verdict":"accepted"|"revise","feedback":"..."}.',
-      'Accept if the draft meaningfully addresses the guidance. Revise if it is vague or incorrect.'
-    ].join('\n\n');
+    const prompt = buildReviewPrompt(req);
 
     const msg = await this.client.messages.create({
       model: REVIEWER,

@@ -14,6 +14,7 @@ export interface DraftRequest {
   suggestion: string;
   currentValue: string | undefined;
   skill: ExtractedSkill;
+  guidance?: string;
 }
 
 export interface ReviewRequest {
@@ -22,6 +23,7 @@ export interface ReviewRequest {
   draft: string;
   suggestion: string;
   skill: ExtractedSkill;
+  guidance?: string;
 }
 
 export type ReviewVerdict = 'accepted' | 'revise';
@@ -46,6 +48,7 @@ export interface RefineSource {
   extract(): Promise<ExtractedSkill>;
   auditContext(skill: ExtractedSkill): AuditContext;
   applyFixes(fixes: readonly DraftedFix[]): Promise<void>;
+  guidance?(): string | Promise<string>;
 }
 
 export interface RefineWorkItem {
@@ -78,4 +81,5 @@ export interface RefineResult {
   finalEstimate: SkillJudgeEstimate;
   passed: boolean;
   stoppedReason: RefineStopReason;
+  guidance: string | undefined;
 }

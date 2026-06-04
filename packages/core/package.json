@@ -48,6 +48,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@ast-grep/napi": "^0.43.0",
     "yaml": "^2.9.0"
   }
 }

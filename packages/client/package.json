@@ -23,11 +23,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.0",
+    "@to-skills/cli": "workspace:*",
     "@to-skills/core": "workspace:*",
     "@to-skills/mcp": "workspace:*",
     "commander": "^14.0.3"
-  },
-  "devDependencies": {
-    "@to-skills/cli": "workspace:*"
   }
 }

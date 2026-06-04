@@ -1,7 +1,7 @@
 // packages/core/src/refine/__tests__/loop.test.ts
 import { describe, it, expect, vi } from 'vitest';
 import { refineSkill } from '../loop.js';
-import type { RefineOptions, ModelClient, RefineSource, RefineResult } from '../types.js';
+import type { RefineOptions, ModelClient, RefineSource } from '../types.js';
 import type { ExtractedSkill, SkillJudgeEstimate } from '../../index.js';
 
 const baseSkill = (): ExtractedSkill =>
