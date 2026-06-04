@@ -4,7 +4,7 @@
 
 Introspects live Model Context Protocol (MCP) servers via stdio or HTTP and produces progressive-disclosure `SKILL.md` output consumable by MCP-native agents (via `mcp:` frontmatter) or non-MCP agents (via CLI-as-proxy adapters).
 
-Part of the [to-skills](https://github.com/pradeepmouli/to-skills) monorepo. Designed against the spec at [`specs/001-mcp-extract-bundle/`](../../specs/001-mcp-extract-bundle/) — see `spec.md` for user stories and `spec-deltas.md` for the small set of decisions that diverge from the original spec.
+Part of the [skillit](https://github.com/pradeepmouli/skillit) monorepo. Designed against the spec at [`specs/001-mcp-extract-bundle/`](../../specs/001-mcp-extract-bundle/) — see `spec.md` for user stories and `spec-deltas.md` for the small set of decisions that diverge from the original spec.
 
 ---
 
@@ -28,19 +28,19 @@ Three transports are supported:
 
 ```bash
 # Stdio (the typical case — npx-launched servers)
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --out ./skills
 
 # HTTP / SSE
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --url https://example.com/mcp \
   --header "Authorization=Bearer $TOKEN" \
   --out ./skills
 
 # Batch over an MCP config file (`mcp.json` or Claude-Desktop's
 # `claude_desktop_config.json`)
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --config ~/.config/claude/claude_desktop_config.json \
   --out ./skills
 ```
@@ -60,7 +60,7 @@ Useful flags:
 Exit codes are documented in [`src/bin.ts`](src/bin.ts).
 
 When `--install-target` is set, the CLI also installs the bundled
-`to-skills-mcp-docs` guidance skill beside the generated MCP skill. Bundled
+`skillit-mcp-docs` guidance skill beside the generated MCP skill. Bundled
 skills are version-aware: newer packaged copies replace older packaged copies,
 while custom or unversioned copies are preserved.
 
@@ -68,7 +68,7 @@ while custom or unversioned copies are preserved.
 
 ## Bundle: ship a skill with your MCP server package
 
-Add a `to-skills.mcp` field to your package's `package.json`:
+Add a `skillit.mcp` field to your package's `package.json`:
 
 ```json
 {
@@ -77,9 +77,9 @@ Add a `to-skills.mcp` field to your package's `package.json`:
   "files": ["dist", "skills"],
   "scripts": {
     "build": "tsc",
-    "postbuild": "to-skills-mcp bundle"
+    "postbuild": "skillit mcp bundle"
   },
-  "to-skills": {
+  "skillit": {
     "mcp": { "skillName": "my-server" }
   },
   "devDependencies": {
@@ -99,7 +99,7 @@ Output lands at `<packageRoot>/skills/<skillName>/`. The emitted SKILL.md instru
 Multi-server packages declare an array of entries (one per `bin`):
 
 ```json
-"to-skills": {
+"skillit": {
   "mcp": [
     { "skillName": "server-a", "binName": "server-a" },
     { "skillName": "server-b", "binName": "server-b" }
@@ -136,7 +136,7 @@ const rendered = await renderSkill(skill, {
 });
 writeSkills([rendered], { outDir: './skills' });
 
-// Or run the full bundle pipeline (reads `to-skills.mcp` from package.json):
+// Or run the full bundle pipeline (reads `skillit.mcp` from package.json):
 const result = await bundleMcpSkill({
   packageRoot: process.cwd(),
   installTargets: ['.claude/skills']

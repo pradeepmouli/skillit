@@ -16,7 +16,7 @@ Add to your `typedoc.json`:
 }
 ```
 
-Or use the auto-discovery wrapper instead — see [`typedoc-plugin-to-skills`](../typedoc-plugin).
+Or use the auto-discovery wrapper instead — see [`typedoc-plugin-skillit`](../typedoc-plugin).
 
 ## What It Does
 

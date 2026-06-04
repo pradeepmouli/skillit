@@ -14,16 +14,16 @@ If you ship a different MCP CLI (or a wholly different target — say, a Lua REP
 
 The loader resolves `--invocation <target>` to an npm package name. Two target shapes are accepted:
 
-| Target syntax               | Resolves to (in order)                                   |
-| --------------------------- | -------------------------------------------------------- |
-| `--invocation mcp-protocol` | `@skillit/target-mcp-protocol` (single canonical name)   |
-| `--invocation cli:<name>`   | `@skillit/target-<name>`, then `to-skills-target-<name>` |
+| Target syntax               | Resolves to (in order)                                 |
+| --------------------------- | ------------------------------------------------------ |
+| `--invocation mcp-protocol` | `@skillit/target-mcp-protocol` (single canonical name) |
+| `--invocation cli:<name>`   | `@skillit/target-<name>`, then `skillit-target-<name>` |
 
 Bare names without the `cli:` prefix (other than the literal `mcp-protocol`) are **rejected** with `UNKNOWN_TARGET` — the loader does not auto-prefix arbitrary `--invocation foo` to `cli:foo`. Always pass `cli:<name>` for third-party adapters.
 
 So a third-party adapter for, say, the hypothetical `mcp-runner` CLI would be published as either:
 
-- `@your-org/to-skills-target-mcp-runner` — _not yet supported_ (only the `@skillit/` namespace and the unscoped `to-skills-target-*` form resolve today; arbitrary scopes can install but you'll need to import + pass programmatically). For most third parties, **use the unscoped `to-skills-target-<name>` form** so the loader picks it up.
+- `@your-org/skillit-target-mcp-runner` — _not yet supported_ (only the `@skillit/` namespace and the unscoped `skillit-target-*` form resolve today; arbitrary scopes can install but you'll need to import + pass programmatically). For most third parties, **use the unscoped `skillit-target-<name>` form** so the loader picks it up.
 
 Pick the unscoped form unless you intend to have `@skillit/mcp` users import your adapter explicitly.
 
@@ -62,7 +62,7 @@ export class MyAdapter implements InvocationAdapter {
   readonly target = 'cli:my-runner' as const;
 
   readonly fingerprint: AdapterFingerprint = {
-    adapter: 'to-skills-target-my-runner',
+    adapter: 'skillit-target-my-runner',
     version: PACKAGE_VERSION, // import from your version.ts
     targetCliRange: 'mcp-runner@^1' // omit if you target a non-CLI surface
   };
@@ -108,7 +108,7 @@ CLI-as-proxy adapters (`cli:<name>`) **should** carry a `generated-by:` frontmat
 
 ```yaml
 generated-by:
-  adapter: 'to-skills-target-my-runner'
+  adapter: 'skillit-target-my-runner'
   version: '1.0.3'
   target-cli-range: 'mcp-runner@^1'
 ```
@@ -126,7 +126,7 @@ Source: [`packages/mcp/src/adapter/loader.ts`](../src/adapter/loader.ts).
 3. The first candidate that resolves wins. The default export is read; if it's an object with `target` and `render`, it's cached and returned.
 4. If no candidate resolves, the host throws `McpError('ADAPTER_NOT_FOUND')` with an enumeration of installed adapters and an `npm install` hint.
 
-The cache is per-process — a single `to-skills-mcp extract --invocation X --invocation Y` invocation imports each package exactly once.
+The cache is per-process — a single `skillit mcp extract --invocation X --invocation Y` invocation imports each package exactly once.
 
 ---
 
@@ -136,7 +136,7 @@ Mirror the test layout in [`packages/target-mcpc/tests/`](../../target-mcpc/test
 
 - **`render.test.ts`** — feeds a hand-built `ExtractedSkill` through `adapter.render(skill, ctx)` and asserts on `rendered.skill.content` and `rendered.references[].content`.
 - **`args.test.ts`** (if your adapter has CLI argument encoding) — pure-function tests on the encoder.
-- **Integration test in the host** — add a fixture under `packages/mcp/tests/fixtures/<your-adapter>-server/` and a test that runs `to-skills-mcp extract --invocation <target> --command node --arg <fixture>` end-to-end.
+- **Integration test in the host** — add a fixture under `packages/mcp/tests/fixtures/<your-adapter>-server/` and a test that runs `skillit mcp extract --invocation <target> --command node --arg <fixture>` end-to-end.
 
 For the renderer test, the smallest viable skeleton is:
 
@@ -200,8 +200,8 @@ Before `npm publish`:
 Once published, end-users can install your adapter alongside `@skillit/mcp` and it works without any host-side change:
 
 ```bash
-npm install --save-dev @skillit/mcp to-skills-target-my-runner
-npx to-skills-mcp extract --command "..." --invocation cli:my-runner
+npm install --save-dev @skillit/mcp skillit-target-my-runner
+npx skillit mcp extract --command "..." --invocation cli:my-runner
 ```
 
 ---

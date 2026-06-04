@@ -1,7 +1,7 @@
 {
   "name": "@skillit/client",
   "version": "0.1.0",
-  "description": "Anthropic model client + to-skills CLI (refine command)",
+  "description": "Anthropic model client + skillit CLI (refine command)",
   "license": "MIT",
   "author": "Pradeep Mouli",
   "bin": {

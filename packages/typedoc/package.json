@@ -11,7 +11,7 @@
     "llm",
     "skill-generation",
     "skill-md",
-    "to-skills",
+    "skillit",
     "tsdoc",
     "typedoc",
     "typedoc-plugin",
@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/typedoc"
   },
   "funding": {

@@ -179,4 +179,4 @@ The JSON report contains structured data for each issue:
 - **Prose quality** --- it checks presence, not whether your descriptions are well-written
 - **Content accuracy** --- it doesn't verify that descriptions match actual behavior
 - **Cross-package consistency** --- each package is audited independently
-- **Auto-fix** --- the audit suggests but doesn't modify files (use the bundled `to-skills-docs` Claude Code skill for interactive fixing)
+- **Auto-fix** --- the audit suggests but doesn't modify files (use the bundled `skillit-docs` Claude Code skill for interactive fixing)

@@ -1,4 +1,4 @@
-# to-skills Development Guidelines
+# skillit Development Guidelines
 
 ## Project Overview
 
@@ -15,7 +15,7 @@ Generate AI agent skills (SKILL.md) from TypeScript API documentation. TypeDoc p
 ```text
 packages/core/           # Shared types, renderer, token budgeting
 packages/typedoc/        # TypeDoc plugin (@skillit/typedoc)
-packages/typedoc-plugin/ # Auto-discovered TypeDoc plugin (typedoc-plugin-to-skills)
+packages/typedoc-plugin/ # Auto-discovered TypeDoc plugin (typedoc-plugin-skillit)
 packages/cli/            # CLI extraction (@skillit/cli)
 packages/docusaurus/     # Docusaurus integration (@skillit/docusaurus)
 packages/vitepress/      # VitePress integration (@skillit/vitepress)

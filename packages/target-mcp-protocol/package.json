@@ -7,13 +7,13 @@
     "ai",
     "mcp",
     "model-context-protocol",
-    "to-skills"
+    "skillit"
   ],
   "license": "MIT",
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/target-mcp-protocol"
   },
   "funding": {

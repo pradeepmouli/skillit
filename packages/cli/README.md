@@ -2,7 +2,7 @@
 
 > Extract CLI command structure from commander/yargs for AI agent skill generation.
 
-Part of the [to-skills](https://github.com/pradeepmouli/to-skills) ecosystem.
+Part of the [skillit](https://github.com/pradeepmouli/skillit) ecosystem.
 
 ## Features
 
@@ -36,7 +36,7 @@ writeCliSkill(skill, {
 ```
 
 `writeCliSkill()` writes the generated skill, installs it into any configured
-agent discovery directories, and adds the bundled `to-skills-cli-docs` guidance
+agent discovery directories, and adds the bundled `skillit-cli-docs` guidance
 skill to those install targets when install targets are enabled.
 
 ## License

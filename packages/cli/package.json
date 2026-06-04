@@ -11,7 +11,7 @@
     "introspection",
     "skill-generation",
     "skill-md",
-    "to-skills",
+    "skillit",
     "typescript",
     "yargs"
   ],
@@ -19,7 +19,7 @@
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/cli"
   },
   "funding": {

@@ -10,7 +10,7 @@ We take security seriously. If you discover a security vulnerability in this pro
 
 ### Report Privately
 
-1. **GitHub Security Advisory:** Use GitHub's [private security advisory feature](https://github.com/pradeepmouli/to-skills/security/advisories/new)
+1. **GitHub Security Advisory:** Use GitHub's [private security advisory feature](https://github.com/pradeepmouli/skillit/security/advisories/new)
 2. **Email:** pmouli@mac.com (for critical issues requiring immediate attention)
 3. **Direct Contact:** Contact maintainers privately if needed
 

@@ -1,10 +1,10 @@
-# to-skills
+# skillit
 
 > Compile-time generator of AI agent skills from your codebase. Inline docs, CLI definitions, config schemas, and examples compile into progressively disclosed SKILL.md files that any LLM can discover.
 
 ## @skillit/core
 
-> Shared types, renderers, and utilities for the to-skills ecosystem.
+> Shared types, renderers, and utilities for the skillit ecosystem.
 
 ### API
 

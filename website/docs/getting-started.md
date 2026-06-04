@@ -9,7 +9,7 @@ title: Getting Started
 ## Install
 
 ```bash
-pnpm add -D typedoc-plugin-to-skills
+pnpm add -D typedoc-plugin-skillit
 ```
 
 TypeDoc auto-discovers the plugin. No config needed for basic usage.
@@ -20,7 +20,7 @@ Add options to your `typedoc.json`:
 
 ```json
 {
-  "plugin": ["typedoc-plugin-to-skills"],
+  "plugin": ["typedoc-plugin-skillit"],
   "skillsOutDir": "skills",
   "skillsPerPackage": true,
   "skillsAudit": true,

@@ -4,11 +4,11 @@ This document provides guidelines and instructions for AI coding agents working 
 
 ## Project Overview
 
-to-skills is a TypeDoc plugin ecosystem that generates structured AI agent skills (SKILL.md files following the agentskills.io spec) and llms.txt documentation from TypeScript API docs. It's a pnpm monorepo with three packages:
+skillit is a TypeDoc plugin ecosystem that generates structured AI agent skills (SKILL.md files following the agentskills.io spec) and llms.txt documentation from TypeScript API docs. It's a pnpm monorepo with three packages:
 
 - **`@skillit/core`** — Shared types (`ExtractedSkill` hierarchy), SKILL.md renderer (progressive disclosure), llms.txt renderer, token budgeting
 - **`@skillit/typedoc`** — TypeDoc plugin that extracts from the reflection tree and hooks into the TypeDoc lifecycle
-- **`typedoc-plugin-to-skills`** — Auto-discovery wrapper (just `pnpm add -D` and TypeDoc finds it)
+- **`typedoc-plugin-skillit`** — Auto-discovery wrapper (just `pnpm add -D` and TypeDoc finds it)
 
 The extraction pipeline: TypeDoc parses TS source → `extractor.ts` walks the reflection tree → `ExtractedSkill` intermediate representation → `renderer.ts` produces SKILL.md + references/ files → `writer.ts` writes to disk.
 

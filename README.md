@@ -1,13 +1,13 @@
-# to-skills
+# skillit
 
-> **to-skills** — Compile-time generator of AI agent skills from your codebase.
+> **skillit** — Compile-time generator of AI agent skills from your codebase.
 
 Inline docs, CLI definitions, config schemas, and examples compile into progressively disclosed [SKILL.md](https://agentskills.io) files that any LLM can discover. Integrated with TypeDoc, with support for conventional repo docs, and plugins for Docusaurus and VitePress provided for what code can't cover.
 
 ## MCP Servers (orthogonal workflow)
 
-`to-skills` can also generate skills from **any live MCP server**, even when the
-server was not authored with `to-skills`.
+`skillit` can also generate skills from **any live MCP server**, even when the
+server was not authored with `skillit`.
 
 This is separate from the TypeDoc/docs extraction flow above: it introspects MCP
 tools/resources/prompts over stdio or HTTP and emits a progressive-disclosure
@@ -19,7 +19,7 @@ tools/resources/prompts over stdio or HTTP and emits a progressive-disclosure
 
 ```bash
 # Inspect any running or launchable MCP server and generate skills
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --out ./skills
 
@@ -27,14 +27,14 @@ npx to-skills-mcp extract \
 npm install --save-dev @skillit/target-mcpc @skillit/target-fastmcp
 
 # Emit CLI-proxy invocation variants for non-MCP agents
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --invocation cli:mcpc \
   --invocation cli:fastmcp \
   --out ./skills
 ```
 
-For server package authors, `to-skills-mcp bundle` can be run in your build to
+For server package authors, `skillit mcp bundle` can be run in your build to
 ship pre-generated skills with your MCP package.
 
 See [`packages/mcp/README.md`](packages/mcp/README.md) for install, extract,
@@ -43,19 +43,19 @@ programmatic API details.
 
 ### Init: detect → install → generate → refine
 
-`to-skills init` bootstraps a project in one step. It detects the project's
+`skillit init` bootstraps a project in one step. It detects the project's
 nature, installs the matching `@skillit/*` package with your package manager,
 generates an initial skill into `skills/`, then runs `refine` on it.
 
 ```bash
 # Auto-detects nature and package manager
-npx to-skills init
+npx skillit init
 
 # Force the source kind, or point at a specific program entry
-npx to-skills init --source cli --program ./dist/cli.js#program
+npx skillit init --source cli --program ./dist/cli.js#program
 
 # Generate into a custom directory (default: skills)
-npx to-skills init --out docs/skills
+npx skillit init --out docs/skills
 ```
 
 Detection:
@@ -63,7 +63,7 @@ Detection:
 - **Nature** — `commander` / `yargs` dep → `cli`; `@modelcontextprotocol/sdk` →
   `mcp`; otherwise a plain TS library → `typedoc`. Override with `--source`.
 - **Package** — `cli` → `@skillit/cli`, `mcp` → `@skillit/mcp`, `typedoc` →
-  `typedoc-plugin-to-skills`.
+  `typedoc-plugin-skillit`.
 - **Package manager** — `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, else npm.
 
 The initial generate step is implemented for the **cli** source this pass; for
@@ -78,7 +78,7 @@ step fails, `init` prints the exact add command and stops before generate/refine
 
 ### Refine: autonomous annotation loop
 
-`to-skills refine` runs an audit → draft → review loop that iteratively improves
+`skillit refine` runs an audit → draft → review loop that iteratively improves
 the `useWhen` / `avoidWhen` annotations in your generated skills. On each pass it
 asks an LLM to evaluate the current guidance, proposes improvements, and applies
 them — no manual editing required.
@@ -88,10 +88,10 @@ Refine is **source-aware**. It auto-detects the source from the installed
 
 ```bash
 # CLI source — writes guidance back into the *Options interface JSDoc
-npx to-skills refine --source cli --program ./dist/cli.js#program
+npx skillit refine --source cli --program ./dist/cli.js#program
 
 # MCP source (see modes below)
-npx to-skills refine --source mcp --mcp ./mcp.json
+npx skillit refine --source mcp --mcp ./mcp.json
 ```
 
 For the **cli** source, refine writes annotations into the JSDoc of your typed
@@ -116,10 +116,10 @@ server.tool(
 
 ```bash
 # Auto-detected when @modelcontextprotocol/sdk appears in package.json
-npx to-skills-mcp refine
+npx skillit mcp refine
 
 # Explicit
-npx to-skills-mcp refine --mode build
+npx skillit mcp refine --mode build
 ```
 
 **Runtime mode** — for any MCP server, including ones you don't own. `refine`
@@ -127,10 +127,10 @@ writes an overlay JSON file that `extract` / `bundle` merges at render time:
 
 ```bash
 # Auto-detected when --mcp points to mcp.json / claude_desktop_config.json
-npx to-skills-mcp refine --mcp ~/.config/claude/mcp.json
+npx skillit mcp refine --mcp ~/.config/claude/mcp.json
 
 # Refine only a subset of tools
-npx to-skills-mcp refine --mode runtime --mcp ./mcp.json --items filesystem,github
+npx skillit mcp refine --mode runtime --mcp ./mcp.json --items filesystem,github
 ```
 
 **Auto-detection** checks for an SDK dependency (build signal) and a runtime
@@ -191,7 +191,7 @@ export function loadConfig(path: string): Config { ... }
 ### TypeScript Library (most common)
 
 ```bash
-pnpm add -D typedoc-plugin-to-skills
+pnpm add -D typedoc-plugin-skillit
 pnpm typedoc
 ```
 
@@ -204,7 +204,7 @@ That's it. TypeDoc auto-discovers the plugin. Skills appear at `skills/<package-
 {
   "entryPointStrategy": "packages",
   "entryPoints": ["packages/*"],
-  "plugin": ["typedoc-plugin-to-skills"],
+  "plugin": ["typedoc-plugin-skillit"],
   "skillsPerPackage": true
 }
 ```
@@ -262,7 +262,7 @@ Reads `_category_.json` for folder labels and ordering. Excludes `api/` and `blo
 ```json
 // typedoc.json — opt-in alongside API extraction
 {
-  "plugin": ["typedoc-plugin-to-skills"],
+  "plugin": ["typedoc-plugin-skillit"],
   "skillsIncludeDocs": true,
   "skillsDocsDir": "docs"
 }
@@ -276,7 +276,7 @@ Scans `docs/` directory for markdown files. Also picks up root-level docs (ARCHI
 
 | Source                         | Extractor                                      | What It Produces                                                        |
 | ------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| TypeScript source + JSDoc      | `typedoc-plugin-to-skills`                     | API reference — functions, classes, types, enums, variables             |
+| TypeScript source + JSDoc      | `typedoc-plugin-skillit`                       | API reference — functions, classes, types, enums, variables             |
 | `@useWhen` / `@avoidWhen` tags | TypeDoc plugin                                 | Decision procedures in SKILL.md "When to Use"                           |
 | `@pitfalls` tag                | TypeDoc plugin                                 | Anti-patterns in SKILL.md "Pitfalls"                                    |
 | `@remarks` tag                 | TypeDoc plugin                                 | Expert knowledge in references                                          |
@@ -326,7 +326,7 @@ Each reference file is token-budgeted independently (default 4000 tokens).
 
 | Package                                                        | Description                                                            |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`typedoc-plugin-to-skills`](packages/typedoc-plugin)          | Auto-discovery wrapper — just install, no config                       |
+| [`typedoc-plugin-skillit`](packages/typedoc-plugin)            | Auto-discovery wrapper — just install, no config                       |
 | [`@skillit/core`](packages/core)                               | Types, renderer, audit engine, token budgeting, docs/examples scanning |
 | [`@skillit/typedoc`](packages/typedoc)                         | TypeDoc plugin — API + config extraction from the reflection tree      |
 | [`@skillit/cli`](packages/cli)                                 | Commander/yargs introspection + `--help` fallback + flag correlation   |
@@ -341,7 +341,7 @@ Each reference file is token-budgeted independently (default 4000 tokens).
 
 ```json
 {
-  "plugin": ["typedoc-plugin-to-skills"],
+  "plugin": ["typedoc-plugin-skillit"],
   "skillsOutDir": "skills",
   "skillsPerPackage": true,
   "skillsAudit": true,
@@ -373,13 +373,13 @@ See the [`examples/`](examples/) directory for runnable scripts:
 
 ## Case Study: PixiJS (47K stars)
 
-We forked [PixiJS](https://github.com/pixijs/pixijs) and bootstrapped to-skills to measure the before/after impact on generated skill quality, scored against the [skill-judge](https://github.com/anthropics/skill-judge) rubric (120 points, 8 dimensions).
+We forked [PixiJS](https://github.com/pixijs/pixijs) and bootstrapped skillit to measure the before/after impact on generated skill quality, scored against the [skill-judge](https://github.com/anthropics/skill-judge) rubric (120 points, 8 dimensions).
 
 ### Results
 
 | Phase                       | Score   | Grade | What Changed                                                 | Agent Cost  |
 | --------------------------- | ------- | ----- | ------------------------------------------------------------ | ----------- |
-| **Install + generate**      | 84/120  | B-    | `npm install typedoc-plugin-to-skills && pnpm typedoc`       | 0 tokens    |
+| **Install + generate**      | 84/120  | B-    | `npm install typedoc-plugin-skillit && pnpm typedoc`         | 0 tokens    |
 | **After JSDoc conventions** | 113/120 | A     | `@useWhen`/`@pitfalls` on 7 key classes (110 lines of JSDoc) | ~80K tokens |
 
 **B- → A with 110 lines of JSDoc annotations.** The generator handles structure, progressive disclosure, config detection, and reference splitting automatically. The annotations add the expert knowledge — when to use each class, what to never do, and why.

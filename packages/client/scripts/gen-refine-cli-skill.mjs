@@ -1,4 +1,4 @@
-// Dogfood: generate a skill for the `to-skills` CLI binary (the `refine` command)
+// Dogfood: generate a skill for the `skillit` CLI binary (the `refine` command)
 // using @skillit/cli's own commander introspection.
 //
 // Run via the package script (builds first):  pnpm --filter @skillit/client gen-cli-skill
@@ -25,24 +25,24 @@ if (!existsSync(refineDist)) {
 const { buildRefineCommand } = await import(refineDist);
 
 // Reconstruct the same program shape that packages/client/src/bin.ts ships.
-const program = new Command('to-skills').description('to-skills CLI').version('0.1.0');
+const program = new Command('skillit').description('skillit CLI').version('0.1.0');
 program.addCommand(buildRefineCommand());
 
 const skill = await extractCliSkill({
   program,
   metadata: {
-    name: 'to-skills-refine',
+    name: 'skillit-refine',
     description:
-      'Autonomously improve an MCP skill via the to-skills audit→draft→review loop (build or runtime mode)',
-    keywords: ['to-skills', 'refine', 'mcp', 'skill-generation', 'cli', 'audit', 'overlay'],
-    repository: 'https://github.com/pradeepmouli/to-skills'
+      'Autonomously improve an MCP skill via the skillit audit→draft→review loop (build or runtime mode)',
+    keywords: ['skillit', 'refine', 'mcp', 'skill-generation', 'cli', 'audit', 'overlay'],
+    repository: 'https://github.com/pradeepmouli/skillit'
   }
 });
 
 writeCliSkill(skill, { outDir: resolve(repoRoot, 'skills') });
 
 const issues = skill.audit?.issues ?? [];
-console.log(`Generated skills/to-skills-refine/ — ${issues.length} audit finding(s).`);
+console.log(`Generated skills/skillit-refine/ — ${issues.length} audit finding(s).`);
 for (const i of issues) {
   console.log(`  [${i.severity ?? '?'}] ${i.code ?? ''} ${i.message ?? ''}`.trimEnd());
 }

@@ -9,14 +9,14 @@
     "model-context-protocol",
     "skill-generation",
     "skill-md",
-    "to-skills",
+    "skillit",
     "typescript"
   ],
   "license": "MIT",
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/mcp"
   },
   "funding": {

@@ -1,10 +1,10 @@
-# to-skills
+# skillit
 
 > Compile-time generator of AI agent skills from your codebase. Inline docs, CLI definitions, config schemas, and examples compile into progressively disclosed SKILL.md files that any LLM can discover.
 
 ## @skillit/core
 
-Shared types, renderers, and utilities for the to-skills ecosystem.
+Shared types, renderers, and utilities for the skillit ecosystem.
 
 Core provides the intermediate representation (ExtractedSkill), the SKILL.md renderer
 with progressive disclosure (lean discovery file + on-demand reference files), the
@@ -395,7 +395,7 @@ A fully parsed markdown document with structured metadata and sections.
 
 TypeDoc plugin that extracts structured AI agent skills from the TypeDoc reflection tree.
 
-Install as `typedoc-plugin-to-skills` for auto-discovery, or import `@skillit/typedoc`
+Install as `typedoc-plugin-skillit` for auto-discovery, or import `@skillit/typedoc`
 directly. The plugin hooks into TypeDoc's converter to extract functions, classes, types,
 enums, config surfaces, and documents, then renders them as SKILL.md + reference files
 via `@skillit/core`.

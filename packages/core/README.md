@@ -1,6 +1,6 @@
 # @skillit/core
 
-Shared types, renderers, and utilities for the [to-skills](https://github.com/pradeepmouli/to-skills) plugin ecosystem.
+Shared types, renderers, and utilities for the [skillit](https://github.com/pradeepmouli/skillit) plugin ecosystem.
 
 ## Usage
 

@@ -2,7 +2,7 @@
 
 > VitePress plugin for AI agent skill generation — uses sidebar for document ordering.
 
-Part of the [to-skills](https://github.com/pradeepmouli/to-skills) ecosystem.
+Part of the [skillit](https://github.com/pradeepmouli/skillit) ecosystem.
 
 ## Install
 
