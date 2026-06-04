@@ -10,13 +10,19 @@ Part of the [skillit](https://github.com/pradeepmouli/skillit) monorepo. Designe
 
 ## Install
 
+The `skillit mcp …` commands shown below ship in the `skillit` CLI — the
+`@skillit/client` package — so install that to get the `skillit` binary:
+
 ```bash
-npm install --save-dev @skillit/mcp
+npm install --save-dev @skillit/client            # provides the `skillit` binary (skillit mcp …)
 # Plus any non-default invocation adapters you intend to use:
 npm install --save-dev @skillit/target-mcpc       # mcpc CLI proxy
 npm install --save-dev @skillit/target-fastmcp    # fastmcp Python CLI proxy
 # (`@skillit/target-mcp-protocol` ships with @skillit/mcp.)
 ```
+
+If you only need the programmatic library (`extractMcpSkill`, `bundleMcpSkill`, …)
+and not the CLI, install `@skillit/mcp` directly instead.
 
 Requires Node.js ≥ 20.
 
