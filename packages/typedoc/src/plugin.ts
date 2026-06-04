@@ -475,7 +475,7 @@ function readPackageJson(): PackageJson {
 }
 
 function loadBundledTypeDocGuidanceSkill() {
-  const skillPath = fileURLToPath(new URL('../skills/to-skills-docs/SKILL.md', import.meta.url));
+  const skillPath = fileURLToPath(new URL('../skills/skillit-docs/SKILL.md', import.meta.url));
   let content: string;
   try {
     content = readFileSync(skillPath, 'utf-8');

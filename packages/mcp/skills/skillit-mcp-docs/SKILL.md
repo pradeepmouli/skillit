@@ -1,5 +1,5 @@
 ---
-name: to-skills-mcp-docs
+name: skillit-mcp-docs
 description: 'MCP server documentation conventions for high-quality generated skills. Use when writing tool descriptions, `_meta.toSkills` annotations, or input schemas for MCP extraction.'
 version: 0.1.0
 toSkills:

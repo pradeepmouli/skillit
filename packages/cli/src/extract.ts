@@ -161,9 +161,7 @@ export function writeCliSkill(skill: ExtractedSkill, options: CliWriteOptions) {
 }
 
 function loadBundledCliGuidanceSkill(): RenderedSkill {
-  const skillPath = fileURLToPath(
-    new URL('../skills/to-skills-cli-docs/SKILL.md', import.meta.url)
-  );
+  const skillPath = fileURLToPath(new URL('../skills/skillit-cli-docs/SKILL.md', import.meta.url));
   let content: string;
   try {
     content = readFileSync(skillPath, 'utf-8');

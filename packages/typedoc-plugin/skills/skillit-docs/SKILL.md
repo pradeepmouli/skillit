@@ -1,5 +1,5 @@
 ---
-name: to-skills-docs
+name: skillit-docs
 description: "Documentation conventions for generating high-quality AI agent skills from TypeScript source. Use when preparing a library for skill generation, auditing JSDoc quality, fixing audit warnings, writing @useWhen/@avoidWhen/@never tags, or asking about documentation conventions for skills. Use this even if the user just says 'audit my docs', 'improve my JSDoc', or 'make my skills better'."
 version: 1.3.0
 toSkills:
@@ -8,7 +8,7 @@ toSkills:
 
 # Documentation Conventions for Skill Generation
 
-typedoc-plugin-to-skills generates AI agent skills (SKILL.md) from your TypeScript documentation. The quality of the generated skill depends entirely on what you write in your source docs.
+typedoc-plugin-skillit generates AI agent skills (SKILL.md) from your TypeScript documentation. The quality of the generated skill depends entirely on what you write in your source docs.
 
 The generator runs an audit during `pnpm typedoc` that checks your docs against these conventions at four severity levels:
 

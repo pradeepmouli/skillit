@@ -100,7 +100,7 @@ export class CliRefineSource implements RefineSource {
 
   guidance(): string {
     const skillPath = fileURLToPath(
-      new URL('../skills/to-skills-cli-docs/SKILL.md', import.meta.url)
+      new URL('../skills/skillit-cli-docs/SKILL.md', import.meta.url)
     );
     return readFileSync(skillPath, 'utf8');
   }
