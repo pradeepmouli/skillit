@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `@to-skills/vitepress` as a Vite plugin that receives VitePress config through Vite's plugin system, uses the sidebar tree for authoritative document ordering, and generates skills at build time. Then scaffold the to-skills VitePress docs site that dogfoods the plugin.
+**Goal:** Build `@skillit/vitepress` as a Vite plugin that receives VitePress config through Vite's plugin system, uses the sidebar tree for authoritative document ordering, and generates skills at build time. Then scaffold the to-skills VitePress docs site that dogfoods the plugin.
 
 **Architecture:** The VitePress plugin uses Vite's `config` hook to capture `config.vitepress.site` (sidebar, srcDir, title) and `closeBundle` hook to scan docs in sidebar order, parse with core's `parseMarkdownDoc`, and generate skills via core's renderer. The docs site lives at `website/` with hand-written guides + TypeDoc-generated API reference.
 
@@ -36,7 +36,7 @@
 
 ---
 
-### Task 1: Scaffold `@to-skills/vitepress` package
+### Task 1: Scaffold `@skillit/vitepress` package
 
 **Files:**
 
@@ -50,7 +50,7 @@
 
 ```json
 {
-  "name": "@to-skills/vitepress",
+  "name": "@skillit/vitepress",
   "version": "0.1.0",
   "description": "VitePress plugin for AI agent skill generation — uses sidebar for document ordering",
   "type": "module",
@@ -87,7 +87,7 @@
   },
   "files": ["dist", "README.md"],
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "peerDependencies": {
     "vitepress": ">=1.0.0"
@@ -116,13 +116,13 @@ export {};
 
 ```bash
 pnpm install
-pnpm --filter @to-skills/vitepress build
+pnpm --filter @skillit/vitepress build
 ```
 
 - [ ] **Step 6: Create README.md**
 
 ````markdown
-# @to-skills/vitepress
+# @skillit/vitepress
 
 > VitePress plugin for AI agent skill generation — uses sidebar for document ordering.
 
@@ -131,7 +131,7 @@ Part of the [to-skills](https://github.com/pradeepmouli/to-skills) ecosystem.
 ## Install
 
 ```bash
-pnpm add -D @to-skills/vitepress
+pnpm add -D @skillit/vitepress
 ```
 ````
 
@@ -140,7 +140,7 @@ pnpm add -D @to-skills/vitepress
 ```typescript
 // .vitepress/config.mts
 import { defineConfig } from 'vitepress'
-import { toSkills } from '@to-skills/vitepress'
+import { toSkills } from '@skillit/vitepress'
 
 export default defineConfig({
   vite: {
@@ -164,7 +164,7 @@ MIT
 
 ```bash
 git add packages/vitepress/
-git commit -m "chore: scaffold @to-skills/vitepress package"
+git commit -m "chore: scaffold @skillit/vitepress package"
 ````
 
 ---
@@ -437,8 +437,8 @@ import {
   writeSkills,
   estimateTokens,
   truncateToTokenBudget
-} from '@to-skills/core';
-import type { ExtractedSkill, ExtractedDocument } from '@to-skills/core';
+} from '@skillit/core';
+import type { ExtractedSkill, ExtractedDocument } from '@skillit/core';
 import { walkSidebar } from './sidebar-walker.js';
 import type { OrderedDoc } from './sidebar-walker.js';
 
@@ -628,7 +628,7 @@ packages:
     "typedoc": "^0.28.0",
     "typedoc-plugin-markdown": "^4.0.0",
     "typedoc-vitepress-theme": "^1.1.0",
-    "@to-skills/vitepress": "workspace:*"
+    "@skillit/vitepress": "workspace:*"
   }
 }
 ```
@@ -652,7 +652,7 @@ packages:
 
 ```typescript
 import { defineConfig } from 'vitepress';
-import { toSkills } from '@to-skills/vitepress';
+import { toSkills } from '@skillit/vitepress';
 
 export default defineConfig({
   title: 'to-skills',
@@ -852,11 +852,11 @@ Content from the audit spec. Cover: severity levels, all checks (F1-F4, E1-E5, W
 
 - [ ] **Step 3: Write cli-extraction.md**
 
-Content from CLI extraction spec. Cover: `@to-skills/cli` package, commander introspection, `--help` fallback, config interface detection (`@config` tag), flag-to-property correlation, `SkillsPluginOptions` example.
+Content from CLI extraction spec. Cover: `@skillit/cli` package, commander introspection, `--help` fallback, config interface detection (`@config` tag), flag-to-property correlation, `SkillsPluginOptions` example.
 
 - [ ] **Step 4: Write markdown-docs.md**
 
-Content from markdown extraction spec. Cover: `@to-skills/vitepress` plugin, `@to-skills/docusaurus` adapter, core docs scanner, `skillsIncludeDocs` option, how prose docs become reference files.
+Content from markdown extraction spec. Cover: `@skillit/vitepress` plugin, `@skillit/docusaurus` adapter, core docs scanner, `skillsIncludeDocs` option, how prose docs become reference files.
 
 - [ ] **Step 5: Commit**
 
@@ -978,7 +978,7 @@ Verify:
 ```bash
 cat > .changeset/vitepress-plugin.md << 'EOF'
 ---
-'@to-skills/vitepress': minor
+'@skillit/vitepress': minor
 ---
 
 VitePress plugin for AI agent skill generation
@@ -1002,7 +1002,7 @@ git push
 
 | Task | What                          | Files                                      |
 | ---- | ----------------------------- | ------------------------------------------ |
-| 1    | Scaffold @to-skills/vitepress | package boilerplate + README               |
+| 1    | Scaffold @skillit/vitepress   | package boilerplate + README               |
 | 2    | Sidebar walker                | `sidebar-walker.ts` + tests                |
 | 3    | VitePress plugin (`toSkills`) | `index.ts` + tests                         |
 | 4    | Scaffold docs site            | `website/` with VitePress + config + pages |

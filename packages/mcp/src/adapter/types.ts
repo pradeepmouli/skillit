@@ -6,7 +6,7 @@ import type {
   AdapterRenderContextHttp,
   AdapterRenderContextStdio,
   AdapterFingerprint
-} from '@to-skills/core';
+} from '@skillit/core';
 
 /**
  * Narrower target identifier for mcp-package adapters.
@@ -17,7 +17,7 @@ export type InvocationTarget = 'mcp-protocol' | `cli:${string}`;
 
 /**
  * Re-export the structural contract from core, narrowing `target`.
- * Adapter packages (`@to-skills/target-*`) implement this interface.
+ * Adapter packages (`@skillit/target-*`) implement this interface.
  */
 export interface InvocationAdapter extends Omit<CoreInvocationAdapter, 'target'> {
   readonly target: InvocationTarget;

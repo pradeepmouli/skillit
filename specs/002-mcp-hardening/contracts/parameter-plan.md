@@ -1,8 +1,8 @@
 # Contract — `ParameterPlan` Discriminated Union
 
-**Owner**: `@to-skills/mcp`
-**Stability**: stable across `@to-skills/mcp@0.x`
-**Breaking-change call-out**: yes — third-party CLI adapters that import `ParameterPlan` and read `plan.scalarType`/`plan.enum` without narrowing on `plan.type` will fail to compile under `@to-skills/mcp@0.2.0`.
+**Owner**: `@skillit/mcp`
+**Stability**: stable across `@skillit/mcp@0.x`
+**Breaking-change call-out**: yes — third-party CLI adapters that import `ParameterPlan` and read `plan.scalarType`/`plan.enum` without narrowing on `plan.type` will fail to compile under `@skillit/mcp@0.2.0`.
 
 ---
 
@@ -98,4 +98,4 @@ function encodeOne(plan: ParameterPlan): string {
 }
 ```
 
-**After (`@to-skills/mcp@0.2.0`)**: see Consumer contract above. TS narrows `plan.scalarType` automatically inside `case 'scalar':`.
+**After (`@skillit/mcp@0.2.0`)**: see Consumer contract above. TS narrows `plan.scalarType` automatically inside `case 'scalar':`.

@@ -1,10 +1,10 @@
-# @to-skills/core
+# @skillit/core
 
-Shared types, renderers, and utilities for the [to-skills](https://github.com/pradeepmouli/to-skills) plugin ecosystem.
+Shared types, renderers, and utilities for the [skillit](https://github.com/pradeepmouli/skillit) plugin ecosystem.
 
 ## Usage
 
-This package is used by source adapters (like `@to-skills/typedoc`) to render extracted API info into SKILL.md and llms.txt files. You typically don't install this directly — it's a dependency of the plugins.
+This package is used by source adapters (like `@skillit/typedoc`) to render extracted API info into SKILL.md and llms.txt files. You typically don't install this directly — it's a dependency of the plugins.
 
 ```ts
 import {
@@ -12,23 +12,23 @@ import {
   renderSkill,
   writeSkills,
   renderLlmsTxt,
-  estimateTokens,
-} from "@to-skills/core";
+  estimateTokens
+} from '@skillit/core';
 
 // Render extracted skills into SKILL.md files
 const rendered = renderSkills(extractedSkills, {
-  outDir: "skills",
+  outDir: 'skills',
   maxTokens: 4000,
-  license: "MIT",
+  license: 'MIT'
 });
 
 // Write to disk
-writeSkills(rendered, { outDir: "skills" });
+writeSkills(rendered, { outDir: 'skills' });
 
 // Optionally render llms.txt
 const llms = renderLlmsTxt(extractedSkills, {
-  projectName: "my-lib",
-  projectDescription: "A great library",
+  projectName: 'my-lib',
+  projectDescription: 'A great library'
 });
 ```
 

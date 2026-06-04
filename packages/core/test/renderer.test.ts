@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { renderSkill, renderSkills, renderConfigSurfaceSection } from '@to-skills/core';
-import type { ExtractedSkill, ExtractedConfigSurface } from '@to-skills/core';
+import { renderSkill, renderSkills, renderConfigSurfaceSection } from '@skillit/core';
+import type { ExtractedSkill, ExtractedConfigSurface } from '@skillit/core';
 
 const minimalSkill: ExtractedSkill = {
   name: 'my-lib',

@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import { scanDocs, docsToExtractedDocuments } from '@to-skills/core';
-import type { ExtractedDocument } from '@to-skills/core';
+import { scanDocs, docsToExtractedDocuments } from '@skillit/core';
+import type { ExtractedDocument } from '@skillit/core';
 import { readCategoryLabels } from './category-reader.js';
 
 export { readCategoryLabels } from './category-reader.js';

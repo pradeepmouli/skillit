@@ -28,7 +28,7 @@ distinction.
 2. Add a TypeScript MCP build path that writes flat `_meta` annotations
    directly into tool definition source files.
 3. Single CLI entry point with smart context detection and an explicit override.
-4. Move shared JSDoc editing utility to `@to-skills/core` for use by all packages.
+4. Move shared JSDoc editing utility to `@skillit/core` for use by all packages.
 
 ## Non-Goals
 
@@ -50,7 +50,7 @@ Two modes, first-class everywhere:
 | **build**   | You                 | TypeScript source, versioned with the server |
 | **runtime** | Anyone              | Local overlay in the consuming project       |
 
-The `RefineSource` interface in `@to-skills/core` is **unchanged** — the loop
+The `RefineSource` interface in `@skillit/core` is **unchanged** — the loop
 engine never needs to know the mode. Mode is an implementation detail of the
 source adapter and a display concern for the CLI.
 
@@ -59,7 +59,7 @@ source adapter and a display concern for the CLI.
 ```
 packages/core/src/
   refine/
-    jsdoc-edit.ts          ← moved from @to-skills/typedoc (shared utility)
+    jsdoc-edit.ts          ← moved from @skillit/typedoc (shared utility)
     loop.ts, types.ts, …   (unchanged)
 
 packages/mcp/src/refine/
@@ -74,7 +74,7 @@ packages/mcp/src/refine/
   index.ts                 ← re-exports both paths
 
 packages/typedoc/src/refine/
-  typedoc-source.ts        ← imports jsdoc-edit from @to-skills/core
+  typedoc-source.ts        ← imports jsdoc-edit from @skillit/core
   …
 
 packages/client/src/
@@ -219,10 +219,10 @@ to-skills refine [server-name] [--mode build|runtime] [--iterations N]
 ## Shared JSDoc Utility
 
 `jsdoc-edit.ts` moves from `packages/typedoc/src/refine/` to
-`packages/core/src/refine/`. All imports in `@to-skills/typedoc` update
+`packages/core/src/refine/`. All imports in `@skillit/typedoc` update
 accordingly. The MCP build path does not use `jsdoc-edit.ts` (it uses
 `meta-edit.ts` instead), but the move makes the utility available to any future
-package without creating a cross-package dependency on `@to-skills/typedoc`.
+package without creating a cross-package dependency on `@skillit/typedoc`.
 
 ---
 

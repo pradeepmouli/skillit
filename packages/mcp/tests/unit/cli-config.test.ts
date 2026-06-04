@@ -10,7 +10,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Command } from 'commander';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 interface ExtractCall {
@@ -85,7 +85,7 @@ describe('extract --config <path>', () => {
   let stderrLines: string[];
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cli-cfg-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cli-cfg-'));
     configPath = join(workDir, 'mcp.json');
     outDir = join(workDir, 'out');
     extractCalls.length = 0;
@@ -271,13 +271,13 @@ describe('extract --config <path>', () => {
       }
     });
     const installTarget = join(workDir, '.claude', 'skills');
-    const guidanceDir = join(installTarget, 'to-skills-mcp-docs');
+    const guidanceDir = join(installTarget, 'skillit-mcp-docs');
     mkdirSync(guidanceDir, { recursive: true });
     writeFileSync(
       join(guidanceDir, 'SKILL.md'),
       [
         '---',
-        'name: to-skills-mcp-docs',
+        'name: skillit-mcp-docs',
         'version: 0.7.0',
         'toSkills:',
         '  managed: bundled-guidance',

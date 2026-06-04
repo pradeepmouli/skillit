@@ -19,7 +19,7 @@
  * @module audit/rules
  */
 
-import type { AdapterFingerprint, ExtractedSkill } from '@to-skills/core';
+import type { AdapterFingerprint, ExtractedSkill } from '@skillit/core';
 import type { InvocationAdapter } from '../adapter/types.js';
 import type { AuditIssue, AuditSeverity } from '../types.js';
 import { auditAdapterFreshness } from './freshness.js';

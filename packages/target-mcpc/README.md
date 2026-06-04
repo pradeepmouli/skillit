@@ -1,8 +1,8 @@
-# @to-skills/target-mcpc
+# @skillit/target-mcpc
 
-> CLI-as-proxy invocation-target adapter for `@to-skills/mcp`. Emits shell-command skills that use Apify's [`mcpc`](https://github.com/apify/mcpc) CLI to invoke MCP tools.
+> CLI-as-proxy invocation-target adapter for `@skillit/mcp`. Emits shell-command skills that use Apify's [`mcpc`](https://github.com/apify/mcpc) CLI to invoke MCP tools.
 
-Pairs with [`@to-skills/mcp`](../mcp/). Where `@to-skills/target-mcp-protocol` emits `mcp:` frontmatter for harnesses that hold an MCP session natively, `@to-skills/target-mcpc` emits a SKILL.md whose body is a series of shell commands the agent runs through its standard shell tool. The CLI terminates the MCP protocol at the shell boundary; the agent never sees MCP.
+Pairs with [`@skillit/mcp`](../mcp/). Where `@skillit/target-mcp-protocol` emits `mcp:` frontmatter for harnesses that hold an MCP session natively, `@skillit/target-mcpc` emits a SKILL.md whose body is a series of shell commands the agent runs through its standard shell tool. The CLI terminates the MCP protocol at the shell boundary; the agent never sees MCP.
 
 Target CLI: **`mcpc@^2.1`**.
 
@@ -11,10 +11,10 @@ Target CLI: **`mcpc@^2.1`**.
 ## Install
 
 ```bash
-npm install --save-dev @to-skills/target-mcpc
+npm install --save-dev @skillit/target-mcpc
 ```
 
-The adapter is loaded by `@to-skills/mcp` on demand when you pass `--invocation cli:mcpc`. You also need `mcpc` available at run time on whatever machine consumes the skill — see Setup commands below.
+The adapter is loaded by `@skillit/mcp` on demand when you pass `--invocation cli:mcpc`. You also need `mcpc` available at run time on whatever machine consumes the skill — see Setup commands below.
 
 ---
 
@@ -91,7 +91,7 @@ The `mcpc connect <skill-name> -- ...` line is intentional: `connect` is a reser
 | Field                        | Value                                         |
 | ---------------------------- | --------------------------------------------- |
 | `target`                     | `'cli:mcpc'`                                  |
-| `fingerprint.adapter`        | `'@to-skills/target-mcpc'`                    |
+| `fingerprint.adapter`        | `'@skillit/target-mcpc'`                      |
 | `fingerprint.version`        | This package's `version` from `package.json`. |
 | `fingerprint.targetCliRange` | `'mcpc@^2.1'`                                 |
 
@@ -102,8 +102,8 @@ Future major versions of mcpc that change the `tools-call` arg shape MUST bump t
 ## Programmatic use
 
 ```ts
-import McpcAdapter from '@to-skills/target-mcpc';
-import { renderSkill } from '@to-skills/core';
+import McpcAdapter from '@skillit/target-mcpc';
+import { renderSkill } from '@skillit/core';
 
 const rendered = await renderSkill(skill, { invocation: McpcAdapter });
 ```
@@ -112,7 +112,7 @@ const rendered = await renderSkill(skill, { invocation: McpcAdapter });
 
 ## Further reading
 
-- [`@to-skills/mcp` README](../mcp/README.md) — host package, CLI usage.
+- [`@skillit/mcp` README](../mcp/README.md) — host package, CLI usage.
 - [`docs/adapter-authoring.md`](../mcp/docs/adapter-authoring.md) — building your own invocation adapter.
 
 ## License

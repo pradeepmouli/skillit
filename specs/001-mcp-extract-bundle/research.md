@@ -1,4 +1,4 @@
-# Phase 0 Research — `@to-skills/mcp`
+# Phase 0 Research — `@skillit/mcp`
 
 **Date**: 2026-04-24
 **Spec**: [spec.md](./spec.md)
@@ -28,7 +28,7 @@ Seven research questions emerged from the Technical Context. Each is resolved be
 
 ## 2. Byte-identical idempotency (FR-038, SC-009) — feasibility and alternative
 
-**Decision**: Relax "byte-identical" to "**canonicalized-content-identical**." Introduce a canonicalization pass in `@to-skills/core/src/canonical.ts` that normalizes:
+**Decision**: Relax "byte-identical" to "**canonicalized-content-identical**." Introduce a canonicalization pass in `@skillit/core/src/canonical.ts` that normalizes:
 
 1. **Key order** — sort object keys alphabetically in all YAML frontmatter, JSON payloads, and parameter tables.
 2. **Array order** — stable-sort tools, resources, and prompts by `name`; stable-sort parameters within each tool by (required-first, then alphabetical).
@@ -95,10 +95,10 @@ Seven research questions emerged from the Technical Context. Each is resolved be
 
 ```typescript
 function resolveAdapter(target: string): InvocationAdapter {
-  if (target === 'mcp-protocol') return require('@to-skills/target-mcp-protocol').default;
+  if (target === 'mcp-protocol') return require('@skillit/target-mcp-protocol').default;
   if (!target.startsWith('cli:')) throw new McpError(`Unknown target form: ${target}`);
   const name = target.slice('cli:'.length);
-  const candidates = [`@to-skills/target-${name}`, `to-skills-target-${name}`];
+  const candidates = [`@skillit/target-${name}`, `to-skills-target-${name}`];
   for (const pkg of candidates) {
     try {
       return require(pkg).default;
@@ -122,7 +122,7 @@ Use `createRequire(import.meta.url)` for ESM compatibility.
 
 - **Dynamic import** (considered but rejected for v1 — synchronous resolution is simpler and the SDK is already synchronous-on-startup. Revisit if third-party adapters need top-level await.)
 - **Plugin registry in `package.json`** (rejected — extra indirection; npm install + flag is the minimum-friction path).
-- **Load all installed `@to-skills/target-*` packages at startup** (rejected — wastes time when the user is only rendering one target; fail-lazy is better.)
+- **Load all installed `@skillit/target-*` packages at startup** (rejected — wastes time when the user is only rendering one target; fail-lazy is better.)
 
 ---
 
@@ -196,6 +196,6 @@ All seven research questions resolved. Zero `NEEDS CLARIFICATION` markers remain
 
 Cross-cutting obligations for `/speckit.tasks`:
 
-- Canonicalization pass (`@to-skills/core/src/canonical.ts`) is a new shared primitive; both adapters and the host invoke it.
+- Canonicalization pass (`@skillit/core/src/canonical.ts`) is a new shared primitive; both adapters and the host invoke it.
 - Spec-delta task: soften FR-038 / SC-009 from "byte-identical" to "content-identical after canonicalization" in a follow-up `/speckit.clarify` pass.
 - Adapter-side contract: every built-in adapter must pass the host's tier-classifier round-trip tests against a fixed schema corpus.

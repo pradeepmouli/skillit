@@ -6,11 +6,11 @@
 
 ## Goal
 
-Make `to-skills refine` work for CLI- and TypeDoc-generated skills — not just MCP — add a `to-skills init` command that bootstraps the correct `@to-skills/*` package, generates the initial skill into a top-level `skills/` directory, then runs `refine`; and replace the fragile regex/string-surgery editing with a real AST engine (`@ast-grep/napi`). The agent eval loop consumes each source's **bundled guidance skill** as its rubric.
+Make `to-skills refine` work for CLI- and TypeDoc-generated skills — not just MCP — add a `to-skills init` command that bootstraps the correct `@skillit/*` package, generates the initial skill into a top-level `skills/` directory, then runs `refine`; and replace the fragile regex/string-surgery editing with a real AST engine (`@ast-grep/napi`). The agent eval loop consumes each source's **bundled guidance skill** as its rubric.
 
 ## Background — current state
 
-- `refineSkill` (`@to-skills/core`) and the `RefineSource` / `ModelClient` interfaces are **already source-agnostic**: the loop audits → drafts → reviews → applies fixes without knowing the source kind.
+- `refineSkill` (`@skillit/core`) and the `RefineSource` / `ModelClient` interfaces are **already source-agnostic**: the loop audits → drafts → reviews → applies fixes without knowing the source kind.
 - Write-back machinery exists per source: **MCP** `_meta`/overlay (`McpRefineSource`, `TypeScriptMcpRefineSource`); **TypeDoc** JSDoc via `insertJsDocTag` (`TypeDocRefineSource`).
 - All current editing/discovery is **regex + character-offset string surgery** — `jsdoc-edit.ts` (61 lines), `meta-edit.ts` (277), `tool-discovery.ts` (140). This is the code that needed ~7 rounds of PR-review edge-case fixes (comments, template literals, trailing commas, brace counting).
 - Gaps: (1) `refine` CLI is hardwired to MCP (`--mcp` required); (2) no `CliRefineSource`; (3) no guidance fed to the model; (4) no `init` command.
@@ -31,7 +31,7 @@ A new shared dependency. All structural discovery and edits go through it instea
 - **Discover**: `root.findAll('server.tool($NAME, $OPTS, $$$REST)')` — a real parser never matches inside comments, strings, or template literals, so `sanitizeComments`, word-boundary regexes, and brace-counting all disappear.
 - **Edit**: `node.replace(text)` returns an `Edit` (byte offsets); `root.commitEdits(edits)` returns the new source. Insertions are computed from real `node.range()` offsets, not hand-rolled scanning.
 
-### Shared core utility — `@to-skills/core` `refine/ast-edit.ts`
+### Shared core utility — `@skillit/core` `refine/ast-edit.ts`
 
 A small module wrapping `@ast-grep/napi` with the primitives every source needs:
 
@@ -42,14 +42,14 @@ A small module wrapping `@ast-grep/napi` with the primitives every source needs:
 
 ## Architecture
 
-### A. Guidance injection (`@to-skills/core`) — source-agnostic
+### A. Guidance injection (`@skillit/core`) — source-agnostic
 
 - Extend `RefineSource` with optional `guidance?(): string | Promise<string>` returning the bundled guidance markdown.
 - Add optional `guidance?: string` to `DraftRequest` and `ReviewRequest`.
 - `refineSkill` resolves `source.guidance?.()` **once** per run and threads it into every request.
 - `AnthropicModelClient` includes guidance verbatim in the drafter/reviewer system prompts under a delimited "Conventions" section. Absent guidance → unchanged behavior.
 
-### B. CLI source (`@to-skills/cli`) — `CliRefineSource implements RefineSource`
+### B. CLI source (`@skillit/cli`) — `CliRefineSource implements RefineSource`
 
 - **`extract()`**: load the consumer's commander program (see _Program loading_), run `extractCliSkill({ program, configSurfaces })`.
 - **`guidance()`**: return the bundled `to-skills-cli-docs` SKILL.md body (same loader as `writeCliSkill`'s `loadBundledCliGuidanceSkill`).
@@ -63,17 +63,17 @@ A small module wrapping `@ast-grep/napi` with the primitives every source needs:
 
 **`*Options` interface resolution:** `extractCliSkill` already correlates a CLI surface to a `<command>Options` config surface (`correlateFlags`), giving the interface **name**. The interface **file** is found by an ast-grep scan over a `--source-glob` (default `**/*.ts`, excluding `node_modules`/`dist`/`*.d.ts`). `upsertJsDocTag` writes onto that declaration. No correlated interface → command's fixes skipped with a logged warning.
 
-### C. `refine` source detection + `--source` (`@to-skills/client`)
+### C. `refine` source detection + `--source` (`@skillit/client`)
 
-- Detect from **installed** `@to-skills/*` packages in consumer `package.json` (deps+devDeps): `@to-skills/cli`→`cli`, `@to-skills/mcp`→`mcp`, `typedoc-plugin-to-skills`/`@to-skills/typedoc`→`typedoc`.
+- Detect from **installed** `@skillit/*` packages in consumer `package.json` (deps+devDeps): `@skillit/cli`→`cli`, `@skillit/mcp`→`mcp`, `typedoc-plugin-to-skills`/`@skillit/typedoc`→`typedoc`.
 - `--source cli|typedoc|mcp` overrides. Ambiguous (multiple, no `--source`) → exit 1 listing candidates + the `--source` form.
 - Existing MCP flags remain; CLI adds `--program`, `--source-glob`; flags validated per resolved source.
 
-### D. `init` command (`@to-skills/client`)
+### D. `init` command (`@skillit/client`)
 
 `to-skills init [--source <kind>] [--program <file#export>] [--out skills]`
 
-1. **Detect project nature** from `package.json` + source (independent of whether a `@to-skills/*` pkg is installed): commander/yargs dep or loadable `bin` → **cli**; `@modelcontextprotocol/sdk` → **mcp**; otherwise TS library → **typedoc**. `--source` overrides; genuinely ambiguous → abort with guidance.
+1. **Detect project nature** from `package.json` + source (independent of whether a `@skillit/*` pkg is installed): commander/yargs dep or loadable `bin` → **cli**; `@modelcontextprotocol/sdk` → **mcp**; otherwise TS library → **typedoc**. `--source` overrides; genuinely ambiguous → abort with guidance.
 2. **Install** the matching package: detect the package manager (`pnpm-lock.yaml`→pnpm, `yarn.lock`→yarn, else npm) and run its add-dev command. Failure surfaces the command and stops.
 3. **Generate** the initial skill into top-level **`skills/<name>/`** (`<name>` from `package.json`).
 4. **Invoke `refine`** for the detected source.
@@ -82,12 +82,12 @@ A small module wrapping `@ast-grep/napi` with the primitives every source needs:
 
 ## Components & files
 
-| Package                     | Add / change                                                                                                                                                                                                                                                            |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@to-skills/core`           | `refine/ast-edit.ts` (ast-grep wrapper: `upsertJsDocTag`, `findCall`, `upsertObjectProperty`); reimplement `insertJsDocTag` on it; `RefineSource.guidance?()`; `guidance?` on `DraftRequest`/`ReviewRequest`; `refineSkill` threads guidance. New dep `@ast-grep/napi`. |
-| `@to-skills/cli`            | `CliRefineSource`; program loader (`--program` + auto-find); `*Options` interface locator (via core util)                                                                                                                                                               |
-| `@to-skills/client`         | `init` command; `refine` source detection + `--source`; per-source flag validation                                                                                                                                                                                      |
-| `@to-skills/client` (model) | `AnthropicModelClient` prompts include guidance                                                                                                                                                                                                                         |
+| Package                   | Add / change                                                                                                                                                                                                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@skillit/core`           | `refine/ast-edit.ts` (ast-grep wrapper: `upsertJsDocTag`, `findCall`, `upsertObjectProperty`); reimplement `insertJsDocTag` on it; `RefineSource.guidance?()`; `guidance?` on `DraftRequest`/`ReviewRequest`; `refineSkill` threads guidance. New dep `@ast-grep/napi`. |
+| `@skillit/cli`            | `CliRefineSource`; program loader (`--program` + auto-find); `*Options` interface locator (via core util)                                                                                                                                                               |
+| `@skillit/client`         | `init` command; `refine` source detection + `--source`; per-source flag validation                                                                                                                                                                                      |
+| `@skillit/client` (model) | `AnthropicModelClient` prompts include guidance                                                                                                                                                                                                                         |
 
 ## Data flow (CLI refine)
 
@@ -126,7 +126,7 @@ output: skills/<name>/   (top-level)
 
 ## Dependencies
 
-- New runtime dep: `@ast-grep/napi` (NAPI native module), isolated to `@to-skills/core`'s `ast-edit.ts`.
+- New runtime dep: `@ast-grep/napi` (NAPI native module), isolated to `@skillit/core`'s `ast-edit.ts`.
 - Builds on the `introspectCommander` `required`-vs-`mandatory` fix (PR #51). Rebase this branch onto master once #51 merges.
 
 ## Non-goals

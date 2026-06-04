@@ -43,17 +43,17 @@ A developer runs `pnpm typedoc` (or `to-skills-cli extract`). Today, skills land
 
 ### User Story 3 — Bundled guidance skills are published and installable for all pipelines (Priority: P1)
 
-Today the `to-skills-docs` skill in `packages/typedoc-plugin/skills/` covers TypeDoc/JSDoc conventions but is excluded from the npm package. Additionally, there is no equivalent guidance skill for the other two generation pipelines: CLI introspection (`@to-skills/cli` — Commander programs, `--help` text) and MCP extraction (`@to-skills/mcp` — `_meta.toSkills` annotations, tool descriptions, parameter schemas). After this story ships, each package bundles its own guidance skill covering the documentation surfaces it controls, and all are published and auto-installable.
+Today the `to-skills-docs` skill in `packages/typedoc-plugin/skills/` covers TypeDoc/JSDoc conventions but is excluded from the npm package. Additionally, there is no equivalent guidance skill for the other two generation pipelines: CLI introspection (`@skillit/cli` — Commander programs, `--help` text) and MCP extraction (`@skillit/mcp` — `_meta.toSkills` annotations, tool descriptions, parameter schemas). After this story ships, each package bundles its own guidance skill covering the documentation surfaces it controls, and all are published and auto-installable.
 
 **Why this priority**: Without pipeline-specific guidance being discoverable, consumers of any pipeline have no actionable advice on how to improve the source material that feeds skill generation. TypeDoc users need JSDoc tag guidance; MCP server authors need `_meta.toSkills` annotation guidance; CLI authors need `--help` text and description quality guidance.
 
-**Independent Test**: Run `npm pack` for each of `typedoc-plugin-to-skills`, `@to-skills/cli`, and `@to-skills/mcp`. Verify each tarball contains its bundled guidance skill. Configure `installTargets` and verify all applicable guidance skills appear alongside generated skills.
+**Independent Test**: Run `npm pack` for each of `typedoc-plugin-to-skills`, `@skillit/cli`, and `@skillit/mcp`. Verify each tarball contains its bundled guidance skill. Configure `installTargets` and verify all applicable guidance skills appear alongside generated skills.
 
 **Acceptance Scenarios**:
 
 1. **Given** `typedoc-plugin-to-skills` is installed via npm, **When** the consumer inspects the package, **Then** `skills/to-skills-docs/SKILL.md` is present with TypeDoc/JSDoc conventions.
-2. **Given** `@to-skills/mcp` is installed via npm, **When** the consumer inspects the package, **Then** `skills/to-skills-mcp-docs/SKILL.md` is present with MCP annotation conventions (`_meta.toSkills` structure, tool description quality, parameter schema best practices).
-3. **Given** `@to-skills/cli` is installed via npm, **When** the consumer inspects the package, **Then** `skills/to-skills-cli-docs/SKILL.md` is present with CLI documentation conventions (`--help` text quality, Commander description fields, config interface JSDoc).
+2. **Given** `@skillit/mcp` is installed via npm, **When** the consumer inspects the package, **Then** `skills/to-skills-mcp-docs/SKILL.md` is present with MCP annotation conventions (`_meta.toSkills` structure, tool description quality, parameter schema best practices).
+3. **Given** `@skillit/cli` is installed via npm, **When** the consumer inspects the package, **Then** `skills/to-skills-cli-docs/SKILL.md` is present with CLI documentation conventions (`--help` text quality, Commander description fields, config interface JSDoc).
 4. **Given** `skillsInstallTargets: [".claude/skills"]`, **When** any pipeline runs, **Then** its bundled guidance skill is installed alongside generated skills.
 5. **Given** the consumer already has a custom guidance skill in the install target (no `version` in frontmatter, or a different `name`), **When** the install runs, **Then** the bundled version does NOT overwrite it (skip with log message).
 6. **Given** a previously installed guidance skill with `version: 1.3.0` in frontmatter, **When** the package is upgraded and the bundled skill has `version: 1.4.0`, **Then** the installed copy is replaced with the newer version.
@@ -135,7 +135,7 @@ A developer using `to-skills-mcp extract --command npx --arg -y --arg @some/serv
 - **FR-Q002**: The SKILL.md renderer MUST emit correct links when token budgets split a section into a directory of files (e.g., `references/functions/` instead of `references/functions.md`).
 - **FR-Q003**: `writeSkills()` MUST accept an optional `installTargets?: string[]` parameter. When provided, each rendered skill is copied to each target directory in addition to `outDir`.
 - **FR-Q004**: The TypeDoc plugin MUST register a `skillsInstallTargets` option (type: array of strings, default: `[]`). When non-empty, skills are installed to those directories after generation.
-- **FR-Q005**: Each pipeline package (`typedoc-plugin-to-skills`, `@to-skills/cli`, `@to-skills/mcp`) MUST include its `skills/` directory in its package.json `"files"` so bundled guidance skills are published to npm.
+- **FR-Q005**: Each pipeline package (`typedoc-plugin-to-skills`, `@skillit/cli`, `@skillit/mcp`) MUST include its `skills/` directory in its package.json `"files"` so bundled guidance skills are published to npm.
 - **FR-Q006**: When `installTargets` is configured, the pipeline's bundled guidance skill MUST be installed alongside generated skills. If the target already contains a copy with a `version` frontmatter field, replace only when the bundled version is newer (semver comparison). If the existing copy has no `version` or a different `name`, skip with a log message.
 - **FR-Q007**: `renderRouterSkill()` MUST detect and preserve curated router skills (identified by `curated: true` in frontmatter).
 - **FR-Q008**: The audit output across all pipelines MUST include actionable fix suggestion templates: TypeDoc audit (F1-F4, E1-E5), MCP audit (M1-M3+), and CLI audit findings. Suggestions MUST be specific enough for an agent in an eval loop to apply them directly to source code without human intervention.

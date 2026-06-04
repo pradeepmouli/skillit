@@ -1,4 +1,4 @@
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
+import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
 import { readOverlay, writeOverlay, applyFixToOverlay } from './overlay.js';
 import { mergeOverlay } from './merge-overlay.js';
 

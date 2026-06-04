@@ -2,7 +2,7 @@
  * Audit rule M5 — adapter freshness (FR-IT-013).
  *
  * @remarks
- * When a CLI-as-proxy adapter (`@to-skills/target-mcpc`, `target-fastmcp`,
+ * When a CLI-as-proxy adapter (`@skillit/target-mcpc`, `target-fastmcp`,
  * etc.) renders a SKILL.md, it embeds its fingerprint (`adapter` + `version`)
  * into the YAML frontmatter via `generated-by:`. Later, when the skill is
  * audited (extract or bundle re-run), the embedded fingerprint is compared
@@ -19,7 +19,7 @@
  * @module audit/freshness
  */
 
-import type { AdapterFingerprint, ExtractedSkill } from '@to-skills/core';
+import type { AdapterFingerprint, ExtractedSkill } from '@skillit/core';
 import type { InvocationAdapter } from '../adapter/types.js';
 import type { AuditIssue } from '../types.js';
 

@@ -4,9 +4,9 @@
 
 **Goal:** Let `to-skills refine` and `to-skills init` drive the audit→draft→review loop through an already-authenticated agent CLI (`claude`, `codex`, `copilot`) instead of direct Anthropic API calls, selected via `--model-client`.
 
-**Architecture:** Add a second `ModelClient` implementation (`CliModelClient`) beside `AnthropicModelClient`, plus a factory that picks between them. The CLI client reuses the existing pure `buildDraftPrompt`/`buildReviewPrompt`/`parseReviewVerdict` and only changes the transport: spawn a per-CLI adapter, capture stdout, extract the answer from the CLI's JSON envelope. Nothing in `@to-skills/core` or the refine loop changes.
+**Architecture:** Add a second `ModelClient` implementation (`CliModelClient`) beside `AnthropicModelClient`, plus a factory that picks between them. The CLI client reuses the existing pure `buildDraftPrompt`/`buildReviewPrompt`/`parseReviewVerdict` and only changes the transport: spawn a per-CLI adapter, capture stdout, extract the answer from the CLI's JSON envelope. Nothing in `@skillit/core` or the refine loop changes.
 
-**Tech Stack:** TypeScript strict (no `any`), ESM `.js` import specifiers, Node `child_process.spawn` (arg array, no shell), Vitest, oxlint/oxfmt, conventional commits. `@to-skills/client` only.
+**Tech Stack:** TypeScript strict (no `any`), ESM `.js` import specifiers, Node `child_process.spawn` (arg array, no shell), Vitest, oxlint/oxfmt, conventional commits. `@skillit/client` only.
 
 **Spec:** `docs/superpowers/specs/2026-06-03-cli-model-backend-design.md`.
 
@@ -14,7 +14,7 @@
 
 ## Repo conventions (read before starting)
 
-- Run tests from the **repo root**: `pnpm exec vitest run <path> --reporter=dot` (vitest globs are root-relative; running inside a package finds no files). Type-check: `pnpm --filter @to-skills/client type-check`. Lint: `pnpm run lint`.
+- Run tests from the **repo root**: `pnpm exec vitest run <path> --reporter=dot` (vitest globs are root-relative; running inside a package finds no files). Type-check: `pnpm --filter @skillit/client type-check`. Lint: `pnpm run lint`.
 - Tests live in `packages/client/src/__tests__/` (matches the include glob `packages/**/src/**/*.test.ts`).
 - **The commit hook rejects the literal `re`+`.exec(`** — use `.match()`/`.matchAll()`.
 - No `any`, anywhere (including tests).
@@ -33,7 +33,7 @@
 | `packages/client/src/commands/refine.ts` (modify)         | `--model-client`/`--model-cli-timeout` options; `RefineCommandOpts` fields; `runRefine` takes a `ModelClient`; `runRefineCommand` builds it via the factory. |
 | `packages/client/src/commands/init.ts` (modify)           | `--model-client`/`--model-cli-timeout` options threaded into the refine dispatch opts.                                                                       |
 | `README.md` (modify)                                      | Document `--model-client`.                                                                                                                                   |
-| `.changeset/cli-model-backend.md` (new)                   | `@to-skills/client` minor.                                                                                                                                   |
+| `.changeset/cli-model-backend.md` (new)                   | `@skillit/client` minor.                                                                                                                                     |
 
 ---
 
@@ -67,7 +67,7 @@ import { DRAFTER, REVIEWER, MAX_TOKENS } from './models.js';
 
 Run: `pnpm exec vitest run packages/client --reporter=dot`
 Expected: PASS (same count as before — this is a pure refactor).
-Run: `pnpm --filter @to-skills/client type-check`
+Run: `pnpm --filter @skillit/client type-check`
 Expected: exit 0.
 
 - [ ] **Step 4: Commit.**
@@ -462,7 +462,7 @@ git commit -m "feat(client): per-cli adapters (claude/codex/copilot)"
 import { describe, it, expect, vi } from 'vitest';
 import { CliModelClient } from '../model/cli/cli-client.js';
 import { claudeAdapter } from '../model/cli/adapters.js';
-import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@skillit/core';
 
 const skill = { name: 'demo' } as unknown as ExtractedSkill;
 const draftReq: DraftRequest = {
@@ -527,7 +527,7 @@ Expected: FAIL (`Cannot find module '../model/cli/cli-client.js'`).
 
 ```typescript
 // packages/client/src/model/cli/cli-client.ts
-import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@skillit/core';
 import { buildDraftPrompt, buildReviewPrompt, parseReviewVerdict } from '../anthropic.js';
 import { runCli, type RunCliOptions } from './run.js';
 import type { CliAdapter } from './adapters.js';
@@ -646,7 +646,7 @@ Expected: FAIL (`Cannot find module`).
 ```typescript
 // packages/client/src/model/model-client-factory.ts
 import { execFileSync } from 'node:child_process';
-import type { ModelClient } from '@to-skills/core';
+import type { ModelClient } from '@skillit/core';
 import { AnthropicModelClient } from './anthropic.js';
 import { CliModelClient } from './cli/cli-client.js';
 import { adapterFor, type CliModelClientKind } from './cli/adapters.js';
@@ -755,7 +755,7 @@ Expected: FAIL (`resolveModelClientKind` is not exported).
 ```typescript
 // remove: import { AnthropicModelClient } from '../model/anthropic.js';
 import { createModelClient } from '../model/model-client-factory.js';
-import type { ModelClient } from '@to-skills/core';
+import type { ModelClient } from '@skillit/core';
 ```
 
 (b) Add fields to `RefineCommandOpts`:
@@ -841,7 +841,7 @@ Then update **both** `runRefine(...)` call sites (the cli branch and the mcp bra
 
 Run: `pnpm exec vitest run --reporter=dot`
 Expected: PASS (existing refine tests still green; new `resolveModelClientKind` tests pass).
-Run: `pnpm --filter @to-skills/client type-check`
+Run: `pnpm --filter @skillit/client type-check`
 Expected: exit 0.
 
 - [ ] **Step 5: Commit.**
@@ -928,7 +928,7 @@ await runRefine({
 
 Run: `pnpm exec vitest run --reporter=dot`
 Expected: PASS.
-Run: `pnpm --filter @to-skills/client type-check`
+Run: `pnpm --filter @skillit/client type-check`
 Expected: exit 0.
 
 - [ ] **Step 5: Commit.**
@@ -966,7 +966,7 @@ environment variable over its `/login` credential — if that token lacks the
 
 ```markdown
 ---
-'@to-skills/client': minor
+'@skillit/client': minor
 ---
 
 `refine` and `init` gain `--model-client api|claude|codex|copilot`: drive the

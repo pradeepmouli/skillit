@@ -1,4 +1,4 @@
-# Contract: `to-skills.mcp` package.json field
+# Contract: `skillit.mcp` package.json field
 
 **FR references**: FR-029, FR-030, FR-031, FR-IT-008.
 
@@ -9,10 +9,10 @@
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "to-skills.mcp configuration",
+  "title": "skillit.mcp configuration",
   "type": "object",
   "properties": {
-    "to-skills": {
+    "skillit": {
       "type": "object",
       "properties": {
         "mcp": {
@@ -81,8 +81,8 @@
 {
   "name": "@myorg/my-mcp-server",
   "bin": "./dist/server.js",
-  "scripts": { "postbuild": "to-skills-mcp bundle" },
-  "to-skills": {
+  "scripts": { "postbuild": "skillit mcp bundle" },
+  "skillit": {
     "mcp": { "skillName": "my-server" }
   }
 }
@@ -95,7 +95,7 @@
 
 ```json
 {
-  "to-skills": {
+  "skillit": {
     "mcp": {
       "skillName": "my-server",
       "invocation": ["mcp-protocol", "cli:mcpc"]
@@ -111,7 +111,7 @@ Bundle mode writes two skill directories: `skills/my-server-mcp-protocol/` and `
 ```json
 {
   "name": "@myorg/py-mcp-server",
-  "to-skills": {
+  "skillit": {
     "mcp": {
       "skillName": "py-server",
       "command": "python",
@@ -125,7 +125,7 @@ Bundle mode writes two skill directories: `skills/my-server-mcp-protocol/` and `
 
 ```json
 {
-  "to-skills": {
+  "skillit": {
     "mcp": [
       { "skillName": "server-a", "command": "node", "args": ["./dist/a.js"] },
       {
@@ -143,13 +143,13 @@ Bundle mode writes two skill directories: `skills/my-server-mcp-protocol/` and `
 
 ## Validation behavior
 
-On `to-skills-mcp bundle`:
+On `skillit mcp bundle`:
 
-- `to-skills.mcp` absent → exit code 4 with message `to-skills.mcp field is required. See https://...`.
+- `skillit.mcp` absent → exit code 4 with message `skillit.mcp field is required. See https://...`.
 - `skillName` missing on an entry → exit code 4 with the index of the offending entry.
 - `skillName` violates the kebab pattern → exit code 4.
 - `command` omitted AND `bin` absent → exit code 5 with code `MISSING_LAUNCH_COMMAND`.
-- `invocation` references an unknown target → exit code 2 with code `UNKNOWN_TARGET`; if the target looks resolvable (`cli:*`), suggests `npm install @to-skills/target-<name>`.
+- `invocation` references an unknown target → exit code 2 with code `UNKNOWN_TARGET`; if the target looks resolvable (`cli:*`), suggests `npm install @skillit/target-<name>`.
 - Two entries with the same `skillName` → exit code 4 with code `DUPLICATE_SKILL_NAME`.
 
 ---

@@ -177,7 +177,7 @@ function readSkillMetadataFromContent(content: string): {
   const explicitBundledGuidance = toSkills?.managed === 'bundled-guidance';
   const legacyBundledGuidance =
     typeof frontmatter?.name === 'string' &&
-    frontmatter.name.startsWith('to-skills-') &&
+    frontmatter.name.startsWith('skillit-') &&
     typeof frontmatter?.version === 'string';
   return {
     bundledGuidance: explicitBundledGuidance || legacyBundledGuidance ? true : undefined,
@@ -199,7 +199,7 @@ function readLenientSkillMetadataFromContent(content: string): {
   const parsed = parseLenientFrontmatter(match[1]!);
   const legacyBundledGuidance =
     typeof parsed.name === 'string' &&
-    parsed.name.startsWith('to-skills-') &&
+    parsed.name.startsWith('skillit-') &&
     typeof parsed.version === 'string';
   return {
     bundledGuidance: parsed.bundledGuidance || legacyBundledGuidance ? true : undefined,

@@ -31,7 +31,7 @@ describe('readBundleConfig', () => {
   it('normalizes a single-server object into a one-element array', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./dist/server.js'] }
       }
     });
@@ -47,7 +47,7 @@ describe('readBundleConfig', () => {
 
   it('preserves order for an array of servers', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: [
           { skillName: 'server-a', command: 'node', args: ['./a.js'] },
           { skillName: 'server-b', command: 'node', args: ['./b.js'] }
@@ -62,7 +62,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: './dist/server.js',
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     const entries = await readBundleConfig(workDir);
     expect(entries[0]?.command).toBe('node');
@@ -74,7 +74,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: { 'my-server': './dist/server.js' },
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     const entries = await readBundleConfig(workDir);
     expect(entries[0]?.command).toBe('node');
@@ -85,7 +85,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: { 'server-a': './a.js', 'server-b': './b.js' },
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       name: 'McpError',
@@ -96,7 +96,7 @@ describe('readBundleConfig', () => {
   it('throws MISSING_LAUNCH_COMMAND when no command and no bin', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       code: 'MISSING_LAUNCH_COMMAND'
@@ -105,7 +105,7 @@ describe('readBundleConfig', () => {
 
   it('rejects skillName that violates the kebab pattern', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'My_Server', command: 'node', args: ['./a.js'] }
       }
     });
@@ -118,7 +118,7 @@ describe('readBundleConfig', () => {
 
   it('detects duplicate skillName across entries', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: [
           { skillName: 'dup', command: 'node', args: ['./a.js'] },
           { skillName: 'dup', command: 'node', args: ['./b.js'] }
@@ -132,7 +132,7 @@ describe('readBundleConfig', () => {
 
   it('normalizes string invocation into a one-element array', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: {
           skillName: 'my-server',
           command: 'node',
@@ -147,7 +147,7 @@ describe('readBundleConfig', () => {
 
   it('preserves array invocation', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: {
           skillName: 'my-server',
           command: 'node',
@@ -162,7 +162,7 @@ describe('readBundleConfig', () => {
 
   it('defaults invocation to [mcp-protocol] when omitted', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
       }
     });
@@ -172,7 +172,7 @@ describe('readBundleConfig', () => {
 
   it('rejects invocation strings that do not match the target pattern', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: {
           skillName: 'my-server',
           command: 'node',
@@ -196,41 +196,41 @@ describe('readBundleConfig', () => {
     await expect(readBundleConfig(workDir)).rejects.toThrow(/package\.json not found/);
   });
 
-  it('throws when to-skills section is absent (distinct from missing mcp field)', async () => {
+  it('throws when skillit section is absent (distinct from missing mcp field)', async () => {
     writePkg({ name: '@my/server' });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       name: 'McpError',
       code: 'TRANSPORT_FAILED'
     });
-    // Specific message: "to-skills section is missing" — distinguishes the
-    // case from a present-but-empty to-skills object.
-    await expect(readBundleConfig(workDir)).rejects.toThrow(/to-skills section is missing/);
+    // Specific message: "skillit section is missing" — distinguishes the
+    // case from a present-but-empty skillit object.
+    await expect(readBundleConfig(workDir)).rejects.toThrow(/skillit section is missing/);
   });
 
-  it('throws when to-skills.mcp field is absent (with to-skills wrapper present)', async () => {
-    writePkg({ name: '@my/server', 'to-skills': {} });
+  it('throws when skillit.mcp field is absent (with skillit wrapper present)', async () => {
+    writePkg({ name: '@my/server', skillit: {} });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       code: 'TRANSPORT_FAILED'
     });
-    await expect(readBundleConfig(workDir)).rejects.toThrow(/to-skills\.mcp field is required/);
+    await expect(readBundleConfig(workDir)).rejects.toThrow(/skillit\.mcp field is required/);
   });
 
-  it('treats explicit null for to-skills.mcp as absent (not an empty entry)', async () => {
-    writePkg({ name: '@my/server', 'to-skills': { mcp: null } });
+  it('treats explicit null for skillit.mcp as absent (not an empty entry)', async () => {
+    writePkg({ name: '@my/server', skillit: { mcp: null } });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       code: 'TRANSPORT_FAILED'
     });
-    await expect(readBundleConfig(workDir)).rejects.toThrow(/to-skills\.mcp field is required/);
+    await expect(readBundleConfig(workDir)).rejects.toThrow(/skillit\.mcp field is required/);
   });
 
-  it('treats explicit null for to-skills wrapper as absent', async () => {
-    writePkg({ name: '@my/server', 'to-skills': null });
-    await expect(readBundleConfig(workDir)).rejects.toThrow(/to-skills section is missing/);
+  it('treats explicit null for skillit wrapper as absent', async () => {
+    writePkg({ name: '@my/server', skillit: null });
+    await expect(readBundleConfig(workDir)).rejects.toThrow(/skillit section is missing/);
   });
 
   it('preserves user-provided env on the entry', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: {
           skillName: 'my-server',
           command: 'node',
@@ -252,7 +252,7 @@ describe('readBundleConfig', () => {
 
   it('throws on non-string args', async () => {
     writePkg({
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: [42] }
       }
     });
@@ -264,7 +264,7 @@ describe('readBundleConfig', () => {
   // Sanity check on the McpError instanceof — guards against a regression where
   // we accidentally throw a plain Error.
   it('always throws McpError instances on validation failure', async () => {
-    writePkg({ 'to-skills': { mcp: { skillName: '!!bad' } } });
+    writePkg({ skillit: { mcp: { skillName: '!!bad' } } });
     try {
       await readBundleConfig(workDir);
       expect.fail('expected throw');
@@ -277,7 +277,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: { 'tool-a': './dist/a.js', 'tool-b': './dist/b.js' },
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', binName: 'tool-b' }
       }
     });
@@ -291,7 +291,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: { 'tool-a': './dist/a.js', 'tool-b': './dist/b.js' },
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       code: 'MISSING_LAUNCH_COMMAND'
@@ -303,7 +303,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: { 'tool-a': './dist/a.js', 'tool-b': './dist/b.js' },
-      'to-skills': { mcp: { skillName: 'my-server', binName: 'nonexistent' } }
+      skillit: { mcp: { skillName: 'my-server', binName: 'nonexistent' } }
     });
     await expect(readBundleConfig(workDir)).rejects.toMatchObject({
       code: 'MISSING_LAUNCH_COMMAND'
@@ -314,7 +314,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: { 'only-tool': './dist/only.js' },
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     const entries = await readBundleConfig(workDir);
     expect(entries[0]?.binName).toBe('only-tool');
@@ -324,7 +324,7 @@ describe('readBundleConfig', () => {
     writePkg({
       name: '@my/server',
       bin: './dist/server.js',
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     const entries = await readBundleConfig(workDir);
     expect(entries[0]?.binName).toBeUndefined();

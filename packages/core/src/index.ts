@@ -1,5 +1,5 @@
 /**
- * Shared types, renderers, and utilities for the to-skills ecosystem.
+ * Shared types, renderers, and utilities for the skillit ecosystem.
  *
  * Core provides the intermediate representation (ExtractedSkill), the SKILL.md renderer
  * with progressive disclosure (lean discovery file + on-demand reference files), the
@@ -7,7 +7,7 @@
  * token budgeting, README parsing, and docs scanning.
  *
  * @remarks
- * All extractors (@to-skills/typedoc, @to-skills/cli, @to-skills/docusaurus) produce
+ * All extractors (@skillit/typedoc, @skillit/cli, @skillit/docusaurus) produce
  * ExtractedSkill objects. Core renders them into SKILL.md + references/ files.
  * The rendering is framework-agnostic — it doesn't know where the data came from.
  *

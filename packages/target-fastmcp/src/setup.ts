@@ -16,7 +16,7 @@
  * @module setup
  */
 
-import type { AdapterFingerprint } from '@to-skills/mcp';
+import type { AdapterFingerprint } from '@skillit/mcp';
 
 /**
  * Stdio launch shape — mirrors the host's `AdapterRenderContext.launchCommand`.
@@ -68,7 +68,7 @@ export function renderFastMcpSetup(
 
   // FR-IT-012 trace line. The "fastmcp 2.x" marker corresponds to this
   // adapter's `targetCliRange` (fastmcp@^2) — keep them in sync. The
-  // `via @to-skills/target-fastmcp <version>` suffix matches the spec wording.
+  // `via @skillit/target-fastmcp <version>` suffix matches the spec wording.
   const cliMarker = formatCliMarker(fingerprint.targetCliRange);
   lines.push(`> Generated for ${cliMarker} via ${fingerprint.adapter} ${fingerprint.version}`);
 

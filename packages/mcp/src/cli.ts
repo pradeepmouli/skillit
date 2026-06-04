@@ -1,11 +1,11 @@
 /**
- * Commander-based CLI wiring for `@to-skills/mcp`.
+ * Commander-based CLI wiring for `@skillit/mcp`.
  *
  * Exposes `buildProgram()`, which constructs a `Command` tree with:
  * - `extract` — connects to a running MCP server (stdio via `--command`,
  *   HTTP via `--url`, or batch via `--config`), renders a SKILL.md per
  *   `--invocation` target, and writes it under the configured output dir.
- * - `bundle` — reads `to-skills.mcp` from the host package's `package.json`,
+ * - `bundle` — reads `skillit.mcp` from the host package's `package.json`,
  *   runs extract per declared server, and writes self-referential skills
  *   into `<packageRoot>/skills/` for dual-consumption packages.
  *
@@ -26,7 +26,7 @@
 import { existsSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { Command, InvalidArgumentError } from 'commander';
-import { readInstalledSkillMetadata, renderSkill, writeSkills } from '@to-skills/core';
+import { readInstalledSkillMetadata, renderSkill, writeSkills } from '@skillit/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import type { InvocationAdapter } from './adapter/types.js';
 import { bundleMcpSkill } from './bundle.js';
@@ -46,23 +46,44 @@ import { extractMcpSkill } from './extract.js';
 import { renderLlmsTxt } from './render/llms-txt.js';
 import { PACKAGE_VERSION } from './version.js';
 
-const BUNDLED_MCP_GUIDANCE_NAME = 'to-skills-mcp-docs';
+const BUNDLED_MCP_GUIDANCE_NAME = 'skillit-mcp-docs';
 
 /**
- * Build the top-level commander program for `to-skills-mcp`.
+ * Standalone program (legacy `skillit-mcp` shape) — kept for internal/testing
+ * use.
  *
  * Consumers that want to embed the CLI into a parent program (e.g. a
- * monorepo-wide `to-skills` wrapper) can call this and attach the returned
- * `Command` as a subcommand.
+ * monorepo-wide `skillit` wrapper) should prefer {@link buildMcpCommand}.
  *
  * @public
  */
 export function buildProgram(): Command {
-  const program = new Command()
-    .name('to-skills-mcp')
-    .description('Extract or bundle MCP servers as Agent Skills')
-    .version(PACKAGE_VERSION);
+  return attachMcpSubcommands(
+    new Command()
+      .name('skillit-mcp')
+      .description('Extract or bundle MCP servers as Agent Skills')
+      .version(PACKAGE_VERSION)
+  );
+}
 
+/**
+ * The `mcp` command for mounting under the top-level `skillit` program:
+ * `skillit mcp extract|bundle …`.
+ * @public
+ */
+export function buildMcpCommand(): Command {
+  return attachMcpSubcommands(
+    new Command('mcp').description('Extract or bundle MCP servers as Agent Skills')
+  );
+}
+
+/**
+ * Attach the `extract` / `bundle` subcommands to a commander program. Shared by
+ * {@link buildProgram} (standalone) and {@link buildMcpCommand} (mounted under
+ * `skillit`).
+ * @internal
+ */
+function attachMcpSubcommands(program: Command): Command {
   program
     .command('extract')
     .description('Extract a SKILL.md from a running MCP server')
@@ -233,7 +254,7 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
   // rather than silent acceptance.
   if (!opts.canonicalize) {
     process.stderr.write(
-      '[to-skills-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
+      '[skillit-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
     );
   }
 
@@ -392,7 +413,7 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
   // many-server configs.
   if (!opts.canonicalize) {
     process.stderr.write(
-      '[to-skills-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
+      '[skillit-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
     );
   }
   const entries = await readMcpConfigFile(opts.config!);
@@ -754,7 +775,7 @@ async function validateTargets(targets: readonly InvocationTarget[]): Promise<In
  *
  * The known-target list is hardcoded — for now we only ship `mcp-protocol`,
  * `cli:mcpc`, `cli:fastmcp`. Third-party adapters that follow the
- * `to-skills-target-<name>` naming convention won't appear in this hint, but
+ * `skillit-target-<name>` naming convention won't appear in this hint, but
  * they remain loadable.
  */
 async function formatInstalledAdaptersHint(): Promise<string> {
@@ -777,7 +798,7 @@ async function formatInstalledAdaptersHint(): Promise<string> {
       // Surface the underlying message under DEBUG so the user has a breadcrumb.
       if (process.env['DEBUG']) {
         const msg = err instanceof Error ? err.message : String(err);
-        process.stderr.write(`[to-skills-mcp DEBUG] adapter ${t} probe failed: ${msg}\n`);
+        process.stderr.write(`[skillit-mcp DEBUG] adapter ${t} probe failed: ${msg}\n`);
       }
     }
   }
@@ -788,7 +809,7 @@ async function formatInstalledAdaptersHint(): Promise<string> {
       : '';
   return (
     `${installedLine}${corruptedLine}\n` +
-    `To install a missing adapter: npm install @to-skills/target-<name>`
+    `To install a missing adapter: npm install @skillit/target-<name>`
   );
 }
 
@@ -806,7 +827,7 @@ interface BundleOpts {
 }
 
 /**
- * `bundle` action body. Reads `to-skills.mcp` from the host package, performs
+ * `bundle` action body. Reads `skillit.mcp` from the host package, performs
  * a pre-flight collision check (so --force semantics fire BEFORE writeSkills
  * does an unconditional rmSync on each destination), then runs
  * `bundleMcpSkill` and surfaces per-skill stdout / per-failure stderr lines.
@@ -826,7 +847,7 @@ async function runBundle(opts: BundleOpts): Promise<void> {
   // users get explicit feedback rather than silent acceptance.
   if (!opts.canonicalize) {
     process.stderr.write(
-      '[to-skills-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
+      '[skillit-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
     );
   }
   // --max-tokens is parsed for forward-compatibility but not yet threaded into
@@ -834,7 +855,7 @@ async function runBundle(opts: BundleOpts): Promise<void> {
   // they explicitly chose a non-default value, so the default 4000 stays quiet.
   if (opts.maxTokens !== 4000) {
     process.stderr.write(
-      '[to-skills-mcp] --max-tokens is not yet threaded into bundle mode; value ignored.\n'
+      '[skillit-mcp] --max-tokens is not yet threaded into bundle mode; value ignored.\n'
     );
   }
 

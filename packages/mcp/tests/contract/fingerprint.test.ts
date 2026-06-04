@@ -15,8 +15,8 @@
  * real `loadAdapterAsync`, renders a fixture skill, and asserts the
  * dual-placement contract via {@link assertFingerprintConsistency}.
  */
-import { renderSkill } from '@to-skills/core';
-import type { ExtractedSkill } from '@to-skills/core';
+import { renderSkill } from '@skillit/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { describe, expect, it } from 'vitest';
 import { assertFingerprintConsistency } from '../../src/adapter/fingerprint.js';
 import { loadAdapterAsync } from '../../src/adapter/loader.js';

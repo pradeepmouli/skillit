@@ -91,7 +91,7 @@ pnpm typedoc
 
 ```typescript
 import { Command } from 'commander';
-import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
+import { extractCliSkill, writeCliSkill } from '@skillit/cli';
 
 const program = new Command().name('demo');
 program.command('build').description('Build the project');

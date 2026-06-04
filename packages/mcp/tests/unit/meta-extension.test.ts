@@ -16,7 +16,7 @@
 // brief: bad metadata is silently ignored — a healthy extract must never
 // crash because of a misshapen annotation.
 
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   McpClient,

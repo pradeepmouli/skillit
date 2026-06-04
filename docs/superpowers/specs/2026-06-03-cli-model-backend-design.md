@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-03
 **Status:** Approved (design)
-**Scope:** `@to-skills/client` only. Adds a CLI-driven `ModelClient` alongside the existing API client, selectable per run. No `@to-skills/core` or `@to-skills/cli` changes.
+**Scope:** `@skillit/client` only. Adds a CLI-driven `ModelClient` alongside the existing API client, selectable per run. No `@skillit/core` or `@skillit/cli` changes.
 **Depends on:** the multi-source refine branch (`feat/refine-multi-source-init` / PR #52) — reuses the pure `buildDraftPrompt`/`buildReviewPrompt`/`parseReviewVerdict` it exports.
 
 ## Goal
@@ -106,7 +106,7 @@ runRefineCommand(opts) → createModelClient(opts.modelClient)
 - Auto-detecting or defaulting to a CLI backend (default stays `api`).
 - Per-role model selection for codex/copilot (no per-role flag; default model).
 - Streaming/interactive sessions — single-shot non-interactive invocation only.
-- Changes to `@to-skills/core` or `@to-skills/cli`.
+- Changes to `@skillit/core` or `@skillit/cli`.
 
 ## Dependencies
 

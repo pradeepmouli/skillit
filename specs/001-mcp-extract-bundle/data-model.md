@@ -1,4 +1,4 @@
-# Phase 1 Data Model — `@to-skills/mcp`
+# Phase 1 Data Model — `@skillit/mcp`
 
 **Date**: 2026-04-24
 
@@ -6,7 +6,7 @@ Types are grouped by their owning package. All type names are the canonical Type
 
 ---
 
-## 1. Extensions to `@to-skills/core`
+## 1. Extensions to `@skillit/core`
 
 Three additions to `packages/core/src/types.ts`. All are backward-compatible (optional fields or an optional parameter).
 
@@ -63,7 +63,7 @@ export interface SkillSetup {
 }
 
 export interface AdapterFingerprint {
-  /** npm package name of the adapter (e.g. "@to-skills/target-mcpc") */
+  /** npm package name of the adapter (e.g. "@skillit/target-mcpc") */
   adapter: string;
   /** Adapter package semver version */
   version: string;
@@ -102,11 +102,11 @@ export interface SkillRenderOptions {
 }
 ```
 
-`InvocationAdapter` is imported from `@to-skills/mcp` (see §2.4). Core does NOT take a dependency on `@to-skills/mcp` — the adapter type is structural, and the default render path (no adapter supplied) emits the existing TypeDoc/CLI-extractor shape.
+`InvocationAdapter` is imported from `@skillit/mcp` (see §2.4). Core does NOT take a dependency on `@skillit/mcp` — the adapter type is structural, and the default render path (no adapter supplied) emits the existing TypeDoc/CLI-extractor shape.
 
 ---
 
-## 2. New types in `@to-skills/mcp`
+## 2. New types in `@skillit/mcp`
 
 All exported from `packages/mcp/src/index.ts`.
 
@@ -202,7 +202,7 @@ export interface AuditIssue {
 /** String identifier; one of the built-in values or `cli:<name>` for third-party targets. */
 export type InvocationTarget = 'mcp-protocol' | `cli:${string}`;
 
-/** Contract third-party adapter packages implement. Default export of @to-skills/target-<n>. */
+/** Contract third-party adapter packages implement. Default export of @skillit/target-<n>. */
 export interface InvocationAdapter {
   /** Machine-readable target identifier, e.g. 'mcp-protocol' or 'cli:mcpc' */
   readonly target: InvocationTarget;
@@ -229,7 +229,7 @@ export interface AdapterContext {
 }
 ```
 
-`RenderedSkill` is imported from `@to-skills/core` — adapters produce the same file-set type the core renderer produces.
+`RenderedSkill` is imported from `@skillit/core` — adapters produce the same file-set type the core renderer produces.
 
 ### 2.5 `McpServerConfig` — `mcp.json` / `claude_desktop_config.json` entry
 

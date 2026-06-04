@@ -8,7 +8,7 @@
  *
  * @remarks
  * We intentionally roll our own minimal renderer rather than reusing
- * `@to-skills/core`'s `renderLlmsTxt` — core's emitter targets API surfaces
+ * `@skillit/core`'s `renderLlmsTxt` — core's emitter targets API surfaces
  * (functions/classes/types) and produces both `llms.txt` and `llms-full.txt`,
  * neither of which is shaped for an MCP tools/resources/prompts directory.
  * The MCP-side llms.txt is a per-skill file directory pointer, not an API
@@ -21,8 +21,8 @@
  * @module render/llms-txt
  */
 
-import type { ExtractedSkill, RenderedFile, RenderedSkill } from '@to-skills/core';
-import { estimateTokens } from '@to-skills/core';
+import type { ExtractedSkill, RenderedFile, RenderedSkill } from '@skillit/core';
+import { estimateTokens } from '@skillit/core';
 
 /** Max characters retained from a description before truncation. */
 const SUMMARY_MAX = 200;

@@ -1,5 +1,5 @@
 {
-  "name": "@to-skills/vitepress",
+  "name": "@skillit/vitepress",
   "version": "0.2.26",
   "description": "VitePress plugin for AI agent skill generation — uses sidebar for document ordering",
   "keywords": [
@@ -9,7 +9,7 @@
     "sidebar",
     "skill-generation",
     "skill-md",
-    "to-skills",
+    "skillit",
     "vite-plugin",
     "vitepress"
   ],
@@ -17,7 +17,7 @@
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/vitepress"
   },
   "funding": {
@@ -42,7 +42,7 @@
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "peerDependencies": {
     "vitepress": ">=2.0.0-alpha.0"

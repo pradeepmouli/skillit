@@ -3,8 +3,8 @@
  * Run the documentation audit on an ExtractedSkill and print actionable results.
  */
 
-import { auditSkill, formatAuditText, parseReadme } from '@to-skills/core';
-import type { ExtractedSkill, AuditContext } from '@to-skills/core';
+import { auditSkill, formatAuditText, parseReadme } from '@skillit/core';
+import type { ExtractedSkill, AuditContext } from '@skillit/core';
 import { readFileSync } from 'node:fs';
 
 // Build audit context from your project's package.json and README

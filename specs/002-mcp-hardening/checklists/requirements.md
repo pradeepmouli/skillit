@@ -1,4 +1,4 @@
-# Requirements Quality Checklist: `@to-skills/mcp` Hardening
+# Requirements Quality Checklist: `@skillit/mcp` Hardening
 
 **Purpose**: Validate spec quality before planning starts — ensure no NEEDS CLARIFICATION markers, requirements are testable, scope is bounded.
 **Created**: 2026-04-25

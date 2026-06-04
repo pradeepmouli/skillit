@@ -1,4 +1,4 @@
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import type { ToSkillsOverlay } from './overlay.js';
 
 export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): ExtractedSkill {

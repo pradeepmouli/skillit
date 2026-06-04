@@ -8,7 +8,7 @@ import {
   type RenderedSkill,
   type SkillRenderOptions,
   type SkillWriteOptions
-} from '@to-skills/core';
+} from '@skillit/core';
 import { introspectCommander } from './introspect-commander.js';
 import { parseHelpOutput } from './help-parser.js';
 import { correlateFlags } from './correlator.js';
@@ -161,9 +161,7 @@ export function writeCliSkill(skill: ExtractedSkill, options: CliWriteOptions) {
 }
 
 function loadBundledCliGuidanceSkill(): RenderedSkill {
-  const skillPath = fileURLToPath(
-    new URL('../skills/to-skills-cli-docs/SKILL.md', import.meta.url)
-  );
+  const skillPath = fileURLToPath(new URL('../skills/skillit-cli-docs/SKILL.md', import.meta.url));
   let content: string;
   try {
     content = readFileSync(skillPath, 'utf-8');
@@ -174,7 +172,7 @@ function loadBundledCliGuidanceSkill(): RenderedSkill {
   }
   return {
     skill: {
-      filename: 'to-skills-cli-docs/SKILL.md',
+      filename: 'skillit-cli-docs/SKILL.md',
       content
     },
     references: []

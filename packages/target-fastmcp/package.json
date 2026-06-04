@@ -1,20 +1,20 @@
 {
-  "name": "@to-skills/target-fastmcp",
+  "name": "@skillit/target-fastmcp",
   "version": "0.2.0",
-  "description": "FastMCP CLI-as-proxy invocation-target adapter for @to-skills/mcp — emits shell-command skills using the fastmcp Python CLI for agents without MCP support",
+  "description": "FastMCP CLI-as-proxy invocation-target adapter for @skillit/mcp — emits shell-command skills using the fastmcp Python CLI for agents without MCP support",
   "keywords": [
     "agent-skills",
     "ai",
     "fastmcp",
     "mcp",
     "model-context-protocol",
-    "to-skills"
+    "skillit"
   ],
   "license": "MIT",
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/target-fastmcp"
   },
   "funding": {
@@ -40,8 +40,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*",
-    "@to-skills/mcp": "workspace:*"
+    "@skillit/core": "workspace:*",
+    "@skillit/mcp": "workspace:*"
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add config surface extraction to core (typed interfaces with `@config` tag or `*Options`/`*Config` suffix), and a new `@to-skills/cli` package that extracts CLI command structure from commander/yargs via runtime introspection with `--help` fallback, correlating CLI flags to typed interface properties for JSDoc tag merging.
+**Goal:** Add config surface extraction to core (typed interfaces with `@config` tag or `*Options`/`*Config` suffix), and a new `@skillit/cli` package that extracts CLI command structure from commander/yargs via runtime introspection with `--help` fallback, correlating CLI flags to typed interface properties for JSDoc tag merging.
 
-**Architecture:** Three layers: (1) `ExtractedConfigSurface` types + config renderer in `@to-skills/core`, (2) config interface detection in `@to-skills/typedoc`, (3) new `@to-skills/cli` package with commander introspection, help parser, and flag-to-property correlation. A project like zod-to-form gets two skills: API from TypeDoc, CLI from `@to-skills/cli`.
+**Architecture:** Three layers: (1) `ExtractedConfigSurface` types + config renderer in `@skillit/core`, (2) config interface detection in `@skillit/typedoc`, (3) new `@skillit/cli` package with commander introspection, help parser, and flag-to-property correlation. A project like zod-to-form gets two skills: API from TypeDoc, CLI from `@skillit/cli`.
 
 **Tech Stack:** TypeScript 5.9, commander 14.x, Vitest 4.1, pnpm workspaces
 
@@ -736,7 +736,7 @@ pnpm test
 In `packages/typedoc/src/extractor.ts`, add:
 
 ```typescript
-import type { ExtractedConfigSurface, ExtractedConfigOption } from '@to-skills/core';
+import type { ExtractedConfigSurface, ExtractedConfigOption } from '@skillit/core';
 
 /** Config interface name suffix patterns (must be at word boundary — PascalCase end) */
 const CONFIG_SUFFIXES = ['Options', 'Config', 'Configuration', 'Settings'];
@@ -879,7 +879,7 @@ git commit -m "feat(typedoc): detect @config interfaces and extract as config su
 
 ---
 
-### Task 4: Scaffold `@to-skills/cli` package
+### Task 4: Scaffold `@skillit/cli` package
 
 **Files:**
 
@@ -892,7 +892,7 @@ git commit -m "feat(typedoc): detect @config interfaces and extract as config su
 
 ```json
 {
-  "name": "@to-skills/cli",
+  "name": "@skillit/cli",
   "version": "0.1.0",
   "description": "Extract CLI command structure from commander/yargs for AI agent skill generation",
   "type": "module",
@@ -913,7 +913,7 @@ git commit -m "feat(typedoc): detect @config interfaces and extract as config su
   "repository": "https://github.com/pradeepmouli/to-skills",
   "author": "Pradeep Mouli",
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "peerDependencies": {
     "commander": ">=12.0.0"
@@ -975,7 +975,7 @@ pnpm install
 
 ```bash
 git add packages/cli/
-git commit -m "chore: scaffold @to-skills/cli package"
+git commit -m "chore: scaffold @skillit/cli package"
 ```
 
 ---
@@ -1078,7 +1078,7 @@ import type {
   ExtractedConfigSurface,
   ExtractedConfigOption,
   ExtractedConfigArgument
-} from '@to-skills/core';
+} from '@skillit/core';
 
 /**
  * Introspect a commander Program object and extract all command definitions.
@@ -1257,7 +1257,7 @@ import type {
   ExtractedConfigSurface,
   ExtractedConfigOption,
   ExtractedConfigArgument
-} from '@to-skills/core';
+} from '@skillit/core';
 
 /**
  * Parse --help text output into an ExtractedConfigSurface.
@@ -1407,7 +1407,7 @@ git commit -m "feat(cli): --help output parser for framework-agnostic extraction
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { correlateFlags } from '../src/correlator.js';
-import type { ExtractedConfigSurface } from '@to-skills/core';
+import type { ExtractedConfigSurface } from '@skillit/core';
 
 describe('correlateFlags', () => {
   it('merges JSDoc tags from config interface into CLI options', () => {
@@ -1549,7 +1549,7 @@ describe('correlateFlags', () => {
 - [ ] **Step 2: Implement correlator.ts**
 
 ```typescript
-import type { ExtractedConfigSurface, ExtractedConfigOption } from '@to-skills/core';
+import type { ExtractedConfigSurface, ExtractedConfigOption } from '@skillit/core';
 
 /**
  * Correlate CLI flags with typed interface properties.
@@ -1698,7 +1698,7 @@ Options:
 - [ ] **Step 2: Implement extract.ts**
 
 ```typescript
-import type { ExtractedSkill, ExtractedConfigSurface } from '@to-skills/core';
+import type { ExtractedSkill, ExtractedConfigSurface } from '@skillit/core';
 import { introspectCommander } from './introspect-commander.js';
 import { parseHelpOutput } from './help-parser.js';
 import { correlateFlags } from './correlator.js';
@@ -1846,16 +1846,16 @@ for (const ref of rendered.references) {
 ```bash
 cat > .changeset/cli-config-extraction.md << 'EOF'
 ---
-'@to-skills/core': minor
-'@to-skills/typedoc': minor
-'@to-skills/cli': minor
+'@skillit/core': minor
+'@skillit/typedoc': minor
+'@skillit/cli': minor
 ---
 
 CLI & config surface extraction
 
 - ExtractedConfigSurface types and config renderer in core
 - @config tag and *Options/*Config suffix detection in TypeDoc extractor
-- New @to-skills/cli package: commander introspection, --help parser, flag-to-property correlator
+- New @skillit/cli package: commander introspection, --help parser, flag-to-property correlator
 - Config surfaces render as Commands and Configuration sections in SKILL.md
 - Detailed per-option documentation in references/commands.md and references/config.md
 EOF
@@ -1875,7 +1875,7 @@ git push
 | 1    | Config surface types in core          | `config-types.ts`, `types.ts`, `index.ts`  |
 | 2    | Config surface renderer               | `config-renderer.ts`, `renderer.ts`, tests |
 | 3    | Config interface detection in TypeDoc | `extractor.ts`, tests                      |
-| 4    | Scaffold `@to-skills/cli` package     | `packages/cli/*`                           |
+| 4    | Scaffold `@skillit/cli` package       | `packages/cli/*`                           |
 | 5    | Commander runtime introspection       | `introspect-commander.ts`, tests           |
 | 6    | `--help` output parser                | `help-parser.ts`, tests                    |
 | 7    | Flag-to-property correlator           | `correlator.ts`, tests                     |

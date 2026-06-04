@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { McpRefineSource } from '../runtime/mcp-source.js';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 let tmp = '';
 afterEach(() => {

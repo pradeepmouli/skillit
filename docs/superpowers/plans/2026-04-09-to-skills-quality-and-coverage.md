@@ -114,7 +114,7 @@ to-skills/
 │   │       └── extractor.ts   # Reflection tree → ExtractedSkill
 │   └── typedoc-plugin/        # Auto-discovery wrapper (npm: typedoc-plugin-to-skills)
 │       └── src/
-│           └── index.ts       # Re-exports @to-skills/typedoc
+│           └── index.ts       # Re-exports @skillit/typedoc
 ├── skills/                    # Generated output (dogfooding)
 ├── docs/                      # Generated TypeDoc HTML
 └── scripts/
@@ -194,8 +194,8 @@ This document provides guidelines and instructions for AI coding agents working 
 
 to-skills is a TypeDoc plugin ecosystem that generates structured AI agent skills (SKILL.md files following the agentskills.io spec) and llms.txt documentation from TypeScript API docs. It's a pnpm monorepo with three packages:
 
-- **`@to-skills/core`** — Shared types (`ExtractedSkill` hierarchy), SKILL.md renderer (progressive disclosure), llms.txt renderer, token budgeting
-- **`@to-skills/typedoc`** — TypeDoc plugin that extracts from the reflection tree and hooks into the TypeDoc lifecycle
+- **`@skillit/core`** — Shared types (`ExtractedSkill` hierarchy), SKILL.md renderer (progressive disclosure), llms.txt renderer, token budgeting
+- **`@skillit/typedoc`** — TypeDoc plugin that extracts from the reflection tree and hooks into the TypeDoc lifecycle
 - **`typedoc-plugin-to-skills`** — Auto-discovery wrapper (just `pnpm add -D` and TypeDoc finds it)
 
 The extraction pipeline: TypeDoc parses TS source → `extractor.ts` walks the reflection tree → `ExtractedSkill` intermediate representation → `renderer.ts` produces SKILL.md + references/ files → `writer.ts` writes to disk.

@@ -1,8 +1,8 @@
-# @to-skills/target-mcp-protocol
+# @skillit/target-mcp-protocol
 
-> Default invocation-target adapter for `@to-skills/mcp`. Emits `mcp:` frontmatter for agent harnesses that speak MCP natively.
+> Default invocation-target adapter for `@skillit/mcp`. Emits `mcp:` frontmatter for agent harnesses that speak MCP natively.
 
-Pairs with [`@to-skills/mcp`](../mcp/) — when a host extracts or bundles an MCP server, this adapter renders a SKILL.md whose frontmatter is consumed directly by MCP-native harnesses (OpenCode, Codex, Cursor, Claude Code) so the harness can wire up the server without a separate connect step.
+Pairs with [`@skillit/mcp`](../mcp/) — when a host extracts or bundles an MCP server, this adapter renders a SKILL.md whose frontmatter is consumed directly by MCP-native harnesses (OpenCode, Codex, Cursor, Claude Code) so the harness can wire up the server without a separate connect step.
 
 This is the **default** adapter — when you don't pass `--invocation`, this is what runs.
 
@@ -10,10 +10,10 @@ This is the **default** adapter — when you don't pass `--invocation`, this is 
 
 ## Install
 
-This adapter ships as a runtime dependency of `@to-skills/mcp`. You do not need to install it explicitly. It's listed here for clarity:
+This adapter ships as a runtime dependency of `@skillit/mcp`. You do not need to install it explicitly. It's listed here for clarity:
 
 ```bash
-npm install --save-dev @to-skills/target-mcp-protocol
+npm install --save-dev @skillit/target-mcp-protocol
 ```
 
 ---
@@ -50,7 +50,7 @@ mcp:
 ---
 ```
 
-For HTTP transports the block uses `url` + `headers` instead of `command` + `args`. The host (`@to-skills/mcp`) decides which form via `AdapterRenderContext.httpEndpoint` vs `.launchCommand`.
+For HTTP transports the block uses `url` + `headers` instead of `command` + `args`. The host (`@skillit/mcp`) decides which form via `AdapterRenderContext.httpEndpoint` vs `.launchCommand`.
 
 The body of the SKILL.md (Quick Reference, References section, tool/resource/prompt content) comes from the default core renderer — this adapter does not override `skipDefaultFunctionsRef`. It only injects `additionalFrontmatter`.
 
@@ -61,19 +61,19 @@ The body of the SKILL.md (Quick Reference, References section, tool/resource/pro
 | Field                        | Value                                         |
 | ---------------------------- | --------------------------------------------- |
 | `target`                     | `'mcp-protocol'`                              |
-| `fingerprint.adapter`        | `'@to-skills/target-mcp-protocol'`            |
+| `fingerprint.adapter`        | `'@skillit/target-mcp-protocol'`              |
 | `fingerprint.version`        | This package's `version` from `package.json`. |
 | `fingerprint.targetCliRange` | _absent_ (this target invokes no CLI).        |
 
-Unlike the CLI-as-proxy adapters (`@to-skills/target-mcpc`, `@to-skills/target-fastmcp`), this adapter does **not** emit a `generated-by:` frontmatter block. The freshness audit (M5) tracks adapter-version drift only for CLI adapters — the `mcp-protocol` adapter has no upstream CLI shape to compare against, so the `fingerprint` is exposed only via the programmatic API (`McpProtocolAdapter.fingerprint`) for consumers that want to record it themselves.
+Unlike the CLI-as-proxy adapters (`@skillit/target-mcpc`, `@skillit/target-fastmcp`), this adapter does **not** emit a `generated-by:` frontmatter block. The freshness audit (M5) tracks adapter-version drift only for CLI adapters — the `mcp-protocol` adapter has no upstream CLI shape to compare against, so the `fingerprint` is exposed only via the programmatic API (`McpProtocolAdapter.fingerprint`) for consumers that want to record it themselves.
 
 ---
 
 ## Programmatic use
 
 ```ts
-import McpProtocolAdapter from '@to-skills/target-mcp-protocol';
-import { renderSkill } from '@to-skills/core';
+import McpProtocolAdapter from '@skillit/target-mcp-protocol';
+import { renderSkill } from '@skillit/core';
 
 const rendered = await renderSkill(skill, { invocation: McpProtocolAdapter });
 ```
@@ -82,7 +82,7 @@ const rendered = await renderSkill(skill, { invocation: McpProtocolAdapter });
 
 ## Further reading
 
-- [`@to-skills/mcp` README](../mcp/README.md) — host package, CLI usage, programmatic API.
+- [`@skillit/mcp` README](../mcp/README.md) — host package, CLI usage, programmatic API.
 - [`docs/adapter-authoring.md`](../mcp/docs/adapter-authoring.md) — building your own invocation adapter.
 
 ## License

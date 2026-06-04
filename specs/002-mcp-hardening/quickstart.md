@@ -1,8 +1,8 @@
-# Quickstart — Adopter Migration to `@to-skills/mcp@0.2.0`
+# Quickstart — Adopter Migration to `@skillit/mcp@0.2.0`
 
-**Audience**: anyone consuming `@to-skills/mcp` programmatically, or maintaining a third-party invocation adapter.
+**Audience**: anyone consuming `@skillit/mcp` programmatically, or maintaining a third-party invocation adapter.
 **Effort**: 5–15 minutes for typical adopters.
-**Prerequisites**: install `@to-skills/mcp@0.2.0` and rebuild.
+**Prerequisites**: install `@skillit/mcp@0.2.0` and rebuild.
 
 This is the breaking-change cookbook for the discriminated-union migrations and the additive `auditIssues` / `initializeTimeoutMs` features.
 
@@ -93,7 +93,7 @@ Programmatic callers can now read structured audit findings directly off the ret
 **Use case — CI gate**:
 
 ```ts
-import { extractMcpSkill } from '@to-skills/mcp';
+import { extractMcpSkill } from '@skillit/mcp';
 
 const skill = await extractMcpSkill({
   transport: { type: 'stdio', command: 'npx', args: ['-y', '@my-org/server'] }
@@ -178,7 +178,7 @@ import {
   renderToolsBody,
   planForTool,
   parameterToSchema
-} from '@to-skills/mcp/adapter-utils';
+} from '@skillit/mcp/adapter-utils';
 
 class FooAdapter implements InvocationAdapter {
   readonly target = 'cli:foo' as const;
@@ -205,7 +205,7 @@ Net effect: ~80 lines deleted from your adapter (matches SC-H003).
 ## §6. Verifying the migration
 
 ```bash
-pnpm install @to-skills/mcp@0.2.0
+pnpm install @skillit/mcp@0.2.0
 pnpm run type-check    # expect 0 errors
 pnpm test              # expect: all green
 ```

@@ -10,19 +10,19 @@ These docs contain expert knowledge (architecture decisions, troubleshooting ste
 
 Two additions:
 
-1. **Generalized markdown parser + directory scanner in `@to-skills/core`** — reads a directory of `.md` files, parses YAML frontmatter + heading-based sections, produces ordered `ExtractedDocument[]` that feed into the existing `ExtractedSkill.documents` field.
+1. **Generalized markdown parser + directory scanner in `@skillit/core`** — reads a directory of `.md` files, parses YAML frontmatter + heading-based sections, produces ordered `ExtractedDocument[]` that feed into the existing `ExtractedSkill.documents` field.
 
-2. **`@to-skills/docusaurus` package** — thin adapter that adds Docusaurus-specific conventions (`sidebar_position`, `_category_.json`, `sidebars.js` ordering, `docs/` default directory).
+2. **`@skillit/docusaurus` package** — thin adapter that adds Docusaurus-specific conventions (`sidebar_position`, `_category_.json`, `sidebars.js` ordering, `docs/` default directory).
 
 ## Architecture
 
 ```
-@to-skills/core
+@skillit/core
   ├── readme-parser.ts (existing — README-specific)
   ├── markdown-parser.ts (NEW — generic doc page parsing)
   └── docs-scanner.ts (NEW — directory scanning + ordering)
 
-@to-skills/docusaurus (NEW package)
+@skillit/docusaurus (NEW package)
   └── Docusaurus adapter:
       - _category_.json reading
       - sidebar_position ordering
@@ -190,7 +190,7 @@ The existing renderer already handles `ExtractedDocument[]` → `references/<tit
 
 ---
 
-## `@to-skills/docusaurus` Package
+## `@skillit/docusaurus` Package
 
 ### Structure
 
@@ -250,9 +250,9 @@ interface DocusaurusOptions {
 
 ```json
 {
-  "name": "@to-skills/docusaurus",
+  "name": "@skillit/docusaurus",
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   }
 }
 ```
@@ -270,7 +270,7 @@ The TypeDoc plugin can optionally invoke docs scanning after skill extraction:
 ```typescript
 // In plugin.ts, after skill extraction and rendering:
 try {
-  const { scanDocs, docsToExtractedDocuments } = await import('@to-skills/core');
+  const { scanDocs, docsToExtractedDocuments } = await import('@skillit/core');
   const docsDir = join(process.cwd(), 'docs');
   if (existsSync(docsDir)) {
     const docs = scanDocs({ docsDir, exclude: ['**/api/**'] });
@@ -305,7 +305,7 @@ app.options.addDeclaration({
 
 ### With CLI extractor
 
-`@to-skills/cli` can also merge docs:
+`@skillit/cli` can also merge docs:
 
 ```typescript
 const cliSkill = await extractCliSkill({ program, metadata });
@@ -317,11 +317,11 @@ cliSkill.documents = docsToExtractedDocuments(docs);
 
 ### With Docusaurus
 
-`@to-skills/docusaurus` is standalone — it reads the docs directory and produces `ExtractedDocument[]`. A project can use it directly:
+`@skillit/docusaurus` is standalone — it reads the docs directory and produces `ExtractedDocument[]`. A project can use it directly:
 
 ```typescript
-import { extractDocusaurusDocs } from '@to-skills/docusaurus';
-import { renderSkill } from '@to-skills/core';
+import { extractDocusaurusDocs } from '@skillit/docusaurus';
+import { renderSkill } from '@skillit/core';
 
 const docs = extractDocusaurusDocs({ docsDir: 'docs' });
 const skill = { name: 'my-project', documents: docs /* ... */ };

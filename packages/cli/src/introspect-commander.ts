@@ -2,7 +2,7 @@ import type {
   ExtractedConfigSurface,
   ExtractedConfigOption,
   ExtractedConfigArgument
-} from '@to-skills/core';
+} from '@skillit/core';
 
 /**
  * Converts a kebab-case string to camelCase.

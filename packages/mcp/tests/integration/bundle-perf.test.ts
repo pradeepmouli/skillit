@@ -3,7 +3,7 @@
  *
  * Generates a synthetic MCP server fixture programmatically (NOT shipped as
  * a static fixture) exposing 30 tools, 10 resources, and 5 prompts, then
- * runs `to-skills-mcp bundle` and asserts wall-clock < 30 seconds.
+ * runs `skillit-mcp bundle` and asserts wall-clock < 30 seconds.
  *
  * Gating (intentionally strict — this is heavy):
  *   - RUN_INTEGRATION_TESTS=true (matches the rest of the integration suite)
@@ -40,7 +40,7 @@ describe.skipIf(!RUN)('bundle performance: synthetic 30/10/5 server', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-perf-it-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-perf-it-'));
     mkdirSync(join(workDir, 'dist'), { recursive: true });
 
     // Generate the fixture server source programmatically. We build the tool /
@@ -102,7 +102,7 @@ await server.connect(transport);
           bin: './dist/server.js',
           files: ['dist', 'skills'],
           type: 'module',
-          'to-skills': { mcp: { skillName: 'perf-server' } }
+          skillit: { mcp: { skillName: 'perf-server' } }
         },
         null,
         2

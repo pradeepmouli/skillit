@@ -3,8 +3,8 @@
  * Extract skill documentation from a commander program and correlate with typed options.
  */
 
-import { extractCliSkill } from '@to-skills/cli';
-import { renderSkill, writeSkills } from '@to-skills/core';
+import { extractCliSkill } from '@skillit/cli';
+import { renderSkill, writeSkills } from '@skillit/core';
 import { Command } from 'commander';
 
 // Define your CLI

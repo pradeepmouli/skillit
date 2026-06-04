@@ -1,6 +1,6 @@
 // packages/typedoc/src/refine/__tests__/jsdoc-edit.test.ts
 import { describe, it, expect } from 'vitest';
-import { insertJsDocTag } from '@to-skills/core';
+import { insertJsDocTag } from '@skillit/core';
 
 const fnWithDoc = `
 /**

@@ -76,6 +76,6 @@ describe.skipIf(!RUN)('cli-target-unknown: extract --invocation cli:nonexistent'
     expect(stderr).toContain('cli:mcpc');
     expect(stderr).toContain('cli:fastmcp');
     // npm-install pointer.
-    expect(stderr).toContain('npm install @to-skills/target-');
+    expect(stderr).toContain('npm install @skillit/target-');
   }, 45_000);
 });

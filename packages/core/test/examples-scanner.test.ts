@@ -59,21 +59,21 @@ describe('scanExamples – named imports', () => {
     write(
       tmpDir,
       'basic.ts',
-      `import { renderSkill, writeSkills } from '@to-skills/core';\n\nrenderSkill();\n`
+      `import { renderSkill, writeSkills } from '@skillit/core';\n\nrenderSkill();\n`
     );
 
     const examples = scanExamples(tmpDir);
 
     expect(examples).toHaveLength(1);
     expect(examples[0]?.importedSymbols).toEqual(['renderSkill', 'writeSkills']);
-    expect(examples[0]?.importedFrom).toEqual(['@to-skills/core']);
+    expect(examples[0]?.importedFrom).toEqual(['@skillit/core']);
   });
 
   it('extracts aliased imports using the original name', () => {
     write(
       tmpDir,
       'aliased.ts',
-      `import { renderSkill as render, writeSkills as write } from '@to-skills/core';\n`
+      `import { renderSkill as render, writeSkills as write } from '@skillit/core';\n`
     );
 
     const examples = scanExamples(tmpDir);
@@ -86,7 +86,7 @@ describe('scanExamples – named imports', () => {
       tmpDir,
       'multi.ts',
       [
-        `import { renderSkill } from '@to-skills/core';`,
+        `import { renderSkill } from '@skillit/core';`,
         `import { join } from 'node:path';`,
         ``
       ].join('\n')
@@ -96,7 +96,7 @@ describe('scanExamples – named imports', () => {
 
     expect(examples[0]?.importedSymbols).toContain('renderSkill');
     expect(examples[0]?.importedSymbols).toContain('join');
-    expect(examples[0]?.importedFrom).toContain('@to-skills/core');
+    expect(examples[0]?.importedFrom).toContain('@skillit/core');
     expect(examples[0]?.importedFrom).toContain('node:path');
   });
 });
@@ -137,7 +137,7 @@ describe('scanExamples – title from JSDoc', () => {
         ` * Minimal LSP Server Example`,
         ` * Demonstrates a basic hover server`,
         ` */`,
-        `import { renderSkill } from '@to-skills/core';`
+        `import { renderSkill } from '@skillit/core';`
       ].join('\n')
     );
 
@@ -156,7 +156,7 @@ describe('scanExamples – title from JSDoc', () => {
         ` * Demonstrates a basic hover server`,
         ` * Second description line`,
         ` */`,
-        `import { renderSkill } from '@to-skills/core';`
+        `import { renderSkill } from '@skillit/core';`
       ].join('\n')
     );
 
@@ -169,7 +169,7 @@ describe('scanExamples – title from JSDoc', () => {
     write(
       tmpDir,
       'basic.ts',
-      [`// Quick usage example`, `import { renderSkill } from '@to-skills/core';`].join('\n')
+      [`// Quick usage example`, `import { renderSkill } from '@skillit/core';`].join('\n')
     );
 
     const examples = scanExamples(tmpDir);
@@ -180,7 +180,7 @@ describe('scanExamples – title from JSDoc', () => {
 
 describe('scanExamples – title fallback to filename', () => {
   it('converts kebab-case filename to title when no comment', () => {
-    write(tmpDir, 'minimal-server.ts', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'minimal-server.ts', `import { renderSkill } from '@skillit/core';\n`);
 
     const examples = scanExamples(tmpDir);
 
@@ -188,7 +188,7 @@ describe('scanExamples – title fallback to filename', () => {
   });
 
   it('handles underscore filenames', () => {
-    write(tmpDir, 'my_example.ts', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'my_example.ts', `import { renderSkill } from '@skillit/core';\n`);
 
     const examples = scanExamples(tmpDir);
 
@@ -202,25 +202,25 @@ describe('scanExamples – title fallback to filename', () => {
 
 describe('scanExamples – file discovery', () => {
   it('scans .ts files', () => {
-    write(tmpDir, 'a.ts', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'a.ts', `import { renderSkill } from '@skillit/core';\n`);
     const examples = scanExamples(tmpDir);
     expect(examples).toHaveLength(1);
   });
 
   it('scans .js files', () => {
-    write(tmpDir, 'a.js', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'a.js', `import { renderSkill } from '@skillit/core';\n`);
     const examples = scanExamples(tmpDir);
     expect(examples).toHaveLength(1);
   });
 
   it('scans .tsx files', () => {
-    write(tmpDir, 'a.tsx', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'a.tsx', `import { renderSkill } from '@skillit/core';\n`);
     const examples = scanExamples(tmpDir);
     expect(examples).toHaveLength(1);
   });
 
   it('scans .jsx files', () => {
-    write(tmpDir, 'a.jsx', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'a.jsx', `import { renderSkill } from '@skillit/core';\n`);
     const examples = scanExamples(tmpDir);
     expect(examples).toHaveLength(1);
   });
@@ -228,7 +228,7 @@ describe('scanExamples – file discovery', () => {
   it('skips non-JS/TS files', () => {
     write(tmpDir, 'readme.md', `# Not a script`);
     write(tmpDir, 'data.json', `{}`);
-    write(tmpDir, 'valid.ts', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'valid.ts', `import { renderSkill } from '@skillit/core';\n`);
 
     const examples = scanExamples(tmpDir);
 
@@ -236,8 +236,8 @@ describe('scanExamples – file discovery', () => {
   });
 
   it('scans subdirectories recursively', () => {
-    write(tmpDir, 'basic.ts', `import { renderSkill } from '@to-skills/core';\n`);
-    write(tmpDir, 'advanced/complex.ts', `import { writeSkills } from '@to-skills/core';\n`);
+    write(tmpDir, 'basic.ts', `import { renderSkill } from '@skillit/core';\n`);
+    write(tmpDir, 'advanced/complex.ts', `import { writeSkills } from '@skillit/core';\n`);
 
     const examples = scanExamples(tmpDir);
 
@@ -253,7 +253,7 @@ describe('scanExamples – file discovery', () => {
   });
 
   it('includes full file content in content field', () => {
-    const src = `import { renderSkill } from '@to-skills/core';\n\nconsole.log('hi');\n`;
+    const src = `import { renderSkill } from '@skillit/core';\n\nconsole.log('hi');\n`;
     write(tmpDir, 'example.ts', src);
 
     const examples = scanExamples(tmpDir);
@@ -262,7 +262,7 @@ describe('scanExamples – file discovery', () => {
   });
 
   it('sets relativePath relative to examples dir', () => {
-    write(tmpDir, 'sub/demo.ts', `import { renderSkill } from '@to-skills/core';\n`);
+    write(tmpDir, 'sub/demo.ts', `import { renderSkill } from '@skillit/core';\n`);
 
     const examples = scanExamples(tmpDir);
 
@@ -295,8 +295,8 @@ describe('linkExamplesToSkill – matching by symbol', () => {
         relativePath: 'basic.ts',
         title: 'Basic',
         importedSymbols: ['renderSkill'],
-        importedFrom: ['@to-skills/core'],
-        content: `import { renderSkill } from '@to-skills/core';\nrenderSkill();`
+        importedFrom: ['@skillit/core'],
+        content: `import { renderSkill } from '@skillit/core';\nrenderSkill();`
       }
     ];
 
@@ -321,13 +321,13 @@ describe('linkExamplesToSkill – matching by symbol', () => {
       ]
     });
 
-    const content = `import { renderSkill } from '@to-skills/core';\nrenderSkill();`;
+    const content = `import { renderSkill } from '@skillit/core';\nrenderSkill();`;
     const examples = [
       {
         relativePath: 'basic.ts',
         title: 'Basic',
         importedSymbols: ['renderSkill'],
-        importedFrom: ['@to-skills/core'],
+        importedFrom: ['@skillit/core'],
         content
       }
     ];
@@ -369,8 +369,8 @@ describe('linkExamplesToSkill – matching by symbol', () => {
         relativePath: 'both.ts',
         title: 'Both',
         importedSymbols: ['renderSkill', 'writeSkills'],
-        importedFrom: ['@to-skills/core'],
-        content: `import { renderSkill, writeSkills } from '@to-skills/core';`
+        importedFrom: ['@skillit/core'],
+        content: `import { renderSkill, writeSkills } from '@skillit/core';`
       }
     ];
 
@@ -461,8 +461,8 @@ describe('linkExamplesToSkill – matching by symbol', () => {
         relativePath: 'basic.ts',
         title: 'Basic',
         importedSymbols: ['renderSkill'],
-        importedFrom: ['@to-skills/core'],
-        content: `import { renderSkill } from '@to-skills/core';`
+        importedFrom: ['@skillit/core'],
+        content: `import { renderSkill } from '@skillit/core';`
       }
     ];
 
@@ -492,8 +492,8 @@ describe('linkExamplesToSkill – matching by symbol', () => {
         relativePath: 'basic.js',
         title: 'Basic',
         importedSymbols: ['renderSkill'],
-        importedFrom: ['@to-skills/core'],
-        content: `import { renderSkill } from '@to-skills/core';`
+        importedFrom: ['@skillit/core'],
+        content: `import { renderSkill } from '@skillit/core';`
       }
     ];
 

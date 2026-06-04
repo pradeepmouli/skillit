@@ -1,7 +1,7 @@
 # Contract: CLI
 
-**Binary**: `to-skills-mcp` (exposed via `bin` field in `@to-skills/mcp` package.json).
-**Invocation forms**: `npx @to-skills/mcp <subcommand>` or `to-skills-mcp <subcommand>` when globally installed.
+**Binary**: `to-skills-mcp` (exposed via `bin` field in `@skillit/mcp` package.json).
+**Invocation forms**: `npx @skillit/mcp <subcommand>` or `to-skills-mcp <subcommand>` when globally installed.
 
 ---
 
@@ -64,25 +64,25 @@ Each diagnostic is one line, prefixed with severity and code:
 
 ```bash
 # Local stdio server
-npx @to-skills/mcp extract \
+npx @skillit/mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --out skills/
 
 # Remote HTTP server with auth
-npx @to-skills/mcp extract \
+npx @skillit/mcp extract \
   --url https://mcp.example.com/sse \
   --header "Authorization: Bearer $TOKEN" \
   --out skills/
 
 # Multi-target render from one extraction
-npx @to-skills/mcp extract \
+npx @skillit/mcp extract \
   --command "node ./server.js" \
   --invocation mcp-protocol \
   --invocation cli:mcpc \
   --out skills/
 
 # Batch from a Claude Desktop config
-npx @to-skills/mcp extract --config ~/.claude/mcp.json --out skills/
+npx @skillit/mcp extract --config ~/.claude/mcp.json --out skills/
 ```
 
 ---

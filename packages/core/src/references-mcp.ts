@@ -3,7 +3,7 @@
  *
  * @remarks
  * Used by core's default render path AND by invocation adapters that delegate
- * body rendering to core (e.g. `@to-skills/target-mcp-protocol`'s `McpProtocolAdapter`).
+ * body rendering to core (e.g. `@skillit/target-mcp-protocol`'s `McpProtocolAdapter`).
  * Centralizing the markdown shape here means every emitter — bundle and extract,
  * MCP-protocol and CLI-as-proxy — produces identical resources/prompts files.
  *

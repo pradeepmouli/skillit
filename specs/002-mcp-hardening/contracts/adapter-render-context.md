@@ -1,8 +1,8 @@
 # Contract — `AdapterRenderContext` Discriminated Union
 
-**Owner**: `@to-skills/mcp`
-**Stability**: stable across `@to-skills/mcp@0.x`
-**Breaking-change call-out**: yes — third-party adapters that destructure `ctx.launchCommand` directly without checking `ctx.mode` will fail to compile under `@to-skills/mcp@0.2.0`.
+**Owner**: `@skillit/mcp`
+**Stability**: stable across `@skillit/mcp@0.x`
+**Breaking-change call-out**: yes — third-party adapters that destructure `ctx.launchCommand` directly without checking `ctx.mode` will fail to compile under `@skillit/mcp@0.2.0`.
 
 ---
 
@@ -35,17 +35,17 @@ type AdapterRenderContext =
 
 ## Producer contract (renderer)
 
-The host (`@to-skills/core`'s `renderSkill`) builds `ctx` from `SkillRenderOptions` deterministically:
+The host (`@skillit/core`'s `renderSkill`) builds `ctx` from `SkillRenderOptions` deterministically:
 
-| `SkillRenderOptions` shape     | Produced `mode` | Throws                                                                                                                                                                                                                                             |
-| ------------------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `invocationPackageName` only   | `'bundle'`      | —                                                                                                                                                                                                                                                  |
-| `invocationHttpEndpoint` only  | `'http'`        | —                                                                                                                                                                                                                                                  |
-| `invocationLaunchCommand` only | `'stdio'`       | —                                                                                                                                                                                                                                                  |
-| more than one of the three     | n/a             | plain `Error` — message prefix `"AdapterRenderContext: more than one of invocationPackageName, invocationHttpEndpoint, invocationLaunchCommand was set"` (mapped to `TRANSPORT_FAILED` exit code by `@to-skills/mcp`'s `bundle.ts::recordFailure`) |
-| none of the three              | n/a             | plain `Error` — message prefix `"AdapterRenderContext: missing launch info — set one of invocationPackageName, invocationHttpEndpoint, invocationLaunchCommand"` (mapped to `MISSING_LAUNCH_COMMAND` by the same wrapper)                          |
+| `SkillRenderOptions` shape     | Produced `mode` | Throws                                                                                                                                                                                                                                           |
+| ------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `invocationPackageName` only   | `'bundle'`      | —                                                                                                                                                                                                                                                |
+| `invocationHttpEndpoint` only  | `'http'`        | —                                                                                                                                                                                                                                                |
+| `invocationLaunchCommand` only | `'stdio'`       | —                                                                                                                                                                                                                                                |
+| more than one of the three     | n/a             | plain `Error` — message prefix `"AdapterRenderContext: more than one of invocationPackageName, invocationHttpEndpoint, invocationLaunchCommand was set"` (mapped to `TRANSPORT_FAILED` exit code by `@skillit/mcp`'s `bundle.ts::recordFailure`) |
+| none of the three              | n/a             | plain `Error` — message prefix `"AdapterRenderContext: missing launch info — set one of invocationPackageName, invocationHttpEndpoint, invocationLaunchCommand"` (mapped to `MISSING_LAUNCH_COMMAND` by the same wrapper)                        |
 
-**Why plain `Error`, not `McpError`**: `@to-skills/core` cannot depend on `@to-skills/mcp` (the dependency runs the other direction). Core throws structural `Error` with stable message prefixes; the mcp wrapper that calls `renderSkill` translates them to the right `McpError` code at the user-facing boundary.
+**Why plain `Error`, not `McpError`**: `@skillit/core` cannot depend on `@skillit/mcp` (the dependency runs the other direction). Core throws structural `Error` with stable message prefixes; the mcp wrapper that calls `renderSkill` translates them to the right `McpError` code at the user-facing boundary.
 
 ## Consumer contract (adapter authors)
 
@@ -74,7 +74,7 @@ async render(skill: ExtractedSkill, ctx: AdapterRenderContext): Promise<Rendered
 
 ```ts
 // adapter-render-context-types.test-d.ts
-import type { AdapterRenderContext } from '@to-skills/mcp';
+import type { AdapterRenderContext } from '@skillit/mcp';
 test('rejects two-arms-set construction', () => {
   // @ts-expect-error — bundle arm cannot also carry launchCommand
   const _bad: AdapterRenderContext = {
@@ -101,4 +101,4 @@ async render(skill, ctx) {
 }
 ```
 
-**After (`@to-skills/mcp@0.2.0`)**: see Consumer contract above. The runtime throw is removed — the renderer can never produce an invalid `ctx`.
+**After (`@skillit/mcp@0.2.0`)**: see Consumer contract above. The runtime throw is removed — the renderer can never produce an invalid `ctx`.

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { canonicalize, renderSkill, renderSkills } from '@to-skills/core';
+import { canonicalize, renderSkill, renderSkills } from '@skillit/core';
 import type {
   AdapterRenderContext,
   ExtractedSkill,
   InvocationAdapter,
   RenderedSkill
-} from '@to-skills/core';
+} from '@skillit/core';
 
 const minimalSkill: ExtractedSkill = {
   name: 'my-lib',
@@ -46,7 +46,7 @@ describe('renderSkill — invocation hook', () => {
     );
     const adapter: InvocationAdapter = {
       target: 'mcp-protocol',
-      fingerprint: { adapter: '@to-skills/target-mcp-protocol', version: '0.0.0-test' },
+      fingerprint: { adapter: '@skillit/target-mcp-protocol', version: '0.0.0-test' },
       render
     };
 

@@ -1,8 +1,8 @@
-# @to-skills/docusaurus
+# @skillit/docusaurus
 
 > Extract Docusaurus documentation structure for AI agent skill generation.
 
-Part of the [to-skills](https://github.com/pradeepmouli/to-skills) ecosystem.
+Part of the [skillit](https://github.com/pradeepmouli/skillit) ecosystem.
 
 ## Features
 
@@ -14,13 +14,13 @@ Part of the [to-skills](https://github.com/pradeepmouli/to-skills) ecosystem.
 ## Install
 
 ```bash
-pnpm add -D @to-skills/docusaurus
+pnpm add -D @skillit/docusaurus
 ```
 
 ## Usage
 
 ```typescript
-import { extractDocusaurusDocs } from '@to-skills/docusaurus';
+import { extractDocusaurusDocs } from '@skillit/docusaurus';
 
 const docs = extractDocusaurusDocs({ projectRoot: '.' });
 // Returns ExtractedDocument[] — merge into your skill

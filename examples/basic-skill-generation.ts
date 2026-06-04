@@ -3,8 +3,8 @@
  * Generate a SKILL.md from an ExtractedSkill object — the simplest possible usage.
  */
 
-import { renderSkill, writeSkills } from '@to-skills/core';
-import type { ExtractedSkill } from '@to-skills/core';
+import { renderSkill, writeSkills } from '@skillit/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 const skill: ExtractedSkill = {
   name: 'my-library',

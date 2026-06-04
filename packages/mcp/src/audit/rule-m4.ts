@@ -21,7 +21,7 @@
  * @module audit/rule-m4
  */
 
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import type { AuditIssue } from '../types.js';
 
 /** Default set of generic-by-themselves tool names. Override via opts.genericNames. */

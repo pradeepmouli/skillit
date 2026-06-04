@@ -10,7 +10,7 @@
  *   6. Patch-only difference, embedded older (1.0.0 vs 1.0.1) → 1 warning.
  */
 
-import type { AdapterFingerprint, ExtractedSkill } from '@to-skills/core';
+import type { AdapterFingerprint, ExtractedSkill } from '@skillit/core';
 import { describe, expect, it } from 'vitest';
 import { auditAdapterFreshness } from '../../src/audit/freshness.js';
 import type { InvocationAdapter } from '../../src/adapter/types.js';
@@ -30,7 +30,7 @@ function makeAdapter(version: string): InvocationAdapter {
   return {
     target: 'cli:mcpc',
     fingerprint: {
-      adapter: '@to-skills/target-mcpc',
+      adapter: '@skillit/target-mcpc',
       version,
       targetCliRange: 'mcpc@^2.1'
     },
@@ -45,7 +45,7 @@ function makeAdapter(version: string): InvocationAdapter {
 
 function makeEmbeddedFingerprint(version: string): AdapterFingerprint {
   return {
-    adapter: '@to-skills/target-mcpc',
+    adapter: '@skillit/target-mcpc',
     version,
     targetCliRange: 'mcpc@^2.1'
   };
@@ -72,7 +72,7 @@ describe('auditAdapterFreshness — rule M5', () => {
     expect(issues[0]!.severity).toBe('warning');
     expect(issues[0]!.message).toContain('1.0.0');
     expect(issues[0]!.message).toContain('1.1.0');
-    expect(issues[0]!.message).toContain('@to-skills/target-mcpc');
+    expect(issues[0]!.message).toContain('@skillit/target-mcpc');
   });
 
   it('returns no issue when embedded is newer than installed (consumer downgraded)', () => {

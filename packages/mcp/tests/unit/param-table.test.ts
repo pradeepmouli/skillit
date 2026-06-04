@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ExtractedFunction } from '@to-skills/core';
+import type { ExtractedFunction } from '@skillit/core';
 import type { JSONSchema7 } from 'json-schema';
 import { classifyParameters } from '../../src/adapter/classify.js';
 import { renderCliParamTable } from '../../src/adapter/param-table.js';

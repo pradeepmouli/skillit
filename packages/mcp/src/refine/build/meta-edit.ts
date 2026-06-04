@@ -1,4 +1,4 @@
-import type { RefineTag } from '@to-skills/core';
+import type { RefineTag } from '@skillit/core';
 
 /** Scan forward from `from`, skipping comments, and return the index of the first `{`. */
 function skipToOptionsOpen(source: string, from: number): number {

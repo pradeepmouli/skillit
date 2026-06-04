@@ -39,7 +39,7 @@ describe.skipIf(!RUN)('bundle integration: multi-target {mcp-protocol, cli:mcpc}
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-multi-it-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-multi-it-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });
@@ -106,7 +106,7 @@ describe.skipIf(!RUN)('bundle integration: multi-target {mcp-protocol, cli:mcpc}
       'generated-by'?: { adapter?: string; version?: string };
     };
     expect(cliFm['generated-by']).toBeTruthy();
-    expect(cliFm['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(cliFm['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(typeof cliFm['generated-by']!.version).toBe('string');
     expect(cliFm.mcp).toBeUndefined();
 

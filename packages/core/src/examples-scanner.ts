@@ -15,7 +15,7 @@ export interface ParsedExample {
   description?: string;
   /** Imported symbol names (e.g. ["renderSkill", "writeSkills"]) */
   importedSymbols: string[];
-  /** Package names imported from (e.g. ["@to-skills/core"]) */
+  /** Package names imported from (e.g. ["@skillit/core"]) */
   importedFrom: string[];
   /** Full file content */
   content: string;

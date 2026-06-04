@@ -1,6 +1,6 @@
 # @fixture/my-mcp-server
 
-Single-bin MCP server fixture for `@to-skills/mcp` bundle integration tests.
+Single-bin MCP server fixture for `@skillit/mcp` bundle integration tests.
 
 The server emits one tool, `echo`, which echoes its input. Tests assert that
 `bundle` produces a SKILL.md whose `mcp:` frontmatter contains the npx-by-name

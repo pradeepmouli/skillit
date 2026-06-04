@@ -70,7 +70,7 @@ export type McpLaunchCommand = McpStdioLaunchCommand | McpHttpLaunchCommand;
  * Build the structured `mcp:` frontmatter object for the default invocation target.
  *
  * The returned object is a plain JavaScript object — NOT a YAML string. The host
- * renderer (in `@to-skills/core`) merges it into the SKILL.md frontmatter via
+ * renderer (in `@skillit/core`) merges it into the SKILL.md frontmatter via
  * `SkillRenderOptions.additionalFrontmatter` and serializes through the `yaml`
  * package, which handles quoting and indentation.
  *

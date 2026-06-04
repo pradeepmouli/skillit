@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatAuditText, formatAuditJson } from '@to-skills/core';
-import type { AuditResult } from '@to-skills/core';
+import { formatAuditText, formatAuditJson } from '@skillit/core';
+import type { AuditResult } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Fixture
@@ -65,7 +65,8 @@ const MOCK_RESULT: AuditResult = {
       line: null,
       symbol: '@my-org/my-lib',
       message: 'Module-level @packageDocumentation JSDoc is missing',
-      suggestion: 'Add a /** @packageDocumentation */ comment with a detailed description (>50 chars)'
+      suggestion:
+        'Add a /** @packageDocumentation */ comment with a detailed description (>50 chars)'
     }
   ],
   passing: [
@@ -73,7 +74,11 @@ const MOCK_RESULT: AuditResult = {
     { code: 'F3', message: 'README description exists and is meaningful' },
     { code: 'E2', message: 'All non-void functions have @returns descriptions' },
     { code: 'E3', message: 'All interface/type properties have JSDoc descriptions' },
-    { code: 'E5', message: 'Repository URL is present', detail: 'https://github.com/my-org/my-lib' },
+    {
+      code: 'E5',
+      message: 'Repository URL is present',
+      detail: 'https://github.com/my-org/my-lib'
+    },
     { code: 'W2', message: 'Every function has at least one @example' },
     { code: 'W3', message: 'At least one function uses notable JSDoc tags' },
     { code: 'W4', message: 'Excellent keyword coverage', detail: '12 domain-specific keywords' },

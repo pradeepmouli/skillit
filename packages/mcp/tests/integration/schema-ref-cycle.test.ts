@@ -29,7 +29,7 @@ describe.skipIf(!RUN)('extract integration: schema $ref cycle', () => {
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cycle-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cycle-'));
     const fixtureNm = join(__dirname, '..', 'fixtures', 'cycle-server', 'node_modules');
     if (!existsSync(fixtureNm)) {
       symlinkSync(PKG_NODE_MODULES, fixtureNm, 'dir');

@@ -33,7 +33,7 @@ describe.skipIf(!RUN)('config-file batch extract: 3-server config (1 disabled)',
   let configPath: string;
 
   beforeAll(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cfg-batch-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cfg-batch-'));
     outDir = join(workDir, 'out');
     configPath = join(workDir, 'mcp.json');
 

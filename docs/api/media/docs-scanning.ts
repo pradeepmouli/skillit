@@ -9,8 +9,8 @@ import {
   docsToExtractedDocuments,
   renderSkill,
   writeSkills
-} from '@to-skills/core';
-import type { ExtractedSkill } from '@to-skills/core';
+} from '@skillit/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 // Scan a docs/ directory — orders by sidebar_position frontmatter or filename prefix
 const parsedDocs = scanDocs({

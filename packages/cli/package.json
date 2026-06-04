@@ -1,5 +1,5 @@
 {
-  "name": "@to-skills/cli",
+  "name": "@skillit/cli",
   "version": "0.3.14",
   "description": "Extract CLI command structure from commander/yargs for AI agent skill generation",
   "keywords": [
@@ -11,7 +11,7 @@
     "introspection",
     "skill-generation",
     "skill-md",
-    "to-skills",
+    "skillit",
     "typescript",
     "yargs"
   ],
@@ -19,7 +19,7 @@
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/cli"
   },
   "funding": {
@@ -45,7 +45,7 @@
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "devDependencies": {
     "commander": "^14.0.3"

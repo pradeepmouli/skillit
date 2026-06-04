@@ -23,34 +23,34 @@ async function writePkg(deps: Record<string, unknown>): Promise<string> {
 }
 
 describe('detectRefineSource', () => {
-  it('returns cli when only @to-skills/cli is installed', async () => {
-    const dir = await writePkg({ dependencies: { '@to-skills/cli': 'workspace:*' } });
+  it('returns cli when only @skillit/cli is installed', async () => {
+    const dir = await writePkg({ dependencies: { '@skillit/cli': 'workspace:*' } });
     expect(await detectRefineSource(dir)).toBe('cli');
   });
 
-  it('returns mcp when only @to-skills/mcp is installed', async () => {
-    const dir = await writePkg({ dependencies: { '@to-skills/mcp': 'workspace:*' } });
+  it('returns mcp when only @skillit/mcp is installed', async () => {
+    const dir = await writePkg({ dependencies: { '@skillit/mcp': 'workspace:*' } });
     expect(await detectRefineSource(dir)).toBe('mcp');
   });
 
-  it('returns typedoc when typedoc-plugin-to-skills is installed', async () => {
-    const dir = await writePkg({ devDependencies: { 'typedoc-plugin-to-skills': '^1.0.0' } });
+  it('returns typedoc when typedoc-plugin-skillit is installed', async () => {
+    const dir = await writePkg({ devDependencies: { 'typedoc-plugin-skillit': '^1.0.0' } });
     expect(await detectRefineSource(dir)).toBe('typedoc');
   });
 
-  it('returns typedoc when @to-skills/typedoc is installed', async () => {
-    const dir = await writePkg({ devDependencies: { '@to-skills/typedoc': 'workspace:*' } });
+  it('returns typedoc when @skillit/typedoc is installed', async () => {
+    const dir = await writePkg({ devDependencies: { '@skillit/typedoc': 'workspace:*' } });
     expect(await detectRefineSource(dir)).toBe('typedoc');
   });
 
   it('returns ambiguous when cli and mcp are both installed', async () => {
     const dir = await writePkg({
-      dependencies: { '@to-skills/cli': 'workspace:*', '@to-skills/mcp': 'workspace:*' }
+      dependencies: { '@skillit/cli': 'workspace:*', '@skillit/mcp': 'workspace:*' }
     });
     expect(await detectRefineSource(dir)).toBe('ambiguous');
   });
 
-  it('returns none when no to-skills source package is installed', async () => {
+  it('returns none when no skillit source package is installed', async () => {
     const dir = await writePkg({ dependencies: { commander: '^14.0.0' } });
     expect(await detectRefineSource(dir)).toBe('none');
   });
@@ -64,7 +64,7 @@ describe('detectRefineSource', () => {
 describe('detectInstalledSources', () => {
   it('returns the deduped candidate list in stable order', async () => {
     const dir = await writePkg({
-      dependencies: { '@to-skills/mcp': 'workspace:*', '@to-skills/cli': 'workspace:*' }
+      dependencies: { '@skillit/mcp': 'workspace:*', '@skillit/cli': 'workspace:*' }
     });
     expect(await detectInstalledSources(dir)).toEqual(['cli', 'mcp']);
   });

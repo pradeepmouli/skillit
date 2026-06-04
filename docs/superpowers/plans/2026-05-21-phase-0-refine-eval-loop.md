@@ -4,7 +4,7 @@
 
 **Goal:** Automate the existing manual audit→fix→re-score workflow into an autonomous `to-skills refine` command that iteratively annotates skills until grade A or an iteration cap.
 
-**Architecture:** `@to-skills/core` owns the abstract engine (loop driver + types + work-item selector); `@to-skills/mcp` owns the MCP overlay adapter (sidecar file); `@to-skills/typedoc` owns the TypeDoc adapter (JSDoc tag insertion); a new `@to-skills/client` package owns the Anthropic SDK implementation + the `to-skills` bin with the `refine` command.
+**Architecture:** `@skillit/core` owns the abstract engine (loop driver + types + work-item selector); `@skillit/mcp` owns the MCP overlay adapter (sidecar file); `@skillit/typedoc` owns the TypeDoc adapter (JSDoc tag insertion); a new `@skillit/client` package owns the Anthropic SDK implementation + the `to-skills` bin with the `refine` command.
 
 **Tech Stack:** TypeScript 5 strict, Node ≥22, Vitest, pnpm workspaces, commander, `@anthropic-ai/sdk`, `tsgo` build
 
@@ -25,7 +25,7 @@
 - `packages/typedoc/src/refine/jsdoc-edit.ts` — insertJsDocTag (string-based JSDoc tag insertion)
 - `packages/typedoc/src/refine/typedoc-source.ts` — TypeDocRefineSource implements RefineSource
 - `packages/typedoc/src/refine/index.ts` — barrel
-- `packages/client/package.json` — new package @to-skills/client with bin to-skills
+- `packages/client/package.json` — new package @skillit/client with bin to-skills
 - `packages/client/tsconfig.json` — extends workspace root
 - `packages/client/tsconfig.build.json` — outDir dist, excludes tests
 - `packages/client/src/model/anthropic.ts` — AnthropicModelClient implements ModelClient
@@ -714,7 +714,7 @@ Expected: FAIL — cannot find module `../overlay.js`
 ```typescript
 // packages/mcp/src/refine/overlay.ts
 import { readFileSync, writeFileSync } from 'node:fs';
-import type { DraftedFix, RefineTag } from '@to-skills/core';
+import type { DraftedFix, RefineTag } from '@skillit/core';
 
 export interface OverlayAnnotations {
   useWhen?: string;
@@ -796,7 +796,7 @@ Read `packages/mcp/src/extract.ts` lines 447–555 to see how `collectMetaEnrich
 // packages/mcp/src/refine/__tests__/merge-overlay.test.ts
 import { describe, it, expect } from 'vitest';
 import { mergeOverlay } from '../merge-overlay.js';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 function skill(fns: Array<{ name: string }>): ExtractedSkill {
   return {
@@ -866,7 +866,7 @@ Expected: FAIL
 
 ```typescript
 // packages/mcp/src/refine/merge-overlay.ts
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import type { ToSkillsOverlay } from './overlay.js';
 
 export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): ExtractedSkill {
@@ -931,7 +931,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { McpRefineSource } from '../mcp-source.js';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 let tmp: string;
 afterEach(() => {
@@ -989,7 +989,7 @@ Expected: FAIL
 
 ```typescript
 // packages/mcp/src/refine/mcp-source.ts
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
+import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
 import { readOverlay, writeOverlay, applyFixToOverlay } from './overlay.js';
 import { mergeOverlay } from './merge-overlay.js';
 
@@ -1152,7 +1152,7 @@ Expected: FAIL
 
 ```typescript
 // packages/typedoc/src/refine/jsdoc-edit.ts
-import type { RefineTag } from '@to-skills/core';
+import type { RefineTag } from '@skillit/core';
 
 // Matches `export function <name>` or `export const <name>` (arrow fns, etc.)
 function exportRe(name: string): RegExp {
@@ -1233,7 +1233,7 @@ Note: TypeDocRefineSource is a thin shell — it reads current TypeDoc-processed
 ```typescript
 // packages/typedoc/src/refine/typedoc-source.ts
 import { readFileSync, writeFileSync } from 'node:fs';
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
+import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
 import { insertJsDocTag } from './jsdoc-edit.js';
 
 interface TypeDocRefineSourceOptions {
@@ -1303,13 +1303,13 @@ git commit -m "feat(typedoc/refine): add TypeDocRefineSource + JSDoc write-back 
 
 ---
 
-## Chunk 4: @to-skills/client — Anthropic model + refine CLI
+## Chunk 4: @skillit/client — Anthropic model + refine CLI
 
 > New package. Contains the Anthropic SDK adapter and the `to-skills` bin with the `refine` command.
 
 ---
 
-### Task 9: Scaffold @to-skills/client package
+### Task 9: Scaffold @skillit/client package
 
 **Files:**
 
@@ -1321,7 +1321,7 @@ git commit -m "feat(typedoc/refine): add TypeDocRefineSource + JSDoc write-back 
 
 ```json
 {
-  "name": "@to-skills/client",
+  "name": "@skillit/client",
   "version": "0.1.0",
   "description": "Anthropic model client + to-skills CLI (refine command)",
   "license": "MIT",
@@ -1344,8 +1344,8 @@ git commit -m "feat(typedoc/refine): add TypeDocRefineSource + JSDoc write-back 
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
-    "@to-skills/core": "workspace:*",
-    "@to-skills/mcp": "workspace:*",
+    "@skillit/core": "workspace:*",
+    "@skillit/mcp": "workspace:*",
     "commander": "^14.0.3"
   },
   "devDependencies": {}
@@ -1383,13 +1383,13 @@ Mirror the pattern from `packages/mcp/tsconfig.json`:
 pnpm install
 ```
 
-Expected: `@to-skills/client` workspace member registered
+Expected: `@skillit/client` workspace member registered
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add packages/client/
-git commit -m "feat(client): scaffold @to-skills/client package"
+git commit -m "feat(client): scaffold @skillit/client package"
 ```
 
 ---
@@ -1452,7 +1452,7 @@ Expected: FAIL
 ```typescript
 // packages/client/src/model/anthropic.ts
 import Anthropic from '@anthropic-ai/sdk';
-import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@skillit/core';
 
 const DRAFTER = 'claude-sonnet-4-6';
 const REVIEWER = 'claude-opus-4-7';
@@ -1543,8 +1543,8 @@ git commit -m "feat(client): add AnthropicModelClient (Sonnet drafter, Opus revi
 ```typescript
 // packages/client/src/commands/refine.ts
 import { Command } from 'commander';
-import { McpRefineSource, extractMcpSkill, readMcpConfigFile } from '@to-skills/mcp';
-import { refineSkill } from '@to-skills/core';
+import { McpRefineSource, extractMcpSkill, readMcpConfigFile } from '@skillit/mcp';
+import { refineSkill } from '@skillit/core';
 import { AnthropicModelClient } from '../model/anthropic.js';
 import { join } from 'node:path';
 

@@ -9,7 +9,7 @@
  *  - The returned `RenderedFile.filename` lands at `<basePath>/llms.txt`.
  */
 import { describe, expect, it } from 'vitest';
-import type { ExtractedSkill, RenderedSkill } from '@to-skills/core';
+import type { ExtractedSkill, RenderedSkill } from '@skillit/core';
 import { renderLlmsTxt } from '../../src/render/llms-txt.js';
 
 function makeSkill(overrides: Partial<ExtractedSkill> = {}): ExtractedSkill {

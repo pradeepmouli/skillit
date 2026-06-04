@@ -1,4 +1,4 @@
-import type { McpAuditIssue, McpAuditSeverity } from '@to-skills/core';
+import type { McpAuditIssue, McpAuditSeverity } from '@skillit/core';
 import type { InvocationTarget } from './adapter/types.js';
 
 export type McpTransport =
@@ -105,7 +105,7 @@ export interface McpBundleOptions {
   installTargets?: readonly string[];
   /**
    * Invocation target(s). When set, overrides the per-entry `invocation` field
-   * in `to-skills.mcp`. When omitted, each entry's declared invocation applies
+   * in `skillit.mcp`. When omitted, each entry's declared invocation applies
    * (defaulting to `'mcp-protocol'` if the entry omits it as well).
    */
   invocation?: InvocationTarget | InvocationTarget[];
@@ -122,10 +122,10 @@ export interface McpBundleOptions {
  * Audit severity levels for MCP audit findings.
  *
  * @remarks
- * Sourced from `@to-skills/core` as `McpAuditSeverity` (forward-declared
+ * Sourced from `@skillit/core` as `McpAuditSeverity` (forward-declared
  * there so `ExtractedSkill.auditIssues` is typeable from core without a
  * core→mcp dependency). Re-exported here under the familiar `AuditSeverity`
- * name so existing adapter-author imports from `@to-skills/mcp` keep working.
+ * name so existing adapter-author imports from `@skillit/mcp` keep working.
  */
 export type AuditSeverity = McpAuditSeverity;
 
@@ -133,10 +133,10 @@ export type AuditSeverity = McpAuditSeverity;
  * MCP audit finding emitted by `runMcpAudit`.
  *
  * @remarks
- * Sourced from `@to-skills/core` as `McpAuditIssue` (forward-declared there
+ * Sourced from `@skillit/core` as `McpAuditIssue` (forward-declared there
  * so `ExtractedSkill.auditIssues` is typeable from core). Re-exported here
  * under the historical `AuditIssue` name to preserve the public surface of
- * `@to-skills/mcp`. Single source of truth: `McpAuditIssue` in core.
+ * `@skillit/mcp`. Single source of truth: `McpAuditIssue` in core.
  */
 export type AuditIssue = McpAuditIssue;
 
@@ -226,7 +226,7 @@ export interface McpConfigFile {
  *
  * The wire-shape `McpServerConfig` remains exported for tooling that needs
  * to inspect the raw JSON shape (e.g. config-file linters), but the rest
- * of `@to-skills/mcp` works with `ConfigEntry` past the file boundary.
+ * of `@skillit/mcp` works with `ConfigEntry` past the file boundary.
  *
  * @public
  */

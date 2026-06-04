@@ -9,7 +9,7 @@ import {
   type ExtractedSkill,
   type RefineSource,
   type RefineTag
-} from '@to-skills/core';
+} from '@skillit/core';
 import { Command } from 'commander';
 import { extractCliSkill } from './extract.js';
 import { introspectCommander } from './introspect-commander.js';
@@ -27,7 +27,7 @@ export interface CliRefineSourceOptions {
 }
 
 /**
- * {@link RefineSource} for `@to-skills/cli` consumers.
+ * {@link RefineSource} for `@skillit/cli` consumers.
  *
  * Extracts a skill from a commander program, returns the bundled CLI
  * documentation conventions as guidance, and writes routing tags as JSDoc
@@ -100,7 +100,7 @@ export class CliRefineSource implements RefineSource {
 
   guidance(): string {
     const skillPath = fileURLToPath(
-      new URL('../skills/to-skills-cli-docs/SKILL.md', import.meta.url)
+      new URL('../skills/skillit-cli-docs/SKILL.md', import.meta.url)
     );
     return readFileSync(skillPath, 'utf8');
   }
@@ -117,7 +117,7 @@ export class CliRefineSource implements RefineSource {
       const file = this.findInterfaceFile(iface, sources);
       if (!file) {
         process.stderr.write(
-          `[to-skills] no ${iface} interface for command '${fix.toolName}'; skipped ${fix.tag}\n`
+          `[skillit] no ${iface} interface for command '${fix.toolName}'; skipped ${fix.tag}\n`
         );
         continue;
       }

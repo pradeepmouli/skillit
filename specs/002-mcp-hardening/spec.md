@@ -1,4 +1,4 @@
-# Feature Specification: `@to-skills/mcp` Hardening — Discriminated Unions, Helper Consolidation, and Robustness Polish
+# Feature Specification: `@skillit/mcp` Hardening — Discriminated Unions, Helper Consolidation, and Robustness Polish
 
 **Feature Branch**: `002-mcp-hardening`
 **Created**: 2026-04-25
@@ -12,7 +12,7 @@ PR 20 (the `001-mcp-extract-bundle` feature) shipped end-to-end functionality ac
 Three categories of work, all _non-functional_ changes (no new user-visible capability):
 
 1. **Type safety** — flat option records (`AdapterRenderContext`, `ParameterPlan`, `McpServerConfig`, `AuditResult`) carry implicit invariants enforced only at runtime. Convert to discriminated unions so misuse becomes a compile error.
-2. **Code consolidation** — five helper functions (`resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, plus `renderToolsBody`/`planForTool`/`parameterToSchema`) are byte-for-byte duplicated between `@to-skills/target-mcpc` and `@to-skills/target-fastmcp`. Extract to a shared module so future CLI adapters get them for free and so a fix lands in one place.
+2. **Code consolidation** — five helper functions (`resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, plus `renderToolsBody`/`planForTool`/`parameterToSchema`) are byte-for-byte duplicated between `@skillit/target-mcpc` and `@skillit/target-fastmcp`. Extract to a shared module so future CLI adapters get them for free and so a fix lands in one place.
 3. **Robustness** — `extract.ts` has an unbounded stderr accumulator (OOM risk on chatty servers), no initialize timeout (infinite hang on stuck servers), and a stderr listener leak in stdio finally blocks. Audit findings at extract time go only to stderr — programmatic API consumers (build pipelines using `extractMcpSkill` directly) can't read them. Malformed `_meta.toSkills` annotations are silently dropped with no diagnostic.
 
 The work is purely additive/refactoring. All 1090+ existing tests must continue to pass; no public API breaks beyond the documented discriminated-union migrations (covered in the changelog).
@@ -49,7 +49,7 @@ A third-party adapter author writes a `render(skill, ctx)` method. Today, `ctx` 
 
 ### User Story 2 — Future CLI adapter gets duplicated helpers from a shared module (Priority: P1)
 
-A maintainer (or a third party) writes `@to-skills/target-foo`. Today they would copy `resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, plus the tool-body rendering scaffolding (`renderToolsBody`, `planForTool`, `parameterToSchema`) from `target-mcpc`. After this story ships, they import them from `@to-skills/mcp/adapter-utils` (or a sibling module) and the only adapter-specific code is the `encodeOne(plan)` callback that determines the per-CLI argument syntax.
+A maintainer (or a third party) writes `@skillit/target-foo`. Today they would copy `resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, plus the tool-body rendering scaffolding (`renderToolsBody`, `planForTool`, `parameterToSchema`) from `target-mcpc`. After this story ships, they import them from `@skillit/mcp/adapter-utils` (or a sibling module) and the only adapter-specific code is the `encodeOne(plan)` callback that determines the per-CLI argument syntax.
 
 **Why this priority**: Important finding from code reviewer (95% confidence). The duplication is real (~100 lines per adapter, byte-identical). A bug fix in one today must be applied in the other manually, and there's no static enforcement keeping them in sync.
 
@@ -59,7 +59,7 @@ A maintainer (or a third party) writes `@to-skills/target-foo`. Today they would
 
 1. **Given** the existing target-mcpc render output, **When** the adapter is refactored to import shared helpers, **Then** all 23 target-mcpc tests pass without snapshot updates.
 2. **Given** the existing target-fastmcp render output, **When** the same refactor lands, **Then** all 23 target-fastmcp tests pass without snapshot updates.
-3. **Given** a maintainer adding a third CLI adapter (`target-foo`), **When** they wire up `@to-skills/mcp/adapter-utils`, **Then** they implement only `encodeOne(plan: ParameterPlan): string` and a Setup-section template — everything else is inherited.
+3. **Given** a maintainer adding a third CLI adapter (`target-foo`), **When** they wire up `@skillit/mcp/adapter-utils`, **Then** they implement only `encodeOne(plan: ParameterPlan): string` and a Setup-section template — everything else is inherited.
 
 ---
 
@@ -89,7 +89,7 @@ A user runs `to-skills-mcp extract --command npx --arg -y --arg some-misbehaving
 
 **Acceptance Scenarios**:
 
-1. **Given** a stdio server that streams 100 KB of stderr before exiting, **When** extract runs, **Then** the captured buffer is ≤64 KiB and the SERVER_EXITED_EARLY message includes the _most recent_ stderr.
+1. **Given** a stdio server that streams 100 KB of stderr before exiting, **When** extract runs, **Then** the captured buffer is ≤64 KiB and the SERVER*EXITED_EARLY message includes the \_most recent* stderr.
 2. **Given** a stdio server that connects but hangs the initialize handshake, **When** extract runs with `initializeTimeoutMs: 5000`, **Then** the call rejects with `McpError('INITIALIZE_FAILED', /timeout/)` after 5 s.
 3. **Given** the default timeout (30 s) is hit on real network conditions (rare), **When** the user wants a longer wait, **Then** they can set `initializeTimeoutMs: 60_000`.
 
@@ -187,7 +187,7 @@ Source files contain ~30 references to `Phase X`, `T###`, `B# fix` — useful du
 - **FR-H001**: `AdapterRenderContext` MUST be a discriminated union over `mode: 'bundle' | 'http' | 'stdio'` with field-presence invariants encoded per arm.
 - **FR-H002**: The renderer's invocation-adapter dispatch in `core/src/renderer.ts` MUST set `ctx.mode` deterministically from `SkillRenderOptions`. Throw `McpError('TRANSPORT_FAILED', ...)` if more than one of `invocationPackageName`/`invocationHttpEndpoint`/`invocationLaunchCommand` is set.
 - **FR-H003**: All 3 in-tree invocation adapters MUST be updated to use `switch (ctx.mode)` for narrowing.
-- **FR-H004**: 5 helpers (`resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, `renderToolsBody`/`planForTool`/`parameterToSchema` group) MUST live in a single shared module under `@to-skills/mcp/adapter-utils` (or equivalent location).
+- **FR-H004**: 5 helpers (`resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, `renderToolsBody`/`planForTool`/`parameterToSchema` group) MUST live in a single shared module under `@skillit/mcp/adapter-utils` (or equivalent location).
 - **FR-H005**: target-mcpc and target-fastmcp MUST import from the shared module; only adapter-specific `encodeOne` and `Setup` template stay in each package.
 - **FR-H006**: `extractMcpSkill` return value MUST carry `auditIssues?: readonly AuditIssue[]`. Undefined when audit was skipped; populated otherwise (empty array when audit ran clean).
 - **FR-H007**: `extract.ts` stderr capture MUST use a ring buffer capped at 64 KiB. The "no stderr captured" / "Server stderr:" message contract continues to surface the most-recent bytes.
@@ -226,14 +226,14 @@ Source files contain ~30 references to `Phase X`, `T###`, `B# fix` — useful du
 - **SC-H007**: A unit test asserts `extractMcpSkill(...).auditIssues` is populated when audit issues exist and `undefined` when `audit.skip === true`.
 - **SC-H008**: Two new integration tests pass under `RUN_INTEGRATION_TESTS=true`; default unit-only runs are unaffected (pre-existing skip behavior).
 - **SC-H009**: `grep -E "Phase [0-9]|B[0-9]+ fix|T[0-9]{3}" packages/*/src/**/*.ts packages/*/README.md` returns zero matches.
-- **SC-H010**: Adopters running `pnpm install @to-skills/mcp@0.2.0` need at most: re-narrow `AdapterRenderContext` consumers via `switch (ctx.mode)`, re-narrow `ParameterPlan` consumers via `switch (plan.type)`. No other public-API changes.
+- **SC-H010**: Adopters running `pnpm install @skillit/mcp@0.2.0` need at most: re-narrow `AdapterRenderContext` consumers via `switch (ctx.mode)`, re-narrow `ParameterPlan` consumers via `switch (plan.type)`. No other public-API changes.
 
 ## Assumptions
 
 - The 1090+ existing tests are a stable baseline; coverage thresholds in `vitest.config.ts` are correct.
 - The `superpowers:subagent-driven-development` workflow remains the execution pattern (spec → plan → tasks → batched implementation with reviewer dispatches).
 - No upstream MCP SDK changes are expected during this work; SDK 1.29.0 stays pinned.
-- pnpm workspace topology (`@to-skills/core`, `@to-skills/mcp`, `@to-skills/target-mcp-protocol`, `@to-skills/target-mcpc`, `@to-skills/target-fastmcp`) stays as-is.
+- pnpm workspace topology (`@skillit/core`, `@skillit/mcp`, `@skillit/target-mcp-protocol`, `@skillit/target-mcpc`, `@skillit/target-fastmcp`) stays as-is.
 - CodeQL alert classes (js/incomplete-sanitization, js/polynomial-redos) addressed in PR 20 do not regress.
 - The pre-1.0 minor-bump-for-breaking convention (used in `001-mcp-extract-bundle`) continues to apply.
-- Adopters of `@to-skills/mcp` are at most a handful; the discriminated-union migration is a documented but acceptable cost.
+- Adopters of `@skillit/mcp` are at most a handful; the discriminated-union migration is a documented but acceptable cost.

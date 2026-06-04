@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
-import type { AdapterRenderContext, ExtractedSkill } from '@to-skills/core';
+import type { AdapterRenderContext, ExtractedSkill } from '@skillit/core';
 import { McpProtocolAdapter } from '../src/render.js';
 
 const baseSkill: ExtractedSkill = {
@@ -28,7 +28,7 @@ const baseSkill: ExtractedSkill = {
  * Inputs to {@link makeCtx} mirror the old flat-context API for test
  * brevity; the helper picks the matching DU arm at construction. Exactly
  * one of `packageName`/`httpEndpoint`/`launchCommand` is required — the
- * renderer in `@to-skills/core` enforces this invariant at dispatch time
+ * renderer in `@skillit/core` enforces this invariant at dispatch time
  * (see `core/test/renderer.invocation.test.ts`).
  */
 type CtxInput = {
@@ -93,7 +93,7 @@ describe('McpProtocolAdapter', () => {
 
   it('exposes target and fingerprint', () => {
     expect(adapter.target).toBe('mcp-protocol');
-    expect(adapter.fingerprint.adapter).toBe('@to-skills/target-mcp-protocol');
+    expect(adapter.fingerprint.adapter).toBe('@skillit/target-mcp-protocol');
     expect(adapter.fingerprint.version).toMatch(/^\d+\.\d+\.\d+/);
   });
 
@@ -191,7 +191,7 @@ describe('McpProtocolAdapter', () => {
   // "bundle wins over launchCommand", and "MISSING_LAUNCH_COMMAND when no
   // arm set" have been removed — these states are now unrepresentable in
   // AdapterRenderContext (3-arm DU over `mode`). The renderer in
-  // `@to-skills/core` enforces exactly-one-arm at dispatch time; see
+  // `@skillit/core` enforces exactly-one-arm at dispatch time; see
   // `core/test/renderer.invocation.test.ts` for the new coverage.
 
   it('http-extract mode — ctx.httpEndpoint emits {url, headers} shape', async () => {

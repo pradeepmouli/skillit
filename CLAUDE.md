@@ -1,4 +1,4 @@
-# to-skills Development Guidelines
+# skillit Development Guidelines
 
 ## Project Overview
 
@@ -14,11 +14,11 @@ Generate AI agent skills (SKILL.md) from TypeScript API documentation. TypeDoc p
 
 ```text
 packages/core/           # Shared types, renderer, token budgeting
-packages/typedoc/        # TypeDoc plugin (@to-skills/typedoc)
-packages/typedoc-plugin/ # Auto-discovered TypeDoc plugin (typedoc-plugin-to-skills)
-packages/cli/            # CLI extraction (@to-skills/cli)
-packages/docusaurus/     # Docusaurus integration (@to-skills/docusaurus)
-packages/vitepress/      # VitePress integration (@to-skills/vitepress)
+packages/typedoc/        # TypeDoc plugin (@skillit/typedoc)
+packages/typedoc-plugin/ # Auto-discovered TypeDoc plugin (typedoc-plugin-skillit)
+packages/cli/            # CLI extraction (@skillit/cli)
+packages/docusaurus/     # Docusaurus integration (@skillit/docusaurus)
+packages/vitepress/      # VitePress integration (@skillit/vitepress)
 website/                 # Documentation site
 skills/                  # Bundled skill outputs
 ```
@@ -51,8 +51,10 @@ pnpm run format     # oxfmt
 <!-- MANUAL ADDITIONS END -->
 
 <!-- SPECKIT START -->
+
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
+
 <!-- SPECKIT END -->
 
 ## Active Technologies
@@ -61,18 +63,19 @@ shell commands, and other important information, read the current plan
 - Filesystem only (read/write SKILL.md + references/) (003-skill-install-quality)
 - none (same as parent feature — filesystem-only, no DB) (002-mcp-hardening)
 
-- TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@to-skills/cli`) (001-mcp-extract-bundle)
+- TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@skillit/cli`) (001-mcp-extract-bundle)
 - none (filesystem only — reads `package.json`, `mcp.json` / `claude_desktop_config.json`; writes `skills/<name>/SKILL.md` + `references/*.md`) (001-mcp-extract-bundle)
 
 ## Recent Changes
 
-- 001-mcp-extract-bundle: Added TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@to-skills/cli`)
+- 001-mcp-extract-bundle: Added TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@skillit/cli`)
 
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 
 Rules:
+
 - ALWAYS read graphify-out/GRAPH_REPORT.md before reading any source files, running grep/glob searches, or answering codebase questions. The graph is your primary map of the codebase.
 - IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
 - For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files

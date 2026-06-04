@@ -1,22 +1,28 @@
-# @to-skills/mcp
+# @skillit/mcp
 
 > Extract and bundle MCP servers as Agent Skills — one extractor, every agent.
 
 Introspects live Model Context Protocol (MCP) servers via stdio or HTTP and produces progressive-disclosure `SKILL.md` output consumable by MCP-native agents (via `mcp:` frontmatter) or non-MCP agents (via CLI-as-proxy adapters).
 
-Part of the [to-skills](https://github.com/pradeepmouli/to-skills) monorepo. Designed against the spec at [`specs/001-mcp-extract-bundle/`](../../specs/001-mcp-extract-bundle/) — see `spec.md` for user stories and `spec-deltas.md` for the small set of decisions that diverge from the original spec.
+Part of the [skillit](https://github.com/pradeepmouli/skillit) monorepo. Designed against the spec at [`specs/001-mcp-extract-bundle/`](../../specs/001-mcp-extract-bundle/) — see `spec.md` for user stories and `spec-deltas.md` for the small set of decisions that diverge from the original spec.
 
 ---
 
 ## Install
 
+The `skillit mcp …` commands shown below ship in the `skillit` CLI — the
+`@skillit/client` package — so install that to get the `skillit` binary:
+
 ```bash
-npm install --save-dev @to-skills/mcp
+npm install --save-dev @skillit/client            # provides the `skillit` binary (skillit mcp …)
 # Plus any non-default invocation adapters you intend to use:
-npm install --save-dev @to-skills/target-mcpc       # mcpc CLI proxy
-npm install --save-dev @to-skills/target-fastmcp    # fastmcp Python CLI proxy
-# (`@to-skills/target-mcp-protocol` ships with @to-skills/mcp.)
+npm install --save-dev @skillit/target-mcpc       # mcpc CLI proxy
+npm install --save-dev @skillit/target-fastmcp    # fastmcp Python CLI proxy
+# (`@skillit/target-mcp-protocol` ships with @skillit/mcp.)
 ```
+
+If you only need the programmatic library (`extractMcpSkill`, `bundleMcpSkill`, …)
+and not the CLI, install `@skillit/mcp` directly instead.
 
 Requires Node.js ≥ 20.
 
@@ -28,19 +34,19 @@ Three transports are supported:
 
 ```bash
 # Stdio (the typical case — npx-launched servers)
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --out ./skills
 
 # HTTP / SSE
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --url https://example.com/mcp \
   --header "Authorization=Bearer $TOKEN" \
   --out ./skills
 
 # Batch over an MCP config file (`mcp.json` or Claude-Desktop's
 # `claude_desktop_config.json`)
-npx to-skills-mcp extract \
+npx skillit mcp extract \
   --config ~/.config/claude/claude_desktop_config.json \
   --out ./skills
 ```
@@ -60,7 +66,7 @@ Useful flags:
 Exit codes are documented in [`src/bin.ts`](src/bin.ts).
 
 When `--install-target` is set, the CLI also installs the bundled
-`to-skills-mcp-docs` guidance skill beside the generated MCP skill. Bundled
+`skillit-mcp-docs` guidance skill beside the generated MCP skill. Bundled
 skills are version-aware: newer packaged copies replace older packaged copies,
 while custom or unversioned copies are preserved.
 
@@ -68,7 +74,7 @@ while custom or unversioned copies are preserved.
 
 ## Bundle: ship a skill with your MCP server package
 
-Add a `to-skills.mcp` field to your package's `package.json`:
+Add a `skillit.mcp` field to your package's `package.json`:
 
 ```json
 {
@@ -77,13 +83,13 @@ Add a `to-skills.mcp` field to your package's `package.json`:
   "files": ["dist", "skills"],
   "scripts": {
     "build": "tsc",
-    "postbuild": "to-skills-mcp bundle"
+    "postbuild": "skillit mcp bundle"
   },
-  "to-skills": {
+  "skillit": {
     "mcp": { "skillName": "my-server" }
   },
   "devDependencies": {
-    "@to-skills/mcp": "^0.1.0"
+    "@skillit/mcp": "^0.1.0"
   }
 }
 ```
@@ -99,7 +105,7 @@ Output lands at `<packageRoot>/skills/<skillName>/`. The emitted SKILL.md instru
 Multi-server packages declare an array of entries (one per `bin`):
 
 ```json
-"to-skills": {
+"skillit": {
   "mcp": [
     { "skillName": "server-a", "binName": "server-a" },
     { "skillName": "server-b", "binName": "server-b" }
@@ -112,9 +118,9 @@ Multi-server packages declare an array of entries (one per `bin`):
 ## Programmatic API
 
 ```ts
-import { extractMcpSkill, bundleMcpSkill } from '@to-skills/mcp';
-import { renderSkill, writeSkills } from '@to-skills/core';
-import McpProtocolAdapter from '@to-skills/target-mcp-protocol';
+import { extractMcpSkill, bundleMcpSkill } from '@skillit/mcp';
+import { renderSkill, writeSkills } from '@skillit/core';
+import McpProtocolAdapter from '@skillit/target-mcp-protocol';
 
 // Extract → render → write yourself, e.g. inside a custom build pipeline:
 const skill = await extractMcpSkill({
@@ -136,7 +142,7 @@ const rendered = await renderSkill(skill, {
 });
 writeSkills([rendered], { outDir: './skills' });
 
-// Or run the full bundle pipeline (reads `to-skills.mcp` from package.json):
+// Or run the full bundle pipeline (reads `skillit.mcp` from package.json):
 const result = await bundleMcpSkill({
   packageRoot: process.cwd(),
   installTargets: ['.claude/skills']
@@ -148,7 +154,7 @@ Public entry points:
 
 - [`extractMcpSkill`](src/extract.ts) — connects to a live server and returns an `ExtractedSkill` IR.
 - [`bundleMcpSkill`](src/bundle.ts) — full bundle pipeline keyed off `package.json`.
-- [`renderSkill`](../core/src/renderer.ts) (re-exported from `@to-skills/core`) — turns the IR into `SKILL.md` + reference files.
+- [`renderSkill`](../core/src/renderer.ts) (re-exported from `@skillit/core`) — turns the IR into `SKILL.md` + reference files.
 - [`McpError`](src/errors.ts) — error class with stable `code` for exit-code mapping.
 
 ---
@@ -157,11 +163,11 @@ Public entry points:
 
 The IR is target-agnostic. Adapters select the rendering dialect:
 
-| Target                   | Package                          | Use when                                                                                    |
-| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `mcp-protocol` (default) | `@to-skills/target-mcp-protocol` | Agent harness speaks MCP natively (Claude Code, Cursor, OpenCode).                          |
-| `cli:mcpc`               | `@to-skills/target-mcpc`         | Harness only runs shell commands; route through [mcpc](https://www.npmjs.com/package/mcpc). |
-| `cli:fastmcp`            | `@to-skills/target-fastmcp`      | Harness only runs shell; route through fastmcp's Python CLI.                                |
+| Target                   | Package                        | Use when                                                                                    |
+| ------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `mcp-protocol` (default) | `@skillit/target-mcp-protocol` | Agent harness speaks MCP natively (Claude Code, Cursor, OpenCode).                          |
+| `cli:mcpc`               | `@skillit/target-mcpc`         | Harness only runs shell commands; route through [mcpc](https://www.npmjs.com/package/mcpc). |
+| `cli:fastmcp`            | `@skillit/target-fastmcp`      | Harness only runs shell; route through fastmcp's Python CLI.                                |
 
 Building your own? See [`docs/adapter-authoring.md`](docs/adapter-authoring.md).
 

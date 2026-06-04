@@ -1,5 +1,5 @@
 /**
- * Contract test (T099) — public API surface of `@to-skills/mcp`.
+ * Contract test (T099) — public API surface of `@skillit/mcp`.
  *
  * Imports every public *value* export from the package barrel and asserts each
  * is defined with the expected runtime shape. The intent is to catch
@@ -49,7 +49,7 @@ import type {
   WrittenSkill
 } from '../../src/index.js';
 
-describe('@to-skills/mcp public API surface', () => {
+describe('@skillit/mcp public API surface', () => {
   it('exports PACKAGE_VERSION as a non-empty string', () => {
     expect(typeof Mcp.PACKAGE_VERSION).toBe('string');
     expect(Mcp.PACKAGE_VERSION.length).toBeGreaterThan(0);

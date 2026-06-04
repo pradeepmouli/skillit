@@ -13,9 +13,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { ExtractedFunction, ExtractedSkill } from '@to-skills/core';
+import type { ExtractedFunction, ExtractedSkill } from '@skillit/core';
 import { splitToolsByNamespace } from '../../src/render/split-by-namespace.js';
-import { McpcAdapter } from '@to-skills/target-mcpc';
+import { McpcAdapter } from '@skillit/target-mcpc';
 
 /** Tiny synthetic tool builder — keeps the per-tool surface shape consistent. */
 function makeTool(name: string, paramCount = 3): ExtractedFunction {

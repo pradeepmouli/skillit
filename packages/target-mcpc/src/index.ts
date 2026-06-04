@@ -1,7 +1,7 @@
 /**
- * `@to-skills/target-mcpc` — CLI-as-proxy invocation-target adapter.
+ * `@skillit/target-mcpc` — CLI-as-proxy invocation-target adapter.
  *
- * Resolved by `@to-skills/mcp`'s adapter loader when target `cli:mcpc` is
+ * Resolved by `@skillit/mcp`'s adapter loader when target `cli:mcpc` is
  * requested. Emits SKILL.md output that routes tool calls through Apify's
  * `mcpc` CLI, making the skill consumable by any agent with a shell tool
  * (rather than only MCP-native harnesses).
@@ -25,7 +25,7 @@ const adapter = new McpcAdapter();
  *
  * @example
  * ```ts
- * import adapter from '@to-skills/target-mcpc';
+ * import adapter from '@skillit/target-mcpc';
  * await adapter.render(skill, ctx);
  * ```
  */

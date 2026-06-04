@@ -39,7 +39,7 @@ describe.skipIf(!RUN)('multi-target extract: server-filesystem × {mcp-protocol,
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-multitarget-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-multitarget-'));
   });
 
   afterAll(() => {
@@ -117,7 +117,7 @@ describe.skipIf(!RUN)('multi-target extract: server-filesystem × {mcp-protocol,
       'generated-by'?: { adapter?: string; version?: string };
     };
     expect(cliFm['generated-by']).toBeTruthy();
-    expect(cliFm['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(cliFm['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(cliFm.mcp).toBeUndefined();
 
     // 6. Same tool names in both reference files (target-agnostic IR).
@@ -175,8 +175,8 @@ describe.skipIf(!RUN)('multi-target extract: server-filesystem × {mcp-protocol,
       expect(existsSync(join(root, 'filesystem-installed-mcp-protocol', 'SKILL.md'))).toBe(true);
       expect(existsSync(join(root, 'filesystem-installed-cli-mcpc', 'SKILL.md'))).toBe(true);
     }
-    expect(existsSync(join(outDir, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
-    expect(existsSync(join(installA, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
-    expect(existsSync(join(installB, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(outDir, 'skillit-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(join(installA, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(installB, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
   }, 120_000);
 });

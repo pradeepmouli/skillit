@@ -1,7 +1,7 @@
 /**
  * Bundle-mode orchestrator.
  *
- * `bundleMcpSkill(options)` reads `to-skills.mcp` from the host package's
+ * `bundleMcpSkill(options)` reads `skillit.mcp` from the host package's
  * `package.json`, then for each declared server it:
  *   1. spawns the server (stdio) and runs the existing extract pipeline,
  *   2. renders SKILL.md for each requested invocation target with
@@ -26,8 +26,8 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { renderSkill, writeSkills } from '@to-skills/core';
-import type { RenderedSkill } from '@to-skills/core';
+import { renderSkill, writeSkills } from '@skillit/core';
+import type { RenderedSkill } from '@skillit/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import { runMcpAudit, worstSeverityOf } from './audit/rules.js';
 import { loadBundledMcpGuidanceSkill } from './bundled-skills.js';
@@ -102,7 +102,7 @@ export async function bundleMcpSkill(options: McpBundleOptions = {}): Promise<Bu
     path.relative(packageRoot, outDir) || 'skills'
   );
   for (const w of result.packageJsonWarnings) {
-    process.stderr.write(`[to-skills-mcp] ${w}\n`);
+    process.stderr.write(`[skillit-mcp] ${w}\n`);
   }
 
   return result;
@@ -137,7 +137,7 @@ async function processEntry(
   //    below (so it can populate `WrittenSkill.audit` and record
   //    AUDIT_FAILED), and we don't want extract to also log the same issues
   //    to stderr a second time.
-  let skill: import('@to-skills/core').ExtractedSkill;
+  let skill: import('@skillit/core').ExtractedSkill;
   try {
     const env = entry.env ? Object.fromEntries(Object.entries(entry.env)) : undefined;
     skill = await extractMcpSkill({

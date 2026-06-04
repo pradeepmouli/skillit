@@ -1,22 +1,22 @@
-# @to-skills/typedoc
+# @skillit/typedoc
 
 TypeDoc plugin that generates AI agent skills ([SKILL.md](https://agentskills.io)) and optionally [llms.txt](https://llmstxt.org) from your TypeScript API documentation.
 
 ## Install
 
 ```bash
-pnpm add -D @to-skills/typedoc
+pnpm add -D @skillit/typedoc
 ```
 
 Add to your `typedoc.json`:
 
 ```json
 {
-  "plugin": ["@to-skills/typedoc"]
+  "plugin": ["@skillit/typedoc"]
 }
 ```
 
-Or use the auto-discovery wrapper instead — see [`typedoc-plugin-to-skills`](../typedoc-plugin).
+Or use the auto-discovery wrapper instead — see [`typedoc-plugin-skillit`](../typedoc-plugin).
 
 ## What It Does
 
@@ -35,17 +35,17 @@ Output goes to `skills/<package-name>/SKILL.md`, discoverable via `npx skills ad
 
 All options can be set in `typedoc.json`:
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `skillsOutDir` | `"skills"` | Output directory |
-| `skillsPerPackage` | `true` | One skill per package in monorepos |
-| `skillsIncludeExamples` | `true` | Include `@example` tags |
-| `skillsIncludeSignatures` | `true` | Include type signatures |
-| `skillsMaxTokens` | `4000` | Token budget per skill |
-| `skillsNamePrefix` | `""` | Custom skill name prefix |
-| `skillsLicense` | auto | License (reads from package.json) |
-| `llmsTxt` | `false` | Also generate llms.txt/llms-full.txt |
-| `llmsTxtOutDir` | `"."` | Where to write llms.txt files |
+| Option                    | Default    | Description                          |
+| ------------------------- | ---------- | ------------------------------------ |
+| `skillsOutDir`            | `"skills"` | Output directory                     |
+| `skillsPerPackage`        | `true`     | One skill per package in monorepos   |
+| `skillsIncludeExamples`   | `true`     | Include `@example` tags              |
+| `skillsIncludeSignatures` | `true`     | Include type signatures              |
+| `skillsMaxTokens`         | `4000`     | Token budget per skill               |
+| `skillsNamePrefix`        | `""`       | Custom skill name prefix             |
+| `skillsLicense`           | auto       | License (reads from package.json)    |
+| `llmsTxt`                 | `false`    | Also generate llms.txt/llms-full.txt |
+| `llmsTxtOutDir`           | `"."`      | Where to write llms.txt files        |
 
 ## Monorepo Support
 

@@ -15,7 +15,7 @@ describe('CliRefineSource', () => {
   let cwd: string;
 
   beforeEach(() => {
-    cwd = mkdtempSync(path.join(os.tmpdir(), 'to-skills-refine-cli-'));
+    cwd = mkdtempSync(path.join(os.tmpdir(), 'skillit-refine-cli-'));
   });
 
   afterEach(() => {

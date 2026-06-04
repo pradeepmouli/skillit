@@ -57,7 +57,7 @@ describe.skipIf(!shouldRun)('stdio integration: python fastmcp fixture', () => {
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-py-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-py-'));
   });
 
   afterAll(() => {

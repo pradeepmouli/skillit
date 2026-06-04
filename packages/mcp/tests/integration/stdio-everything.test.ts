@@ -25,7 +25,7 @@ describe.skipIf(!RUN)('stdio integration: server-everything', () => {
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-everything-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-everything-'));
   });
 
   afterAll(() => {

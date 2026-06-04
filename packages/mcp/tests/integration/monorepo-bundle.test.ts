@@ -1,7 +1,7 @@
 /**
  * Integration test (T098) — US6 AC4: sibling packages bundle independently.
  *
- * Two sibling packages, each with its own `to-skills.mcp` config and its own
+ * Two sibling packages, each with its own `skillit.mcp` config and its own
  * stdio MCP server, are bundled in sequence via the programmatic
  * `bundleMcpSkill` API. Asserts:
  *
@@ -15,7 +15,7 @@
  *
  * Builds both fixture packages by copying the existing `fake-server-package`
  * fixture twice into a tmpdir and rewriting `package.json#name` and
- * `to-skills.mcp.skillName` for each copy. Symlinks the parent package's
+ * `skillit.mcp.skillName` for each copy. Symlinks the parent package's
  * `node_modules` into each copy so the hand-written stdio server can resolve
  * `@modelcontextprotocol/sdk`.
  *
@@ -66,10 +66,10 @@ function makePackage(parent: string, dirName: string, pkgName: string, skillName
   const pkgPath = join(root, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as {
     name: string;
-    'to-skills'?: { mcp?: { skillName?: string } };
+    skillit?: { mcp?: { skillName?: string } };
   };
   pkg.name = pkgName;
-  if (pkg['to-skills']?.mcp) pkg['to-skills'].mcp.skillName = skillName;
+  if (pkg['skillit']?.mcp) pkg['skillit'].mcp.skillName = skillName;
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
   return root;
 }
@@ -80,7 +80,7 @@ describe.skipIf(!RUN)('monorepo bundle — sibling packages stay isolated (US6 A
   let pkgB: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-monorepo-bundle-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-monorepo-bundle-'));
     pkgA = makePackage(workDir, 'pkg-a', '@fixture/sibling-a', 'sibling-a');
     pkgB = makePackage(workDir, 'pkg-b', '@fixture/sibling-b', 'sibling-b');
   });

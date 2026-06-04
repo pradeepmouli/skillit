@@ -9,7 +9,7 @@
     "README.md"
   ],
   "type": "module",
-  "to-skills": {
+  "skillit": {
     "mcp": {
       "skillName": "meta-server"
     }

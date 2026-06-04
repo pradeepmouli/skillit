@@ -45,7 +45,7 @@ describe.skipIf(!RUN)(
     let workDir: string;
 
     beforeEach(() => {
-      workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-meta-it-'));
+      workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-meta-it-'));
       cpSync(FIXTURE_DIR, workDir, { recursive: true });
       symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
     });

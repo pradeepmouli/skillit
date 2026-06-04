@@ -1,6 +1,6 @@
 // packages/client/src/model/model-client-factory.ts
 import { execFileSync } from 'node:child_process';
-import type { ModelClient } from '@to-skills/core';
+import type { ModelClient } from '@skillit/core';
 import { AnthropicModelClient } from './anthropic.js';
 import { CliModelClient } from './cli/cli-client.js';
 import { adapterFor, type CliModelClientKind } from './cli/adapters.js';

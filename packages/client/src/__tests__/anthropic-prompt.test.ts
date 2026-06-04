@@ -1,7 +1,7 @@
 // packages/client/src/__tests__/anthropic-prompt.test.ts
 import { describe, it, expect } from 'vitest';
 import { buildDraftPrompt, buildReviewPrompt } from '../model/anthropic.js';
-import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@skillit/core';
 
 const baseSkill = (): ExtractedSkill =>
   ({ name: 'my-tool', functions: [] }) as unknown as ExtractedSkill;

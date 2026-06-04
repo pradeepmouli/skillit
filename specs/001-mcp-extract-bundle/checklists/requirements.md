@@ -1,4 +1,4 @@
-# Specification Quality Checklist: `@to-skills/mcp` — Extract and Bundle MCP Servers as Agent Skills
+# Specification Quality Checklist: `@skillit/mcp` — Extract and Bundle MCP Servers as Agent Skills
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-04-24
@@ -34,7 +34,7 @@
 
 ### Content Quality caveat
 
-This spec is deeply technical — it names specific packages (`@modelcontextprotocol/sdk`, `@to-skills/core`, `mcpc`, `fastmcp`, `mcptools`), CLI shapes (`extract`, `bundle` subcommands, `--invocation` flag), and IR fields (`ExtractedFunction`, `ExtractedResource`, `InvocationAdapter`). This is appropriate here because the feature is itself a developer tool whose "users" are library authors and CI pipelines; the technical surface IS the user-facing surface. The spec does not prescribe _how_ to implement transport, parser, or adapter internals — those are left for `/speckit.plan`.
+This spec is deeply technical — it names specific packages (`@modelcontextprotocol/sdk`, `@skillit/core`, `mcpc`, `fastmcp`, `mcptools`), CLI shapes (`extract`, `bundle` subcommands, `--invocation` flag), and IR fields (`ExtractedFunction`, `ExtractedResource`, `InvocationAdapter`). This is appropriate here because the feature is itself a developer tool whose "users" are library authors and CI pipelines; the technical surface IS the user-facing surface. The spec does not prescribe _how_ to implement transport, parser, or adapter internals — those are left for `/speckit.plan`.
 
 ### Clarifications resolved (14 total)
 
@@ -42,7 +42,7 @@ Seven original design questions plus seven follow-ups on invocation targets and 
 
 - **Extract semantics** — fresh handshake only, no caching; metadata-only (no execution); docs-only output with `mcp:` frontmatter for the harness to consume.
 - **Bundle semantics** — no package.json mutation; npx-by-name frontmatter (not file paths); single postbuild step only; `llms.txt` reuses core's existing flag; forward-compatible writer abstraction for future native Skills primitive.
-- **Invocation targets** — multiple targets shipped as first-class renderers; no new CLI (existing `mcpc`/`fastmcp`/`mcptools` are rendering targets, not competitors); simple npm-convention plugin resolution (`@to-skills/target-<n>`); extract is target-agnostic (one extraction → any number of rendered targets); bundle mode accepts string-or-array `invocation` field for multi-target emission.
+- **Invocation targets** — multiple targets shipped as first-class renderers; no new CLI (existing `mcpc`/`fastmcp`/`mcptools` are rendering targets, not competitors); simple npm-convention plugin resolution (`@skillit/target-<n>`); extract is target-agnostic (one extraction → any number of rendered targets); bundle mode accepts string-or-array `invocation` field for multi-target emission.
 - **Architectural framing (new)** — `mcp-protocol` and `cli:*` are two architectures sharing one extractor, not cosmetic render variants. CLI targets are a _CLI-as-proxy_ model: the external CLI terminates MCP at the shell boundary; the agent never sees MCP; session/auth/retry state lives in the CLI. Different test obligations per architecture (CLI targets need arg-encoding round-trip tests; `mcp-protocol` needs frontmatter-dialect verification).
 - **Adapter-version invalidation (new, resolves prior open risk)** — CLI-target skills embed adapter name + version in both human-readable Setup text and machine-readable frontmatter (FR-IT-012). Audit engine warns when the embedded version drifts from the installed adapter (FR-IT-013). Consumers get a mechanical freshness signal without runtime skill↔CLI coupling.
 

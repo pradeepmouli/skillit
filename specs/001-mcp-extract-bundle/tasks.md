@@ -1,8 +1,8 @@
 ---
-description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as Agent Skills'
+description: 'Task list for @skillit/mcp — Extract and Bundle MCP Servers as Agent Skills'
 ---
 
-# Tasks: `@to-skills/mcp` — Extract and Bundle MCP Servers as Agent Skills
+# Tasks: `@skillit/mcp` — Extract and Bundle MCP Servers as Agent Skills
 
 **Input**: Design documents from `/specs/001-mcp-extract-bundle/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
@@ -30,18 +30,18 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 
 **Purpose**: pnpm workspace scaffolding for the four new packages. No feature code yet.
 
-- [x] T001 Create `packages/mcp/` directory with `package.json` declaring `@to-skills/mcp@0.1.0`, `type: module`, `bin: { "to-skills-mcp": "./dist/bin.js" }`, `main`/`types` pointing at `./dist/index.js`/`./dist/index.d.ts`, and `files: ["dist", "README.md"]` per existing workspace convention (match `packages/cli/package.json`)
-- [x] T002 [P] Create `packages/target-mcp-protocol/package.json` declaring `@to-skills/target-mcp-protocol@0.1.0`, default export shape, and dependency on `@to-skills/core` (workspace:\*) + peer dependency on `@to-skills/mcp`
-- [x] T003 [P] Create `packages/target-mcpc/package.json` declaring `@to-skills/target-mcpc@0.1.0` mirroring T002
-- [x] T004 [P] Create `packages/target-fastmcp/package.json` declaring `@to-skills/target-fastmcp@0.1.0` mirroring T002
-- [x] T005 Add runtime deps to `packages/mcp/package.json`: `@modelcontextprotocol/sdk@^1.0.0`, `@apidevtools/json-schema-ref-parser@^11.0.0`, `yaml@^2.0.0`, `commander@^14.0.3`, `@to-skills/core` (workspace:\*)
+- [x] T001 Create `packages/mcp/` directory with `package.json` declaring `@skillit/mcp@0.1.0`, `type: module`, `bin: { "to-skills-mcp": "./dist/bin.js" }`, `main`/`types` pointing at `./dist/index.js`/`./dist/index.d.ts`, and `files: ["dist", "README.md"]` per existing workspace convention (match `packages/cli/package.json`)
+- [x] T002 [P] Create `packages/target-mcp-protocol/package.json` declaring `@skillit/target-mcp-protocol@0.1.0`, default export shape, and dependency on `@skillit/core` (workspace:\*) + peer dependency on `@skillit/mcp`
+- [x] T003 [P] Create `packages/target-mcpc/package.json` declaring `@skillit/target-mcpc@0.1.0` mirroring T002
+- [x] T004 [P] Create `packages/target-fastmcp/package.json` declaring `@skillit/target-fastmcp@0.1.0` mirroring T002
+- [x] T005 Add runtime deps to `packages/mcp/package.json`: `@modelcontextprotocol/sdk@^1.0.0`, `@apidevtools/json-schema-ref-parser@^11.0.0`, `yaml@^2.0.0`, `commander@^14.0.3`, `@skillit/core` (workspace:\*)
 - [x] T006 [P] Create `packages/mcp/tsconfig.json` and `packages/mcp/tsconfig.build.json` mirroring `packages/cli/tsconfig*.json` (strict, ES2022 target, module NodeNext)
 - [x] T007 [P] Create `tsconfig.json`/`tsconfig.build.json` in each of the three `packages/target-*/` dirs, same shape as T006
 - [x] T008 Add `vitest.config.ts` to `packages/mcp/` with `test.include: ['tests/**/*.test.ts']`, `test.coverage.provider: 'v8'`, and per-package node environment
 - [x] T009 [P] Update root `pnpm-workspace.yaml` to confirm new packages are matched by the existing `packages/*` glob (no change expected; verify by running `pnpm install` and checking all four packages resolve)
 - [x] T010 [P] Add `README.md` stubs (one paragraph, "Generated from specs/001-mcp-extract-bundle") to each of the four new packages so `npm publish` dry-runs don't warn
 
-**Checkpoint**: `pnpm install && pnpm --filter @to-skills/mcp run type-check` succeeds (empty src dirs are OK at this point)
+**Checkpoint**: `pnpm install && pnpm --filter @skillit/mcp run type-check` succeeds (empty src dirs are OK at this point)
 
 ---
 
@@ -57,7 +57,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 - [x] T012 Extend `packages/core/src/types.ts` with `ExtractedPrompt` and `ExtractedPromptArgument` interfaces per data-model.md §1.2
 - [x] T013 Extend `packages/core/src/types.ts` with `SkillSetup` and `AdapterFingerprint` interfaces per data-model.md §1.3
 - [x] T014 Add optional `resources?: ExtractedResource[]`, `prompts?: ExtractedPrompt[]`, `setup?: SkillSetup` fields to `ExtractedSkill` interface in `packages/core/src/types.ts` per data-model.md §1.4
-- [x] T015 Add optional `invocation?: InvocationAdapter` field to `SkillRenderOptions` in `packages/core/src/types.ts`; use `import type` for a forward-declared `InvocationAdapter` interface to avoid `@to-skills/core → @to-skills/mcp` dependency cycle
+- [x] T015 Add optional `invocation?: InvocationAdapter` field to `SkillRenderOptions` in `packages/core/src/types.ts`; use `import type` for a forward-declared `InvocationAdapter` interface to avoid `@skillit/core → @skillit/mcp` dependency cycle
 - [x] T016 Re-export `ExtractedResource`, `ExtractedPrompt`, `SkillSetup`, `AdapterFingerprint` from `packages/core/src/index.ts`
 
 ### Canonicalization pass
@@ -69,7 +69,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 ### Adapter plugin interface (lives in host package)
 
 - [x] T020 Create `packages/mcp/src/adapter/types.ts` exporting `InvocationTarget` string union, `InvocationAdapter` interface (target, fingerprint, render method), and `AdapterContext` type per data-model.md §2.4
-- [x] T021 [P] Create `packages/mcp/src/adapter/loader.ts` implementing `loadAdapter(target: InvocationTarget): InvocationAdapter` using `createRequire(import.meta.url)` + the candidate-list resolution from research.md §5 (mcp-protocol → `@to-skills/target-mcp-protocol`; cli:\* → scoped then unscoped fallback)
+- [x] T021 [P] Create `packages/mcp/src/adapter/loader.ts` implementing `loadAdapter(target: InvocationTarget): InvocationAdapter` using `createRequire(import.meta.url)` + the candidate-list resolution from research.md §5 (mcp-protocol → `@skillit/target-mcp-protocol`; cli:\* → scoped then unscoped fallback)
 - [x] T022 [P] Add unit test `packages/mcp/tests/unit/loader.test.ts` covering resolution success (mock fs), scoped-name preference, unscoped fallback, and `ADAPTER_NOT_FOUND` error on miss
 - [x] T023 Create `packages/mcp/src/errors.ts` exporting `McpError` class with `code`, `cause`, message; export string-literal union `McpErrorCode` covering `UNKNOWN_TARGET`, `ADAPTER_NOT_FOUND`, `TRANSPORT_FAILED`, `INITIALIZE_FAILED`, `PROTOCOL_VERSION_UNSUPPORTED`, `SCHEMA_REF_CYCLE`, `SERVER_EXITED_EARLY`, `MISSING_LAUNCH_COMMAND`, `DUPLICATE_SKILL_NAME`
 
@@ -88,13 +88,13 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 - [x] T028 Create `packages/mcp/src/types.ts` exporting `McpExtractOptions`, `McpTransport`, `McpBundleOptions`, `BundleResult`, `WrittenSkill`, `AuditResult`, `AuditIssue`, `AuditOptions`, `McpServerConfig`, `McpConfigFile` per data-model.md §2
 - [x] T029 Create `packages/mcp/src/index.ts` skeleton that re-exports all public types from T020/T023/T028 (no implementation yet — just the surface)
 
-**Checkpoint**: `pnpm --filter @to-skills/core --filter @to-skills/mcp run type-check` passes. `pnpm --filter @to-skills/core run test` passes (canonicalization tests). Foundation is ready — user stories can now be implemented in parallel where independent.
+**Checkpoint**: `pnpm --filter @skillit/core --filter @skillit/mcp run type-check` passes. `pnpm --filter @skillit/core run test` passes (canonicalization tests). Foundation is ready — user stories can now be implemented in parallel where independent.
 
 ---
 
 ## Phase 3: User Story 1 — Extract from a Local stdio MCP Server (Priority: P1) 🎯 MVP
 
-**Goal**: `npx @to-skills/mcp extract --command "..."` produces `skills/<name>/SKILL.md` with `mcp:` frontmatter and `references/tools.md` from a live stdio MCP server.
+**Goal**: `npx @skillit/mcp extract --command "..."` produces `skills/<name>/SKILL.md` with `mcp:` frontmatter and `references/tools.md` from a live stdio MCP server.
 
 **Independent Test**: Run the CLI against `npx -y @modelcontextprotocol/server-filesystem /tmp`. Verify `skills/filesystem/SKILL.md` exists with YAML frontmatter containing `name`, `description`, `license`, `mcp:` block, and a Quick Reference table listing all filesystem tools. Verify `references/tools.md` has each tool with its parameter table derived from `inputSchema`.
 
@@ -107,7 +107,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 
 ### Main extract entry point
 
-- [x] T034 [US1] Create `packages/mcp/src/extract.ts` exporting `extractMcpSkill(options: McpExtractOptions): Promise<ExtractedSkill>` — for stdio transport: imports `StdioClientTransport` from SDK, spawns the server via `command`+`args`+`env`, wraps in `Client` from SDK, performs `initialize` handshake with client name `@to-skills/mcp` and current package version, calls listTools/listResources/listPrompts from T030-T032, assembles ExtractedSkill, ensures transport is closed on success and failure
+- [x] T034 [US1] Create `packages/mcp/src/extract.ts` exporting `extractMcpSkill(options: McpExtractOptions): Promise<ExtractedSkill>` — for stdio transport: imports `StdioClientTransport` from SDK, spawns the server via `command`+`args`+`env`, wraps in `Client` from SDK, performs `initialize` handshake with client name `@skillit/mcp` and current package version, calls listTools/listResources/listPrompts from T030-T032, assembles ExtractedSkill, ensures transport is closed on success and failure
 - [x] T035 [US1] Add `initialize`-handshake error mapping in `packages/mcp/src/extract.ts`: convert SDK errors to `McpError` with code `INITIALIZE_FAILED`, `TRANSPORT_FAILED`, `SERVER_EXITED_EARLY`, or `PROTOCOL_VERSION_UNSUPPORTED` based on error shape
 - [x] T036 [US1] Add capability-gating in `packages/mcp/src/extract.ts`: only call listResources when `capabilities.resources` is set; only call listPrompts when `capabilities.prompts` is set (per FR-007)
 - [x] T037 [US1] Add initialize-response `protocolVersion` check in `packages/mcp/src/extract.ts`: warn (stderr) if newer than SDK supports; throw `PROTOCOL_VERSION_UNSUPPORTED` if older than SDK minimum (per Edge Case in spec.md) — helper `checkProtocolVersion` lives in `packages/mcp/src/introspect/protocol-version.ts` with full unit-test coverage; runtime integration in `extract.ts` is deferred (TODO documented in JSDoc) until SDK 1.x exposes a public getter for the negotiated protocol version (the SDK already validates min/max internally during `connect()`).
@@ -118,7 +118,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 - [x] T039 [US1] Create `packages/target-mcp-protocol/src/render.ts` exporting `McpProtocolAdapter` implementing `InvocationAdapter` — composes frontmatter from T038 with core's standard SKILL.md body emission, sets target `'mcp-protocol'`, fingerprint with package version
 - [x] T039a [P] [US1] Extend `packages/target-mcp-protocol/src/render.ts` (and make the helper exportable from `packages/core/src/renderer.ts` or a new `packages/core/src/references-resources.ts`) to emit `references/resources.md` into the returned `RenderedSkill` when `skill.resources?.length > 0`. Each resource MUST render URI template, name, description, and MIME type (FR-019). SKILL.md Quick Reference MUST include resources with relative links to this file (FR-017)
 - [x] T039b [P] [US1] Parallel counterpart to T039a for prompts — emit `references/prompts.md` into the returned `RenderedSkill` when `skill.prompts?.length > 0`, rendering each prompt's name, description, and argument table (name, description, required) per FR-020. Wire Quick Reference entries
-- [x] T040 [US1] Create `packages/target-mcp-protocol/src/index.ts` with `export default new McpProtocolAdapter()` so `require('@to-skills/target-mcp-protocol').default` resolves correctly per adapter-loader contract
+- [x] T040 [US1] Create `packages/target-mcp-protocol/src/index.ts` with `export default new McpProtocolAdapter()` so `require('@skillit/target-mcp-protocol').default` resolves correctly per adapter-loader contract
 - [x] T041 [P] [US1] Add unit test `packages/target-mcp-protocol/tests/frontmatter.test.ts` snapshotting the YAML output for single-arg, multi-arg, and env-set cases
 
 ### CLI wiring (extract subcommand, stdio form only for this phase)
@@ -139,19 +139,19 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 - [x] T047b [P] [US1] Integration test `packages/mcp/tests/integration/stdio-python-fastmcp.test.ts` against a minimal FastMCP-based Python server placed in `packages/mcp/tests/fixtures/py-server/server.py`. Gate the `describe` block with `describe.skipIf(!isPythonAvailable())` so local offline runs don't fail. Exercises SC-008 (server category 3 of 3)
 - [x] T048 [P] [US1] Add integration test `packages/mcp/tests/integration/stdio-programmatic.test.ts` that calls `extractMcpSkill` directly against the same server; asserts returned `ExtractedSkill` has `functions.length > 0`, `resources` populated if server advertises them, no `mcp:` frontmatter in the IR (adapter adds it at render time, not extract time)
 
-**Checkpoint**: US1 is shippable as MVP. `npx @to-skills/mcp extract --command "..."` works end-to-end against any stdio MCP server.
+**Checkpoint**: US1 is shippable as MVP. `npx @skillit/mcp extract --command "..."` works end-to-end against any stdio MCP server.
 
 ---
 
 > **✓ Phase 4 precondition — ESM+CJS adapter loading (resolved in T044)**
 >
-> The B9 implementation surfaced this when integration tests against the ESM-only `@to-skills/target-mcp-protocol` package failed under `createRequire`+`require`. Resolved by adding `loadAdapterAsync()` (alongside the original sync `loadAdapter`), which falls back to dynamic `import()` when `require` reports `ERR_REQUIRE_ESM`, `ERR_PACKAGE_PATH_NOT_EXPORTED`, or "No exports main defined". The CLI uses the async variant; sync callers (existing tests) are unchanged. No `McpErrorCode` extension was required — the fallback path consumes the loader-interop error before it surfaces.
+> The B9 implementation surfaced this when integration tests against the ESM-only `@skillit/target-mcp-protocol` package failed under `createRequire`+`require`. Resolved by adding `loadAdapterAsync()` (alongside the original sync `loadAdapter`), which falls back to dynamic `import()` when `require` reports `ERR_REQUIRE_ESM`, `ERR_PACKAGE_PATH_NOT_EXPORTED`, or "No exports main defined". The CLI uses the async variant; sync callers (existing tests) are unchanged. No `McpErrorCode` extension was required — the fallback path consumes the loader-interop error before it surfaces.
 >
 > Phase 6's target-mcpc / target-fastmcp adapters can rely on `loadAdapterAsync` directly; no further migration is needed.
 
 ## Phase 4: User Story 2 — Extract from a Remote HTTP MCP Server (Priority: P1)
 
-**Goal**: `npx @to-skills/mcp extract --url <url>` produces a valid skill from a hosted HTTP MCP endpoint.
+**Goal**: `npx @skillit/mcp extract --url <url>` produces a valid skill from a hosted HTTP MCP endpoint.
 
 **Independent Test**: Run against a local mock SSE server that advertises 3 tools; verify `skills/<name>/SKILL.md` is produced. Then run with `--header "Authorization: Bearer XXX"` against an auth-required mock endpoint; verify the header is forwarded on initialize + list requests.
 
@@ -216,7 +216,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 ### `target-mcpc` adapter (primary)
 
 - [x] T070 [US5] Create `packages/target-mcpc/src/args.ts` exporting `encodeMcpcArgs(plan: Map<string, ParameterPlan>): { tier12: string[], tier3Fallback: string | null }` — consumes the classifier output from T024; emits `key:=value` for typed Tier 1, `key=value` for string-typed Tier 1, `parent.child:=value` for Tier 2, and a `--json '{...}'` argument for any Tier 3 fallback
-- [x] T071 [US5] Create `packages/target-mcpc/src/setup.ts` exporting `renderMcpcSetup(skillName: string, launchCommand: McpTransport, fingerprint: AdapterFingerprint): string` — returns a Markdown Setup section with `npm install -g mcpc` instructions, `mcpc connect` command, and a "Generated for mcpc 2.1.x via @to-skills/target-mcpc 1.0.0" line per FR-IT-012
+- [x] T071 [US5] Create `packages/target-mcpc/src/setup.ts` exporting `renderMcpcSetup(skillName: string, launchCommand: McpTransport, fingerprint: AdapterFingerprint): string` — returns a Markdown Setup section with `npm install -g mcpc` instructions, `mcpc connect` command, and a "Generated for mcpc 2.1.x via @skillit/target-mcpc 1.0.0" line per FR-IT-012
 - [x] T072a [US5] Create `packages/target-mcpc/src/render.ts` scaffolding exporting `McpcAdapter` implementing `InvocationAdapter` with target `'cli:mcpc'`, fingerprint from the package's own version (read at build time via a generated constant or `require('../package.json').version`). `.render()` is a stub that throws `'not implemented'` — subsequent sub-tasks fill it in
 - [x] T072b [US5] Fill in `McpcAdapter.render()` frontmatter emission in `packages/target-mcpc/src/render.ts`: uses `generatedByFrontmatter()` (T084) to emit `generated-by: { adapter, version, target-cli-range }`; MUST NOT emit `mcp:` block. Verify via the T085 contract test after T078d lands
 - [x] T072c [US5] Fill in `McpcAdapter.render()` body composition in `packages/target-mcpc/src/render.ts`: emits the Setup section via `renderMcpcSetup` (T071), then the SKILL.md overview and description from the IR
@@ -248,7 +248,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 ### Fingerprint embedding contract enforcement
 
 - [x] T084 [US5] Add `generatedByFrontmatter(fingerprint: AdapterFingerprint): Record<string, unknown>` helper in `packages/mcp/src/adapter/fingerprint.ts`; used by all CLI adapters to produce identical `generated-by:` frontmatter shape
-- [x] T084a [US5] Tighten the fingerprint dual-placement contract in the CLI adapters: update T072b and T078b to call `generatedByFrontmatter(this.fingerprint)` and merge the result into the rendered YAML frontmatter. Update T071 (and `renderFastMcpSetup` in T077) to embed the human-readable fingerprint line ("Generated for mcpc 2.1.x via @to-skills/target-mcpc 1.4.0"). Add assertion logic used by T085 — when the Setup section's embedded fingerprint disagrees with frontmatter's `generated-by`, the test fails. Implements FR-IT-012 completely
+- [x] T084a [US5] Tighten the fingerprint dual-placement contract in the CLI adapters: update T072b and T078b to call `generatedByFrontmatter(this.fingerprint)` and merge the result into the rendered YAML frontmatter. Update T071 (and `renderFastMcpSetup` in T077) to embed the human-readable fingerprint line ("Generated for mcpc 2.1.x via @skillit/target-mcpc 1.4.0"). Add assertion logic used by T085 — when the Setup section's embedded fingerprint disagrees with frontmatter's `generated-by`, the test fails. Implements FR-IT-012 completely
 - [x] T085 [P] [US5] Add contract test `packages/mcp/tests/contract/fingerprint.test.ts` asserting that rendering any `cli:*` adapter against a fixture skill produces a SKILL.md whose frontmatter contains `generated-by` AND does NOT contain `mcp:`, AND the frontmatter `generated-by.adapter`/`version` exactly match the adapter/version substrings in the Setup section. Run parametrized against both target-mcpc and target-fastmcp
 
 ### Adapter freshness audit
@@ -296,7 +296,7 @@ description: 'Task list for @to-skills/mcp — Extract and Bundle MCP Servers as
 - [x] T097 [P] [US6] Add integration test `packages/mcp/tests/integration/programmatic-render-twice.test.ts` — calls extract once, calls renderSkill twice with different adapters, asserts SC-011 (same underlying IR, distinct outputs)
 - [x] T098 [P] [US6] Add integration test `packages/mcp/tests/integration/monorepo-bundle.test.ts` using two fixture packages each with its own `to-skills.mcp` and `skills/` directory; run `bundleMcpSkill` from each package root in sequence; assert no collision, each package gets its own `skills/` dir per US6 AC4
 - [x] T098a [P] [US6] Snapshot-equivalence test `packages/mcp/tests/integration/programmatic-vs-bundle.test.ts` — run extract+renderSkill pipeline against a fixture server, then run `bundleMcpSkill` against the same server via a fixture package wrapping it; assert the resulting `SKILL.md` and every `references/*.md` are byte-identical after canonicalization. Exercises SC-007
-- [x] T099 [US6] Add TypeScript API surface test `packages/mcp/tests/contract/api-surface.test.ts` that imports every public export from `@to-skills/mcp/dist/index.d.ts` and asserts each is defined (prevents accidental export removal across refactors)
+- [x] T099 [US6] Add TypeScript API surface test `packages/mcp/tests/contract/api-surface.test.ts` that imports every public export from `@skillit/mcp/dist/index.d.ts` and asserts each is defined (prevents accidental export removal across refactors)
 
 ---
 
@@ -448,7 +448,7 @@ At that point the package can:
 
 **Incremental delivery**:
 
-1. **v0.1**: MVP (Phases 1-3). Release as `@to-skills/mcp@0.1.0`, `@to-skills/target-mcp-protocol@0.1.0`. Users can extract stdio servers.
+1. **v0.1**: MVP (Phases 1-3). Release as `@skillit/mcp@0.1.0`, `@skillit/target-mcp-protocol@0.1.0`. Users can extract stdio servers.
 2. **v0.2**: add HTTP (Phase 4). Users can target hosted servers.
 3. **v0.3**: add bundle (Phase 5). Maintainers can ship dual-consumption packages.
 4. **v0.4**: add CLI targets (Phase 6). Non-MCP agents unblocked. Publishes `target-mcpc` and `target-fastmcp`.

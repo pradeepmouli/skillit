@@ -1,6 +1,6 @@
 // MCP resources/list introspection — paginates and maps to ExtractedResource.
 
-import type { ExtractedResource } from '@to-skills/core';
+import type { ExtractedResource } from '@skillit/core';
 import type { McpClient, McpResourceListEntry } from './client-types.js';
 import { paginate } from './paginate.js';
 

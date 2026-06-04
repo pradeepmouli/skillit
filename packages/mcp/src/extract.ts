@@ -19,7 +19,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { runMcpAudit } from './audit/rules.js';
 import { McpError, type McpErrorCode } from './errors.js';
 import type { McpClient } from './introspect/client-types.js';
@@ -132,7 +132,7 @@ async function extractStdio(options: McpExtractOptions): Promise<ExtractedSkill>
   });
 
   const client = new Client(
-    { name: '@to-skills/mcp', version: PACKAGE_VERSION },
+    { name: '@skillit/mcp', version: PACKAGE_VERSION },
     { capabilities: {} }
   );
 
@@ -274,7 +274,7 @@ async function extractHttp(options: McpExtractOptions): Promise<ExtractedSkill> 
   // signaling we should retry over SSE.
   const httpTransport = new StreamableHTTPClientTransport(url, { requestInit });
   const client = new Client(
-    { name: '@to-skills/mcp', version: PACKAGE_VERSION },
+    { name: '@skillit/mcp', version: PACKAGE_VERSION },
     { capabilities: {} }
   );
 
@@ -301,7 +301,7 @@ async function extractHttp(options: McpExtractOptions): Promise<ExtractedSkill> 
     if (shouldFallbackToSSE(err)) {
       // Fresh client for the retry — the first one's transport is terminated.
       const sseClient = new Client(
-        { name: '@to-skills/mcp', version: PACKAGE_VERSION },
+        { name: '@skillit/mcp', version: PACKAGE_VERSION },
         { capabilities: {} }
       );
       const sseTransport = new SSEClientTransport(url, { requestInit });

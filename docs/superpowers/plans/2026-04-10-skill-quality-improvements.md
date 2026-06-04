@@ -946,8 +946,8 @@ git commit -m "chore: regenerate skills with contextual descriptions and module 
 # Create changeset
 cat > .changeset/skill-quality.md << 'EOF'
 ---
-'@to-skills/core': minor
-'@to-skills/typedoc': minor
+'@skillit/core': minor
+'@skillit/typedoc': minor
 'typedoc-plugin-to-skills': patch
 ---
 

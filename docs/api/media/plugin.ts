@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Application, Converter, type Context, ParameterType } from 'typedoc';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import {
   renderSkills,
   writeSkills,
@@ -12,8 +12,8 @@ import {
   parseReadme,
   scanDocs,
   docsToExtractedDocuments
-} from '@to-skills/core';
-import type { AuditContext } from '@to-skills/core';
+} from '@skillit/core';
+import type { AuditContext } from '@skillit/core';
 import { extractSkills } from './extractor.js';
 
 /**

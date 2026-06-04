@@ -7,7 +7,7 @@ description: Custom and standard JSDoc tags that control skill generation qualit
 
 > Write JSDoc that generates expert-quality skills. Three custom tags, ten standard tags, and a README structure.
 
-The quality of a generated SKILL.md depends entirely on what you write in your source docs. This page covers every tag and convention that `typedoc-plugin-to-skills` understands.
+The quality of a generated SKILL.md depends entirely on what you write in your source docs. This page covers every tag and convention that `typedoc-plugin-skillit` understands.
 
 ## Custom Tags
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalize } from '@to-skills/core';
-import type { RenderedSkill } from '@to-skills/core';
+import { canonicalize } from '@skillit/core';
+import type { RenderedSkill } from '@skillit/core';
 
 function makeSkill(
   content: string,

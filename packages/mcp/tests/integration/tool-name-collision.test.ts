@@ -14,8 +14,8 @@
  * we don't gate on `RUN_INTEGRATION_TESTS`.
  */
 import { describe, expect, it } from 'vitest';
-import type { AdapterRenderContext, ExtractedSkill } from '@to-skills/core';
-import { McpcAdapter } from '@to-skills/target-mcpc';
+import type { AdapterRenderContext, ExtractedSkill } from '@skillit/core';
+import { McpcAdapter } from '@skillit/target-mcpc';
 
 const skillWithConnect: ExtractedSkill = {
   name: 'collision-server',

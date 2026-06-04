@@ -1,8 +1,8 @@
-# @to-skills/target-fastmcp
+# @skillit/target-fastmcp
 
-> CLI-as-proxy invocation-target adapter for `@to-skills/mcp`. Emits shell-command skills that use the [fastmcp](https://gofastmcp.com) Python CLI to invoke MCP tools.
+> CLI-as-proxy invocation-target adapter for `@skillit/mcp`. Emits shell-command skills that use the [fastmcp](https://gofastmcp.com) Python CLI to invoke MCP tools.
 
-Pairs with [`@to-skills/mcp`](../mcp/). Where `@to-skills/target-mcp-protocol` emits `mcp:` frontmatter for harnesses that hold an MCP session natively, `@to-skills/target-fastmcp` emits a SKILL.md whose body is a series of shell commands the agent runs through its standard shell tool. The CLI terminates the MCP protocol at the shell boundary; the agent never sees MCP.
+Pairs with [`@skillit/mcp`](../mcp/). Where `@skillit/target-mcp-protocol` emits `mcp:` frontmatter for harnesses that hold an MCP session natively, `@skillit/target-fastmcp` emits a SKILL.md whose body is a series of shell commands the agent runs through its standard shell tool. The CLI terminates the MCP protocol at the shell boundary; the agent never sees MCP.
 
 Target CLI: **`fastmcp@^2`** (Python, installed via `pip install fastmcp`).
 
@@ -11,10 +11,10 @@ Target CLI: **`fastmcp@^2`** (Python, installed via `pip install fastmcp`).
 ## Install
 
 ```bash
-npm install --save-dev @to-skills/target-fastmcp
+npm install --save-dev @skillit/target-fastmcp
 ```
 
-The adapter is loaded by `@to-skills/mcp` on demand when you pass `--invocation cli:fastmcp`. Consumers of the rendered SKILL.md additionally need a Python environment with `fastmcp` installed — see Setup commands below.
+The adapter is loaded by `@skillit/mcp` on demand when you pass `--invocation cli:fastmcp`. Consumers of the rendered SKILL.md additionally need a Python environment with `fastmcp` installed — see Setup commands below.
 
 ---
 
@@ -26,7 +26,7 @@ Pick `cli:fastmcp` when **the agent harness has a shell tool but cannot speak MC
 - You want to use fastmcp's richer Python-side ergonomics (server authoring, debugging) end-to-end.
 - The harness machine has Python pre-installed but not Node.
 
-If neither of those applies, `cli:mcpc` is the lighter alternative — see [`@to-skills/target-mcpc`](../target-mcpc/).
+If neither of those applies, `cli:mcpc` is the lighter alternative — see [`@skillit/target-mcpc`](../target-mcpc/).
 
 ---
 
@@ -88,7 +88,7 @@ pyfastmcp list
 | Field                        | Value                                         |
 | ---------------------------- | --------------------------------------------- |
 | `target`                     | `'cli:fastmcp'`                               |
-| `fingerprint.adapter`        | `'@to-skills/target-fastmcp'`                 |
+| `fingerprint.adapter`        | `'@skillit/target-fastmcp'`                   |
 | `fingerprint.version`        | This package's `version` from `package.json`. |
 | `fingerprint.targetCliRange` | `'fastmcp@^2'`                                |
 
@@ -99,8 +99,8 @@ Future major versions of fastmcp that change the `call` arg shape MUST bump this
 ## Programmatic use
 
 ```ts
-import FastMcpAdapter from '@to-skills/target-fastmcp';
-import { renderSkill } from '@to-skills/core';
+import FastMcpAdapter from '@skillit/target-fastmcp';
+import { renderSkill } from '@skillit/core';
 
 const rendered = await renderSkill(skill, { invocation: FastMcpAdapter });
 ```
@@ -109,7 +109,7 @@ const rendered = await renderSkill(skill, { invocation: FastMcpAdapter });
 
 ## Further reading
 
-- [`@to-skills/mcp` README](../mcp/README.md) — host package, CLI usage.
+- [`@skillit/mcp` README](../mcp/README.md) — host package, CLI usage.
 - [`docs/adapter-authoring.md`](../mcp/docs/adapter-authoring.md) — building your own invocation adapter.
 
 ## License

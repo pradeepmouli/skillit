@@ -45,7 +45,7 @@ describe('buildProgram', () => {
 
   it('builds a Command with name, description, version, and both subcommands', () => {
     const program = buildProgram();
-    expect(program.name()).toBe('to-skills-mcp');
+    expect(program.name()).toBe('skillit-mcp');
     expect(program.description()).toMatch(/Extract or bundle MCP servers/i);
     const subNames = program.commands.map((c) => c.name()).sort();
     expect(subNames).toEqual(['bundle', 'extract']);
@@ -72,7 +72,7 @@ describe('buildProgram', () => {
     // TRANSPORT_FAILED (no package.json) — proves the action ran, didn't
     // throw the old stub message, and didn't try to extract.
     const program = makeProgram();
-    const dir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-stub-'));
+    const dir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-stub-'));
     try {
       await expect(
         program.parseAsync(['node', 'bin', 'bundle', '--package-root', dir])
@@ -244,7 +244,7 @@ describe('buildProgram', () => {
     let workDir: string;
 
     beforeEach(() => {
-      workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cli-test-'));
+      workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cli-test-'));
     });
 
     afterEach(() => {

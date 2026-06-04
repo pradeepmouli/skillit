@@ -39,8 +39,8 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { canonicalize, renderSkill, writeSkills } from '@to-skills/core';
-import type { RenderedFile, RenderedSkill } from '@to-skills/core';
+import { canonicalize, renderSkill, writeSkills } from '@skillit/core';
+import type { RenderedFile, RenderedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { bundleMcpSkill, extractMcpSkill, loadAdapterAsync } from '../../src/index.js';
 
@@ -86,7 +86,7 @@ describe.skipIf(!RUN)('programmatic vs bundle — byte-identical output (SC-007)
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-prog-vs-bundle-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-prog-vs-bundle-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });

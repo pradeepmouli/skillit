@@ -13,7 +13,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Command } from 'commander';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const extractCalls: Array<{ skillName?: string; installTargets?: readonly string[] }> = [];
@@ -58,7 +58,7 @@ describe('extract --invocation flag', () => {
   let stdoutLines: string[];
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cli-inv-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cli-inv-'));
     extractCalls.length = 0;
     stdoutLines = [];
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
@@ -152,20 +152,20 @@ describe('extract --invocation flag', () => {
       expect(existsSync(path.join(root, 'demo', 'SKILL.md'))).toBe(true);
     }
 
-    expect(existsSync(path.join(workDir, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
-    expect(existsSync(path.join(installA, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(installB, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(workDir, 'skillit-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(installA, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(installB, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
   });
 
   it('allows existing bundled guidance in install targets before extract runs', async () => {
     const installTarget = path.join(workDir, '.claude', 'skills');
-    const guidanceDir = path.join(installTarget, 'to-skills-mcp-docs');
+    const guidanceDir = path.join(installTarget, 'skillit-mcp-docs');
     mkdirSync(guidanceDir, { recursive: true });
     writeFileSync(
       path.join(guidanceDir, 'SKILL.md'),
       [
         '---',
-        'name: to-skills-mcp-docs',
+        'name: skillit-mcp-docs',
         'version: 0.7.0',
         'toSkills:',
         '  managed: bundled-guidance',
@@ -186,7 +186,7 @@ describe('extract --invocation flag', () => {
       installTarget
     ]);
     expect(extractCalls).toHaveLength(1);
-    expect(existsSync(path.join(installTarget, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(installTarget, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
   });
 
   it('cli:mcpc render emits generated-by frontmatter (no mcp: block)', async () => {

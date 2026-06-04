@@ -2,19 +2,19 @@
 
 ## Problem
 
-to-skills has no documentation site. The generated skills serve as API reference but there's no prose documentation — getting started guide, conventions reference, architecture overview, or CLI usage guide. Additionally, the `@to-skills/docusaurus` adapter is a passive file reader that misses Docusaurus/VitePress config context. Since we chose VitePress, we need a proper VitePress plugin that receives site config (including sidebar ordering) through Vite's plugin system.
+to-skills has no documentation site. The generated skills serve as API reference but there's no prose documentation — getting started guide, conventions reference, architecture overview, or CLI usage guide. Additionally, the `@skillit/docusaurus` adapter is a passive file reader that misses Docusaurus/VitePress config context. Since we chose VitePress, we need a proper VitePress plugin that receives site config (including sidebar ordering) through Vite's plugin system.
 
 ## Solution
 
 Two deliverables:
 
-1. **`@to-skills/vitepress`** — a Vite plugin registered in `.vitepress/config.mts` that receives VitePress config through Vite's plugin hooks, uses the sidebar tree for authoritative document ordering, scans markdown docs, and generates skills at build time.
+1. **`@skillit/vitepress`** — a Vite plugin registered in `.vitepress/config.mts` that receives VitePress config through Vite's plugin hooks, uses the sidebar tree for authoritative document ordering, scans markdown docs, and generates skills at build time.
 
-2. **VitePress docs site for to-skills** — prose documentation deployed to GitHub Pages, with TypeDoc-generated API reference alongside hand-written guides. Uses `@to-skills/vitepress` to dogfood skill generation from its own docs.
+2. **VitePress docs site for to-skills** — prose documentation deployed to GitHub Pages, with TypeDoc-generated API reference alongside hand-written guides. Uses `@skillit/vitepress` to dogfood skill generation from its own docs.
 
 ## Architecture
 
-### `@to-skills/vitepress` Package
+### `@skillit/vitepress` Package
 
 ```
 packages/vitepress/
@@ -35,7 +35,7 @@ packages/vitepress/
 ```typescript
 // .vitepress/config.mts
 import { defineConfig } from 'vitepress';
-import { toSkills } from '@to-skills/vitepress';
+import { toSkills } from '@skillit/vitepress';
 
 export default defineConfig({
   vite: {
@@ -183,7 +183,7 @@ website/
 ```typescript
 // website/.vitepress/config.mts
 import { defineConfig } from 'vitepress';
-import { toSkills } from '@to-skills/vitepress';
+import { toSkills } from '@skillit/vitepress';
 import typedocSidebar from '../docs/api/typedoc-sidebar.json';
 
 export default defineConfig({
@@ -295,7 +295,7 @@ When the site builds:
 
 1. `typedoc-vitepress-theme` generates API reference into `docs/api/`
 2. VitePress builds the site from `docs/`
-3. `@to-skills/vitepress` plugin runs at `closeBundle`:
+3. `@skillit/vitepress` plugin runs at `closeBundle`:
    - Reads sidebar from VitePress config
    - Scans guide pages in sidebar order
    - Generates `skills/to-skills-docs/SKILL.md` with all prose docs as references
@@ -312,13 +312,13 @@ Result: **four skills** for to-skills:
 
 ## Package Dependencies
 
-### `@to-skills/vitepress`
+### `@skillit/vitepress`
 
 ```json
 {
-  "name": "@to-skills/vitepress",
+  "name": "@skillit/vitepress",
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "peerDependencies": {
     "vitepress": ">=1.0.0"
@@ -341,7 +341,7 @@ VitePress is an optional peer dep — the plugin's types reference VitePress con
     "typedoc": "^0.28.0",
     "typedoc-plugin-markdown": "^4.0.0",
     "typedoc-vitepress-theme": "^2.0.0",
-    "@to-skills/vitepress": "workspace:*"
+    "@skillit/vitepress": "workspace:*"
   }
 }
 ```
@@ -355,4 +355,4 @@ VitePress is an optional peer dep — the plugin's types reference VitePress con
 - **Versioned docs** — single version for now. VitePress versioning can be added later.
 - **Blog** — no blog section. Pure documentation.
 - **i18n** — English only.
-- **Workspace membership** — `website/` is added to `pnpm-workspace.yaml` as a workspace member so it can reference `@to-skills/vitepress` via `workspace:*`.
+- **Workspace membership** — `website/` is added to `pnpm-workspace.yaml` as a workspace member so it can reference `@skillit/vitepress` via `workspace:*`.

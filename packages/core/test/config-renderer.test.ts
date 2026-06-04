@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { renderConfigSurfaceSection, renderConfigReference, renderSkill } from '@to-skills/core';
-import type {
-  ExtractedConfigSurface,
-  ExtractedConfigOption,
-  ExtractedSkill
-} from '@to-skills/core';
+import { renderConfigSurfaceSection, renderConfigReference, renderSkill } from '@skillit/core';
+import type { ExtractedConfigSurface, ExtractedConfigOption, ExtractedSkill } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Factories

@@ -1,8 +1,8 @@
-# Contract — `@to-skills/mcp/adapter-utils` Subpath Module
+# Contract — `@skillit/mcp/adapter-utils` Subpath Module
 
-**Owner**: `@to-skills/mcp`
-**Stability**: public-stable across `@to-skills/mcp@0.x`. Major bump to break.
-**Subpath import**: `import { ... } from '@to-skills/mcp/adapter-utils'`
+**Owner**: `@skillit/mcp`
+**Stability**: public-stable across `@skillit/mcp@0.x`. Major bump to break.
+**Subpath import**: `import { ... } from '@skillit/mcp/adapter-utils'`
 
 ---
 
@@ -10,7 +10,7 @@
 
 Three CLI invocation adapters (`target-mcpc`, `target-fastmcp`, hypothetical third parties) share ~100 lines of byte-identical helper code. This module is the single source of truth — adapters import from here instead of copying.
 
-The host-side `@to-skills/mcp` is not the natural place for these helpers from the user's perspective (they're adapter-author concerns), so they live under a subpath that consumers reach explicitly.
+The host-side `@skillit/mcp` is not the natural place for these helpers from the user's perspective (they're adapter-author concerns), so they live under a subpath that consumers reach explicitly.
 
 ## Exported symbols
 
@@ -55,7 +55,7 @@ Everything else — function header, description block, command line wrapping, p
 
 ```jsonc
 {
-  "name": "@to-skills/mcp",
+  "name": "@skillit/mcp",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

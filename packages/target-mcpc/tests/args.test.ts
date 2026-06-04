@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
-import { classifyParameters } from '@to-skills/mcp';
+import { classifyParameters } from '@skillit/mcp';
 import { encodeMcpcArgs } from '../src/args.js';
 
 function classify(schema: JSONSchema7) {

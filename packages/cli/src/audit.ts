@@ -3,7 +3,7 @@ import type {
   ExtractedConfigOption,
   ExtractedConfigSurface,
   ExtractedSkill
-} from '@to-skills/core';
+} from '@skillit/core';
 
 export interface CliAuditIssue {
   readonly code: `C${number}`;

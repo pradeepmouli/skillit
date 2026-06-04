@@ -1,12 +1,12 @@
 ---
-title: What is to-skills?
+title: What is skillit?
 ---
 
-# to-skills
+# skillit
 
 > Generate AI agent skills from your TypeScript documentation.
 
-to-skills is a plugin ecosystem that transforms your existing JSDoc, CLI definitions, and prose docs into structured [SKILL.md](https://agentskills.io) files that LLMs can discover and use.
+skillit is a plugin ecosystem that transforms your existing JSDoc, CLI definitions, and prose docs into structured [SKILL.md](https://agentskills.io) files that LLMs can discover and use.
 
 ## Why?
 
@@ -21,7 +21,7 @@ LLMs are great at code — but they don't know YOUR library's API, trade-offs, a
 ## Quick Install
 
 ```bash
-pnpm add -D typedoc-plugin-to-skills
+pnpm add -D typedoc-plugin-skillit
 pnpm typedoc
 ```
 

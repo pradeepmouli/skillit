@@ -30,7 +30,7 @@ describe.skipIf(!RUN)('bundle integration: files-field warning', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-fw-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-fw-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
     // Rewrite package.json with `files` omitting "skills".

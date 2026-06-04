@@ -1,7 +1,7 @@
 /**
  * Bundle-mode `package.json` config reader.
  *
- * Reads the host package's `package.json` and parses the `to-skills.mcp` field
+ * Reads the host package's `package.json` and parses the `skillit.mcp` field
  * into a normalized array of {@link NormalizedBundleEntry} ready for the bundle
  * orchestrator. Entry-or-array shape, kebab-skill-name validation, invocation-
  * target validation, duplicate-skill-name detection, and `bin` derivation all
@@ -11,7 +11,7 @@
  * runtime so the package keeps its zero-dep stance for config parsing.
  *
  * Failure modes (all surface as {@link McpError}):
- *  - `TRANSPORT_FAILED` — package.json missing, malformed JSON, or `to-skills.mcp`
+ *  - `TRANSPORT_FAILED` — package.json missing, malformed JSON, or `skillit.mcp`
  *    field absent. Validation errors (bad schema) also use this code so callers
  *    see a stable IO/config-failure code; the message carries the entry-index
  *    and key for actionable diagnosis.
@@ -28,7 +28,7 @@ import { McpError } from '../errors.js';
 import type { InvocationTarget } from '../adapter/types.js';
 
 /**
- * A single MCP-server entry from `to-skills.mcp`, normalized against the schema
+ * A single MCP-server entry from `skillit.mcp`, normalized against the schema
  * in `contracts/package-json-config.md`.
  *
  * - `command`/`args` are populated either from the user's explicit fields or
@@ -60,14 +60,14 @@ interface PackageJson {
   name?: string;
   bin?: string | Record<string, string>;
   files?: string[];
-  'to-skills'?: { mcp?: unknown };
+  skillit?: { mcp?: unknown };
 }
 
 const SKILL_NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const INVOCATION_TARGET_PATTERN = /^(mcp-protocol|cli:[a-z0-9][a-z0-9-]*)$/;
 
 /**
- * Read and normalize `to-skills.mcp` from `<packageRoot>/package.json`.
+ * Read and normalize `skillit.mcp` from `<packageRoot>/package.json`.
  *
  * Validates each entry against the schema in `contracts/package-json-config.md`,
  * derives missing `command`/`args` from `package.json.bin` when possible, and
@@ -103,19 +103,19 @@ export async function readBundleConfig(packageRoot: string): Promise<NormalizedB
     );
   }
 
-  // Distinguish "no to-skills section at all" from "to-skills exists but mcp is
+  // Distinguish "no skillit section at all" from "skillit exists but mcp is
   // missing/null" so the error message tells the user exactly what to add.
-  const toSkills = pkg['to-skills'];
-  if (toSkills === undefined || toSkills === null) {
+  const skillitConfig = pkg['skillit'];
+  if (skillitConfig === undefined || skillitConfig === null) {
     throw new McpError(
-      'to-skills section is missing from package.json. Add { "to-skills": { "mcp": { "skillName": "..." } } }. See contracts/package-json-config.md',
+      'skillit section is missing from package.json. Add { "skillit": { "mcp": { "skillName": "..." } } }. See contracts/package-json-config.md',
       'TRANSPORT_FAILED'
     );
   }
-  const mcpField = toSkills.mcp;
+  const mcpField = skillitConfig.mcp;
   if (mcpField === undefined || mcpField === null) {
     throw new McpError(
-      'to-skills.mcp field is required in package.json. See contracts/package-json-config.md',
+      'skillit.mcp field is required in package.json. See contracts/package-json-config.md',
       'TRANSPORT_FAILED'
     );
   }
@@ -123,7 +123,7 @@ export async function readBundleConfig(packageRoot: string): Promise<NormalizedB
   // Normalize entry-or-array → array.
   const rawEntries: unknown[] = Array.isArray(mcpField) ? mcpField : [mcpField];
   if (rawEntries.length === 0) {
-    throw new McpError('to-skills.mcp must contain at least one server entry.', 'TRANSPORT_FAILED');
+    throw new McpError('skillit.mcp must contain at least one server entry.', 'TRANSPORT_FAILED');
   }
 
   const seenNames = new Set<string>();
@@ -132,7 +132,7 @@ export async function readBundleConfig(packageRoot: string): Promise<NormalizedB
     const entry = validateAndNormalize(rawEntries[i], i, pkg, packageRoot);
     if (seenNames.has(entry.skillName)) {
       throw new McpError(
-        `Duplicate skillName in to-skills.mcp: ${entry.skillName}`,
+        `Duplicate skillName in skillit.mcp: ${entry.skillName}`,
         'DUPLICATE_SKILL_NAME'
       );
     }
@@ -143,7 +143,7 @@ export async function readBundleConfig(packageRoot: string): Promise<NormalizedB
 }
 
 /**
- * Validate a single raw entry from `to-skills.mcp` and produce a
+ * Validate a single raw entry from `skillit.mcp` and produce a
  * {@link NormalizedBundleEntry}. Pulls `command`/`args` from the entry first
  * and falls back to `package.json.bin` derivation.
  */
@@ -272,8 +272,8 @@ function deriveFromBin(
   const bin = pkg.bin;
   if (bin === undefined) {
     throw new McpError(
-      `to-skills.mcp entry "${skillName}" has no command set and package.json has no "bin" field; ` +
-        `set command/args explicitly in to-skills.mcp.`,
+      `skillit.mcp entry "${skillName}" has no command set and package.json has no "bin" field; ` +
+        `set command/args explicitly in skillit.mcp.`,
       'MISSING_LAUNCH_COMMAND'
     );
   }
@@ -282,8 +282,8 @@ function deriveFromBin(
   }
   if (typeof bin !== 'object' || Array.isArray(bin)) {
     throw new McpError(
-      `to-skills.mcp entry "${skillName}": package.json "bin" has unsupported shape; ` +
-        `set command/args explicitly in to-skills.mcp.`,
+      `skillit.mcp entry "${skillName}": package.json "bin" has unsupported shape; ` +
+        `set command/args explicitly in skillit.mcp.`,
       'MISSING_LAUNCH_COMMAND'
     );
   }
@@ -293,8 +293,8 @@ function deriveFromBin(
     const path = bin[onlyKey];
     if (typeof path !== 'string') {
       throw new McpError(
-        `to-skills.mcp entry "${skillName}": package.json "bin.${onlyKey}" is not a string; ` +
-          `set command/args explicitly in to-skills.mcp.`,
+        `skillit.mcp entry "${skillName}": package.json "bin.${onlyKey}" is not a string; ` +
+          `set command/args explicitly in skillit.mcp.`,
         'MISSING_LAUNCH_COMMAND'
       );
     }
@@ -306,7 +306,7 @@ function deriveFromBin(
     const selectedPath = bin[selectedBin];
     if (typeof selectedPath !== 'string') {
       throw new McpError(
-        `to-skills.mcp entry "${skillName}": package.json "bin.${selectedBin}" is not a string.`,
+        `skillit.mcp entry "${skillName}": package.json "bin.${selectedBin}" is not a string.`,
         'MISSING_LAUNCH_COMMAND'
       );
     }
@@ -317,9 +317,9 @@ function deriveFromBin(
     };
   }
   throw new McpError(
-    `to-skills.mcp entry "${skillName}" has no command set; package.json bin is multi-bin so ` +
+    `skillit.mcp entry "${skillName}" has no command set; package.json bin is multi-bin so ` +
       `the launch command cannot be derived. Set "binName": "<one of: ${keys.join(', ')}>" ` +
-      `in to-skills.mcp, or set command/args explicitly.`,
+      `in skillit.mcp, or set command/args explicitly.`,
     'MISSING_LAUNCH_COMMAND'
   );
 }

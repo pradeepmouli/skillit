@@ -20,7 +20,7 @@ import type {
   ExtractedDocument,
   ExtractedConfigSurface,
   ExtractedConfigOption
-} from '@to-skills/core';
+} from '@skillit/core';
 
 /** Package metadata to enrich extracted skills */
 export interface PackageMetadata {

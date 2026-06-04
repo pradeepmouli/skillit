@@ -109,7 +109,7 @@ export function renderSkill(
     const setCount = (hasPackage ? 1 : 0) + (hasHttp ? 1 : 0) + (hasStdio ? 1 : 0);
 
     if (setCount > 1) {
-      // NOTE: McpError lives in @to-skills/mcp and core has no dependency on
+      // NOTE: McpError lives in @skillit/mcp and core has no dependency on
       // mcp. Plain Error is fine — the mcp wrapper that invokes renderSkill
       // (bundle.ts → recordFailure) maps non-McpError throws onto
       // TRANSPORT_FAILED so the CLI exit-code mapper still sees a stable code.

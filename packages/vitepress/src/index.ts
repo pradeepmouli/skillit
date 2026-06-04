@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { parseMarkdownDoc, renderSkill, writeSkills } from '@to-skills/core';
-import type { ExtractedDocument, ExtractedSkill } from '@to-skills/core';
+import { parseMarkdownDoc, renderSkill, writeSkills } from '@skillit/core';
+import type { ExtractedDocument, ExtractedSkill } from '@skillit/core';
 import { walkSidebar } from './sidebar-walker.js';
 
 // Minimal Vite Plugin interface — avoids a hard dep on the `vite` package.
@@ -61,7 +61,7 @@ export function toSkills(options?: ToSkillsVitePressOptions): VitePlugin {
   let srcDir = '';
 
   return {
-    name: 'to-skills-vitepress',
+    name: 'skillit-vitepress',
     enforce: 'post',
 
     config(config: any) {
@@ -134,7 +134,7 @@ export function toSkills(options?: ToSkillsVitePressOptions): VitePlugin {
 
       // 6. Log output
       const allFiles = [rendered.skill, ...rendered.references];
-      console.log(`[to-skills] Generated ${allFiles.length} file(s) → ${skillsOutDir}`);
+      console.log(`[skillit] Generated ${allFiles.length} file(s) → ${skillsOutDir}`);
       for (const file of allFiles) {
         console.log(`  ${file.filename}`);
       }

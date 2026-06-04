@@ -1,20 +1,20 @@
 {
-  "name": "@to-skills/target-mcpc",
+  "name": "@skillit/target-mcpc",
   "version": "0.2.0",
-  "description": "mcpc CLI-as-proxy invocation-target adapter for @to-skills/mcp — emits shell-command skills consumable by any agent with a shell tool, via Apify's mcpc CLI",
+  "description": "mcpc CLI-as-proxy invocation-target adapter for @skillit/mcp — emits shell-command skills consumable by any agent with a shell tool, via Apify's mcpc CLI",
   "keywords": [
     "agent-skills",
     "ai",
     "mcp",
     "mcpc",
     "model-context-protocol",
-    "to-skills"
+    "skillit"
   ],
   "license": "MIT",
   "author": "Pradeep Mouli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/to-skills.git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/target-mcpc"
   },
   "funding": {
@@ -40,8 +40,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*",
-    "@to-skills/mcp": "workspace:*"
+    "@skillit/core": "workspace:*",
+    "@skillit/mcp": "workspace:*"
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",

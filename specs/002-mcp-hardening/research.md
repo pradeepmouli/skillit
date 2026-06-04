@@ -1,4 +1,4 @@
-# Research — `@to-skills/mcp` Hardening
+# Research — `@skillit/mcp` Hardening
 
 **Feature**: `002-mcp-hardening`
 **Date**: 2026-04-25
@@ -175,7 +175,7 @@ try {
 
 ```ts
 // adapter-render-context-types.test-d.ts
-import type { AdapterRenderContext } from '@to-skills/mcp';
+import type { AdapterRenderContext } from '@skillit/mcp';
 import { test } from 'vitest';
 
 test('AdapterRenderContext rejects two-arms-set construction', () => {
@@ -204,9 +204,9 @@ test('AdapterRenderContext rejects two-arms-set construction', () => {
 
 ---
 
-## R6. Subpath export for `@to-skills/mcp/adapter-utils`
+## R6. Subpath export for `@skillit/mcp/adapter-utils`
 
-**Decision**: Add an `exports` subpath in `packages/mcp/package.json` so adapter packages can `import { resolveLaunchCommand } from '@to-skills/mcp/adapter-utils'`.
+**Decision**: Add an `exports` subpath in `packages/mcp/package.json` so adapter packages can `import { resolveLaunchCommand } from '@skillit/mcp/adapter-utils'`.
 
 ```jsonc
 {
@@ -222,14 +222,14 @@ test('AdapterRenderContext rejects two-arms-set construction', () => {
 
 **Rationale**:
 
-- Subpath exports keep the main entrypoint clean — adapter-internals don't pollute `@to-skills/mcp`'s public README surface.
+- Subpath exports keep the main entrypoint clean — adapter-internals don't pollute `@skillit/mcp`'s public README surface.
 - TypeScript respects `exports` subpaths since 4.7 (with `"moduleResolution": "Bundler"` or `"NodeNext"`); the workspace already uses NodeNext-compatible config.
 - Stability docs go in `contracts/adapter-utils.md`: which symbols are stable vs. internal. Three CLI adapters (target-mcpc, target-fastmcp, hypothetical target-foo) consume it; bumping the major-version of the subpath is decoupled from the main package's version.
 
 **Alternatives considered**:
 
-- **Re-export from `@to-skills/mcp` main**: would make every helper part of the public surface forever; rejected.
-- **Separate `@to-skills/adapter-utils` package**: adds release ceremony for what's effectively three function helpers; rejected (FR-H004 explicitly says "shared module under `@to-skills/mcp/adapter-utils`").
+- **Re-export from `@skillit/mcp` main**: would make every helper part of the public surface forever; rejected.
+- **Separate `@skillit/adapter-utils` package**: adds release ceremony for what's effectively three function helpers; rejected (FR-H004 explicitly says "shared module under `@skillit/mcp/adapter-utils`").
 
 ---
 

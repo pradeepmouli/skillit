@@ -41,9 +41,9 @@ describe('writeCliSkill', () => {
     );
 
     expect(existsSync(path.join(outDir, 'demo-cli', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(outDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(outDir, 'skillit-cli-docs', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(installDir, 'demo-cli', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(installDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(installDir, 'skillit-cli-docs', 'SKILL.md'))).toBe(true);
   });
 
   it('respects includeOutDir=false for extracted CLI skills', () => {
@@ -69,8 +69,8 @@ describe('writeCliSkill', () => {
     );
 
     expect(existsSync(path.join(outDir, 'demo-cli', 'SKILL.md'))).toBe(false);
-    expect(existsSync(path.join(outDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(outDir, 'skillit-cli-docs', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(installDir, 'demo-cli', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(installDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(installDir, 'skillit-cli-docs', 'SKILL.md'))).toBe(true);
   });
 });

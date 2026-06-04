@@ -1,10 +1,10 @@
-# to-skills
+# skillit
 
 > Compile-time generator of AI agent skills from your codebase. Inline docs, CLI definitions, config schemas, and examples compile into progressively disclosed SKILL.md files that any LLM can discover.
 
-## @to-skills/core
+## @skillit/core
 
-Shared types, renderers, and utilities for the to-skills ecosystem.
+Shared types, renderers, and utilities for the skillit ecosystem.
 
 Core provides the intermediate representation (ExtractedSkill), the SKILL.md renderer
 with progressive disclosure (lean discovery file + on-demand reference files), the
@@ -391,14 +391,14 @@ A fully parsed markdown document with structured metadata and sections.
 
 ---
 
-## @to-skills/typedoc
+## @skillit/typedoc
 
 TypeDoc plugin that extracts structured AI agent skills from the TypeDoc reflection tree.
 
-Install as `typedoc-plugin-to-skills` for auto-discovery, or import `@to-skills/typedoc`
+Install as `typedoc-plugin-skillit` for auto-discovery, or import `@skillit/typedoc`
 directly. The plugin hooks into TypeDoc's converter to extract functions, classes, types,
 enums, config surfaces, and documents, then renders them as SKILL.md + reference files
-via `@to-skills/core`.
+via `@skillit/core`.
 
 ### load
 
@@ -411,7 +411,7 @@ load(app: Application): void
 
 ---
 
-## @to-skills/cli
+## @skillit/cli
 
 CLI extraction for commander/yargs programs.
 
@@ -420,7 +420,7 @@ Provides a three-phase pipeline for extracting structured skill data from CLI to
 2. **Parse** — fallback: parse `--help` text output when runtime introspection is unavailable
 3. **Correlate** — merge JSDoc metadata from typed config interfaces into CLI option metadata
 
-The result is an `ExtractedSkill` that can be rendered by `@to-skills/core`.
+The result is an `ExtractedSkill` that can be rendered by `@skillit/core`.
 
 ### introspectCommander
 

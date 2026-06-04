@@ -1,4 +1,4 @@
-import type { ExtractedConfigSurface, ExtractedConfigOption } from '@to-skills/core';
+import type { ExtractedConfigSurface, ExtractedConfigOption } from '@skillit/core';
 
 /**
  * Merges JSDoc tag metadata from a typed config interface surface into CLI

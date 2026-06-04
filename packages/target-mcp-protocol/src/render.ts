@@ -1,7 +1,7 @@
 /**
  * `McpProtocolAdapter` — default invocation adapter for MCP-native harnesses.
  *
- * Delegates body rendering to `@to-skills/core`'s default path and injects the
+ * Delegates body rendering to `@skillit/core`'s default path and injects the
  * `mcp:` frontmatter that tells OpenCode/Codex/Cursor how to launch the server.
  * Inherits resources/prompts reference emission from core's shared helpers.
  *
@@ -13,9 +13,9 @@ import type {
   AdapterRenderContext,
   ExtractedSkill,
   RenderedSkill
-} from '@to-skills/core';
-import { renderSkill } from '@to-skills/core';
-import type { InvocationAdapter } from '@to-skills/mcp';
+} from '@skillit/core';
+import { renderSkill } from '@skillit/core';
+import type { InvocationAdapter } from '@skillit/mcp';
 import { emitMcpFrontmatter, type McpLaunchCommand } from './frontmatter.js';
 import { PACKAGE_VERSION } from './version.js';
 
@@ -32,7 +32,7 @@ import { PACKAGE_VERSION } from './version.js';
  * 2. **`mode: 'http'`** — emits a `{ url, headers? }` shape (no shell launch).
  * 3. **`mode: 'stdio'`** — `ctx.launchCommand` is used verbatim.
  *
- * The renderer's invocation-adapter dispatch in `@to-skills/core` guarantees
+ * The renderer's invocation-adapter dispatch in `@skillit/core` guarantees
  * `mode` is always one of these three arms, so the previous runtime
  * `MISSING_LAUNCH_COMMAND` throw is no longer needed at the adapter level.
  * An exhaustive `default` branch is kept for compile-time exhaustiveness.
@@ -51,7 +51,7 @@ export class McpProtocolAdapter implements InvocationAdapter {
 
   constructor() {
     this.fingerprint = {
-      adapter: '@to-skills/target-mcp-protocol',
+      adapter: '@skillit/target-mcp-protocol',
       version: PACKAGE_VERSION
     };
   }

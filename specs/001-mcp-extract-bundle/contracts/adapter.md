@@ -2,7 +2,7 @@
 
 **For**: third-party package authors who want to contribute a new invocation target.
 
-**Package naming**: `@to-skills/target-<name>` (scoped, preferred) or `to-skills-target-<name>` (unscoped fallback).
+**Package naming**: `@skillit/target-<name>` (scoped, preferred) or `to-skills-target-<name>` (unscoped fallback).
 
 **Required export**: default export must be an `InvocationAdapter`.
 
@@ -11,18 +11,18 @@
 ## Interface
 
 ```typescript
-import type { ExtractedSkill, RenderedSkill } from '@to-skills/core';
+import type { ExtractedSkill, RenderedSkill } from '@skillit/core';
 import type {
   InvocationAdapter,
   AdapterContext,
   AdapterFingerprint,
   InvocationTarget
-} from '@to-skills/mcp';
+} from '@skillit/mcp';
 
 export default class MyAdapter implements InvocationAdapter {
   readonly target: InvocationTarget = 'cli:myname';
   readonly fingerprint: AdapterFingerprint = {
-    adapter: '@to-skills/target-myname',
+    adapter: '@skillit/target-myname',
     version: '1.0.0', // MUST match package.json version at build time
     targetCliRange: 'myname@^2' // semver range of the underlying CLI
   };
@@ -33,7 +33,7 @@ export default class MyAdapter implements InvocationAdapter {
     //    - Emit `setup:` section if CLI-based (do NOT emit `mcp:` frontmatter)
     //    - Embed this.fingerprint in the Setup section for FR-IT-012
     // 2. Build references/tools.md, references/resources.md, references/prompts.md
-    //    - Use the tier classifier (helper exported from @to-skills/mcp) to decide per-parameter encoding
+    //    - Use the tier classifier (helper exported from @skillit/mcp) to decide per-parameter encoding
     // 3. Return RenderedSkill
   }
 }
@@ -59,13 +59,13 @@ export default class MyAdapter implements InvocationAdapter {
 - Invoke any MCP tool, read any resource, or execute any prompt. Adapters only see `ExtractedSkill` — they have no live connection.
 - Modify the `ExtractedSkill` passed in. Adapters produce new output; they don't mutate input.
 - Emit `mcp:` frontmatter when `target.startsWith('cli:')`. CLI targets proxy through the external CLI; embedding `mcp:` would confuse consuming harnesses.
-- Depend on `@to-skills/core` internals beyond the exported types (`ExtractedSkill`, `ExtractedResource`, `ExtractedPrompt`, `RenderedSkill`, `RenderedFile`). Use the public surface only.
+- Depend on `@skillit/core` internals beyond the exported types (`ExtractedSkill`, `ExtractedResource`, `ExtractedPrompt`, `RenderedSkill`, `RenderedFile`). Use the public surface only.
 
 ### SHOULD
 
 - Export named helpers for unit testing (e.g., `encodeParameter(plan)` — so a third party can assert on encoding without running a full render).
 - Include a README.md in the adapter package documenting the target CLI's expected version range and any known incompatibilities.
-- Pin the adapter's `@to-skills/core` peer dependency to the same major version the adapter was built against.
+- Pin the adapter's `@skillit/core` peer dependency to the same major version the adapter was built against.
 
 ---
 
@@ -111,8 +111,8 @@ A conformant adapter SHOULD include:
 Adapters are NOT registered in any config file. Installation is the registration:
 
 ```bash
-npm install @to-skills/target-myname
+npm install @skillit/target-myname
 to-skills-mcp extract --command "..." --invocation cli:myname
 ```
 
-The host resolves `cli:myname` → `@to-skills/target-myname` via `require.resolve()` at runtime (Research §5). If resolution fails, the host emits `McpError` with code `ADAPTER_NOT_FOUND` listing the candidates it tried.
+The host resolves `cli:myname` → `@skillit/target-myname` via `require.resolve()` at runtime (Research §5). If resolution fails, the host emits `McpError` with code `ADAPTER_NOT_FOUND` listing the candidates it tried.

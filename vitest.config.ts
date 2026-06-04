@@ -4,8 +4,8 @@ import { resolve } from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@to-skills/core': resolve(__dirname, 'packages/core/src/index.ts'),
-      '@to-skills/typedoc': resolve(__dirname, 'packages/typedoc/src/index.ts')
+      '@skillit/core': resolve(__dirname, 'packages/core/src/index.ts'),
+      '@skillit/typedoc': resolve(__dirname, 'packages/typedoc/src/index.ts')
     }
   },
   test: {
@@ -25,7 +25,7 @@ export default defineConfig({
         branches: 25,
         statements: 30,
         // Core package should maintain high coverage. Renderer thresholds
-        // were lowered when @to-skills/mcp was added: the renderer grew with
+        // were lowered when @skillit/mcp was added: the renderer grew with
         // invocation-adapter dispatch + bodyPrefix + skipDefaultFunctionsRef
         // + canonicalize-gate + references-mcp branches, and the bulk of
         // those code paths are exhaustively tested in `packages/mcp/tests/`
@@ -55,7 +55,7 @@ export default defineConfig({
       // for `*.test-d.ts` files still run via `packages/mcp/vitest.config.ts`
       // (which has `typecheck.enabled: true` scoped to its own tests/types/
       // directory). To exercise SC-H002 explicitly, run
-      // `pnpm --filter @to-skills/mcp test`.
+      // `pnpm --filter @skillit/mcp test`.
       enabled: false
     }
   }

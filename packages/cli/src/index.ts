@@ -6,7 +6,7 @@
  * 2. **Parse** — fallback: parse `--help` text output when runtime introspection is unavailable
  * 3. **Correlate** — merge JSDoc metadata from typed config interfaces into CLI option metadata
  *
- * The result is an `ExtractedSkill` that can be rendered by `@to-skills/core`.
+ * The result is an `ExtractedSkill` that can be rendered by `@skillit/core`.
  *
  * @remarks
  * Commander introspection is preferred over help-text parsing because it captures

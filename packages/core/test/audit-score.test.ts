@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { estimateSkillJudgeScore, formatScoreEstimate } from '@to-skills/core';
-import type { AuditResult, ActionableImprovement } from '@to-skills/core';
+import { estimateSkillJudgeScore, formatScoreEstimate } from '@skillit/core';
+import type { AuditResult, ActionableImprovement } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Fixture helpers

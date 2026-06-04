@@ -1,4 +1,4 @@
-# Data Model — `@to-skills/mcp` Hardening
+# Data Model — `@skillit/mcp` Hardening
 
 **Feature**: `002-mcp-hardening`
 **Date**: 2026-04-25
@@ -234,9 +234,9 @@ Exports moved from `target-mcpc/src/render.ts` (and removed from `target-fastmcp
 | `planForTool`              | `(fn: ExtractedFunction) => Map<string, ParameterPlan>`                   |
 | `parameterToSchema`        | `(p: ExtractedParameter) => JSONSchema7`                                  |
 
-**Subpath export**: `@to-skills/mcp/adapter-utils` (declared in `packages/mcp/package.json`'s `exports` field).
+**Subpath export**: `@skillit/mcp/adapter-utils` (declared in `packages/mcp/package.json`'s `exports` field).
 
-**Stability**: documented in `contracts/adapter-utils.md`. Public-stable for the lifetime of `@to-skills/mcp@0.x` major. Bump major to break.
+**Stability**: documented in `contracts/adapter-utils.md`. Public-stable for the lifetime of `@skillit/mcp@0.x` major. Bump major to break.
 
 ---
 

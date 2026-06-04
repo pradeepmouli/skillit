@@ -1,5 +1,5 @@
 // packages/client/src/model/cli/cli-client.ts
-import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@skillit/core';
 import { buildDraftPrompt, buildReviewPrompt, parseReviewVerdict } from '../anthropic.js';
 import { runCli, type RunCliOptions } from './run.js';
 import type { CliAdapter } from './adapters.js';

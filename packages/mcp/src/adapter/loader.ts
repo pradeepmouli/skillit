@@ -27,8 +27,8 @@ function isEsmOnlyPackageError(err: unknown): boolean {
  * Resolve an invocation target to its adapter package.
  *
  * Resolution algorithm (per research.md §5):
- * - `mcp-protocol` → `@to-skills/target-mcp-protocol`
- * - `cli:<name>` → tries `@to-skills/target-<name>` first, then `to-skills-target-<name>`
+ * - `mcp-protocol` → `@skillit/target-mcp-protocol`
+ * - `cli:<name>` → tries `@skillit/target-<name>` first, then `skillit-target-<name>`
  *
  * The module's default export MUST be an `InvocationAdapter`. Results are cached
  * per-process — calling twice with the same target returns the same adapter instance.
@@ -72,7 +72,7 @@ export function loadAdapter(target: InvocationTarget): InvocationAdapter {
 }
 
 function resolveCandidates(target: InvocationTarget): string[] {
-  if (target === 'mcp-protocol') return ['@to-skills/target-mcp-protocol'];
+  if (target === 'mcp-protocol') return ['@skillit/target-mcp-protocol'];
   if (target.startsWith('cli:')) {
     const name = target.slice('cli:'.length);
     if (!name) {
@@ -81,7 +81,7 @@ function resolveCandidates(target: InvocationTarget): string[] {
         'UNKNOWN_TARGET'
       );
     }
-    return [`@to-skills/target-${name}`, `to-skills-target-${name}`];
+    return [`@skillit/target-${name}`, `skillit-target-${name}`];
   }
   throw new McpError(`Unknown target form: '${target}'`, 'UNKNOWN_TARGET');
 }

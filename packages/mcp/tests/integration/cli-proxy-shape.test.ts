@@ -31,7 +31,7 @@ describe.skipIf(!RUN)('cli-proxy shape: tools.md follows documented mcpc syntax'
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cli-shape-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cli-shape-'));
   });
 
   afterAll(() => {

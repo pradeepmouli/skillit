@@ -1,6 +1,6 @@
-# Contributing to to-skills
+# Contributing to skillit
 
-Thank you for your interest in contributing to to-skills! This document covers how to get set up and submit changes. For coding standards and conventions, see [AGENTS.md](./AGENTS.md).
+Thank you for your interest in contributing to skillit! This document covers how to get set up and submit changes. For coding standards and conventions, see [AGENTS.md](./AGENTS.md).
 
 ## Table of Contents
 
@@ -25,14 +25,14 @@ Thank you for your interest in contributing to to-skills! This document covers h
 2. Clone your fork locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/to-skills.git
-cd to-skills
+git clone https://github.com/YOUR_USERNAME/skillit.git
+cd skillit
 ```
 
 3. Add the upstream repository:
 
 ```bash
-git remote add upstream https://github.com/pradeepmouli/to-skills.git
+git remote add upstream https://github.com/pradeepmouli/skillit.git
 ```
 
 ## Development Setup
@@ -82,10 +82,10 @@ pnpm type-check && pnpm lint && pnpm test
 
 ## Project Structure
 
-to-skills is a pnpm monorepo with three packages:
+skillit is a pnpm monorepo with three packages:
 
 ```
-to-skills/
+skillit/
 ├── packages/
 │   ├── core/               # Shared types, renderers, token budgeting, writer
 │   │   └── src/
@@ -96,7 +96,7 @@ to-skills/
 │   │   └── src/
 │   │       ├── plugin.ts   # TypeDoc lifecycle hooks
 │   │       └── extractor.ts # Reflection tree walker
-│   └── typedoc-plugin/     # Auto-discovery wrapper (npm: typedoc-plugin-to-skills)
+│   └── typedoc-plugin/     # Auto-discovery wrapper (npm: typedoc-plugin-skillit)
 ├── AGENTS.md               # Coding standards and conventions
 └── CONTRIBUTING.md         # This file
 ```
@@ -105,7 +105,7 @@ to-skills/
 
 - **packages/core** — Framework-agnostic types (`ExtractedSkill` hierarchy), renderers (SKILL.md, llms.txt), token budgeting utilities, and the file writer
 - **packages/typedoc** — TypeDoc plugin that hooks into the TypeDoc lifecycle (`plugin.ts`) and walks the reflection tree to extract skill metadata (`extractor.ts`)
-- **packages/typedoc-plugin** — Thin auto-discovery wrapper published to npm as `typedoc-plugin-to-skills`
+- **packages/typedoc-plugin** — Thin auto-discovery wrapper published to npm as `typedoc-plugin-skillit`
 
 ## Testing
 
@@ -147,7 +147,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 feat(core): add token budget enforcement to SKILL.md renderer
 fix(typedoc): handle missing @skill tag gracefully
-docs: rewrite CONTRIBUTING.md for to-skills
+docs: rewrite CONTRIBUTING.md for skillit
 test(core): add llms.txt renderer edge case coverage
 ```
 
@@ -180,7 +180,7 @@ git commit -m "feat(scope): description"
 git push origin feat/your-feature-name
 ```
 
-6. Open a Pull Request against `master` on [github.com/pradeepmouli/to-skills](https://github.com/pradeepmouli/to-skills)
+6. Open a Pull Request against `master` on [github.com/pradeepmouli/skillit](https://github.com/pradeepmouli/skillit)
 
 ### PR Guidelines
 
@@ -207,10 +207,10 @@ Maintainers will publish releases when ready.
 
 ## Getting Help
 
-- **Questions**: Open a [Discussion](https://github.com/pradeepmouli/to-skills/discussions)
-- **Bug Reports**: Open an [Issue](https://github.com/pradeepmouli/to-skills/issues)
-- **Feature Requests**: Open an [Issue](https://github.com/pradeepmouli/to-skills/issues) with the `enhancement` label
+- **Questions**: Open a [Discussion](https://github.com/pradeepmouli/skillit/discussions)
+- **Bug Reports**: Open an [Issue](https://github.com/pradeepmouli/skillit/issues)
+- **Feature Requests**: Open an [Issue](https://github.com/pradeepmouli/skillit/issues) with the `enhancement` label
 
 ## License
 
-By contributing to to-skills, you agree that your contributions will be licensed under the MIT License.
+By contributing to skillit, you agree that your contributions will be licensed under the MIT License.
