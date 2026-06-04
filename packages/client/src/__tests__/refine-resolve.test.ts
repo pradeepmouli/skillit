@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { resolveRefineSource } from '../commands/refine.js';
+import { resolveModelClientKind, resolveRefineSource } from '../commands/refine.js';
+
+describe('resolveModelClientKind', () => {
+  it("defaults to 'api' when --model-client is omitted", () => {
+    expect(resolveModelClientKind(undefined)).toBe('api');
+  });
+  it('passes through a provided kind', () => {
+    expect(resolveModelClientKind('claude')).toBe('claude');
+  });
+});
 
 describe('resolveRefineSource', () => {
   it('explicit --source cli wins over detection', () => {
