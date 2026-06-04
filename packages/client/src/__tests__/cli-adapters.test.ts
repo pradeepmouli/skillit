@@ -22,6 +22,11 @@ describe('claudeAdapter', () => {
     const stdout = JSON.stringify({ type: 'result', is_error: true, result: 'nope' });
     expect(() => claudeAdapter.extractResult(stdout)).toThrow(/claude/i);
   });
+
+  it('returns an empty result string (does not editorialize)', () => {
+    const stdout = JSON.stringify({ type: 'result', is_error: false, result: '' });
+    expect(claudeAdapter.extractResult(stdout)).toBe('');
+  });
 });
 
 describe('codexAdapter', () => {
@@ -45,8 +50,21 @@ describe('codexAdapter', () => {
     expect(codexAdapter.extractResult(stdout)).toBe('final');
   });
 
+  it('returns an empty final agent_message, overriding an earlier non-empty one (last-wins on empty)', () => {
+    const stdout = [
+      JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: 'first' } }),
+      JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: '' } })
+    ].join('\n');
+    expect(codexAdapter.extractResult(stdout)).toBe('');
+  });
+
   it('throws when no agent_message is present', () => {
     expect(() => codexAdapter.extractResult('{"type":"turn.completed"}')).toThrow(/codex/i);
+  });
+
+  it('surfaces a turn.failed signal in the no-message error', () => {
+    const stdout = JSON.stringify({ type: 'turn.failed' });
+    expect(() => codexAdapter.extractResult(stdout)).toThrow(/turn\.failed/);
   });
 });
 
@@ -71,10 +89,23 @@ describe('copilotAdapter', () => {
     expect(copilotAdapter.extractResult(stdout)).toBe('the answer');
   });
 
+  it('returns an empty assistant.message content (does not editorialize)', () => {
+    const stdout = [
+      JSON.stringify({ type: 'assistant.message', data: { content: 'first', toolRequests: [] } }),
+      JSON.stringify({ type: 'assistant.message', data: { content: '', toolRequests: [] } })
+    ].join('\n');
+    expect(copilotAdapter.extractResult(stdout)).toBe('');
+  });
+
   it('throws when no assistant.message is present', () => {
     expect(() => copilotAdapter.extractResult('{"type":"result","exitCode":0}')).toThrow(
       /copilot/i
     );
+  });
+
+  it('surfaces a nonzero result exitCode in the no-message error', () => {
+    const stdout = JSON.stringify({ type: 'result', exitCode: 1 });
+    expect(() => copilotAdapter.extractResult(stdout)).toThrow(/exitCode 1/);
   });
 });
 

@@ -21,6 +21,62 @@ export interface CliAdapter {
   extractResult(stdout: string): string;
 }
 
+/** Minimal shape a JSONL line is narrowed to before an adapter inspects it. */
+interface JsonlEvent {
+  type?: string;
+  item?: { type?: string; text?: string };
+  data?: { content?: string };
+  exitCode?: number;
+}
+
+/**
+ * Walk a JSONL stream (one JSON object per line), skip non-`{` log/noise lines
+ * and unparseable lines, and return the LAST value `extract` accepts. Returning
+ * `''` from `extract` is a valid match (the empty answer wins last) — only
+ * `undefined` means "not a match", so the adapter never editorializes empty
+ * model output.
+ */
+function lastJsonlMatch<T>(
+  stdout: string,
+  extract: (evt: JsonlEvent) => T | undefined
+): T | undefined {
+  let last: T | undefined;
+  for (const line of stdout.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('{')) continue;
+    let evt: JsonlEvent;
+    try {
+      evt = JSON.parse(trimmed) as JsonlEvent;
+    } catch {
+      continue;
+    }
+    const got = extract(evt);
+    if (got !== undefined) last = got;
+  }
+  return last;
+}
+
+/** Best-effort scan for a JSONL failure signal, used to enrich no-match errors. */
+function jsonlFailureSignal(
+  stdout: string,
+  detect: (evt: JsonlEvent) => string | undefined
+): string | undefined {
+  let signal: string | undefined;
+  for (const line of stdout.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('{')) continue;
+    let evt: JsonlEvent;
+    try {
+      evt = JSON.parse(trimmed) as JsonlEvent;
+    } catch {
+      continue;
+    }
+    const got = detect(evt);
+    if (got !== undefined) signal = got;
+  }
+  return signal;
+}
+
 export const claudeAdapter: CliAdapter = {
   name: 'claude',
   invocation(role, prompt) {
@@ -55,22 +111,23 @@ export const codexAdapter: CliAdapter = {
     return { cmd: 'codex', args: ['exec', '--json'], input: prompt };
   },
   extractResult(stdout) {
-    let last: string | undefined;
-    for (const line of stdout.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith('{')) continue; // skip log/noise lines
-      let evt: { type?: string; item?: { type?: string; text?: string } };
-      try {
-        evt = JSON.parse(trimmed) as typeof evt;
-      } catch {
-        continue;
-      }
-      if (evt.type === 'item.completed' && evt.item?.type === 'agent_message' && evt.item.text) {
-        last = evt.item.text;
-      }
-    }
+    const last = lastJsonlMatch(stdout, (evt) =>
+      evt.type === 'item.completed' &&
+      evt.item?.type === 'agent_message' &&
+      typeof evt.item.text === 'string'
+        ? evt.item.text
+        : undefined
+    );
     if (last === undefined) {
-      throw new Error(`codex: no agent_message in output: ${stdout.slice(0, 200)}`);
+      const failure = jsonlFailureSignal(stdout, (evt) =>
+        evt.type === 'turn.failed' || (evt.type === 'item.completed' && evt.item?.type === 'error')
+          ? evt.type === 'turn.failed'
+            ? 'turn.failed'
+            : 'item.error'
+          : undefined
+      );
+      const detail = failure !== undefined ? ` (failure signal: ${failure})` : '';
+      throw new Error(`codex: no agent_message in output${detail}: ${stdout.slice(0, 200)}`);
     }
     return last;
   }
@@ -86,22 +143,19 @@ export const copilotAdapter: CliAdapter = {
     // copilot emits JSONL; the answer is the last `assistant.message` event's
     // data.content (skip `assistant.message_delta` streaming events + the final
     // `result` event). Verified live 2026-06-03.
-    let last: string | undefined;
-    for (const line of stdout.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith('{')) continue;
-      let evt: { type?: string; data?: { content?: string } };
-      try {
-        evt = JSON.parse(trimmed) as typeof evt;
-      } catch {
-        continue;
-      }
-      if (evt.type === 'assistant.message' && typeof evt.data?.content === 'string') {
-        last = evt.data.content;
-      }
-    }
+    const last = lastJsonlMatch(stdout, (evt) =>
+      evt.type === 'assistant.message' && typeof evt.data?.content === 'string'
+        ? evt.data.content
+        : undefined
+    );
     if (last === undefined) {
-      throw new Error(`copilot: no assistant.message in output: ${stdout.slice(0, 200)}`);
+      const failure = jsonlFailureSignal(stdout, (evt) =>
+        evt.type === 'result' && typeof evt.exitCode === 'number' && evt.exitCode !== 0
+          ? `exitCode ${evt.exitCode}`
+          : undefined
+      );
+      const detail = failure !== undefined ? ` (failure signal: ${failure})` : '';
+      throw new Error(`copilot: no assistant.message in output${detail}: ${stdout.slice(0, 200)}`);
     }
     return last;
   }
