@@ -1,10 +1,10 @@
 ---
-name: to-skills
+name: skillit
 description: Generate structured AI agent skills (SKILL.md) and llms.txt from your TypeScript API documentation
 license: MIT
 ---
 
-# to-skills
+# skillit
 
 Generate structured AI agent skills (SKILL.md) and llms.txt from your TypeScript API documentation
 
@@ -49,5 +49,5 @@ Generate structured AI agent skills (SKILL.md) and llms.txt from your TypeScript
 
 ## Links
 
-- [Repository](https://github.com/pradeepmouli/to-skills)
+- [Repository](https://github.com/pradeepmouli/skillit)
 - Author: Pradeep Mouli

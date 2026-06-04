@@ -135,7 +135,7 @@ describe('McpcAdapter', () => {
       makeCtx({ launchCommand: { command: 'node', args: ['./server.js'] } })
     );
     expect(out.skill.content).toMatch(
-      /Generated for mcpc 2\.1\.x via @to-skills\/target-mcpc \d+\.\d+\.\d+/
+      /Generated for mcpc 2\.1\.x via @skillit\/target-mcpc \d+\.\d+\.\d+/
     );
   });
 

@@ -29,7 +29,7 @@ describe.skipIf(!RUN)('stdio integration: server-filesystem', () => {
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-it-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-it-'));
   });
 
   afterAll(() => {

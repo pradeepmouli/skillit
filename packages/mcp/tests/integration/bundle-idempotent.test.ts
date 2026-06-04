@@ -42,7 +42,7 @@ describe.skipIf(!RUN)('bundle integration: idempotency', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-idem-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-idem-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });

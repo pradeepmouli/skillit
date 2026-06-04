@@ -172,7 +172,7 @@ function loadBundledCliGuidanceSkill(): RenderedSkill {
   }
   return {
     skill: {
-      filename: 'to-skills-cli-docs/SKILL.md',
+      filename: 'skillit-cli-docs/SKILL.md',
       content
     },
     references: []

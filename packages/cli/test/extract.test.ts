@@ -178,8 +178,8 @@ describe('extractCliSkill', () => {
   });
 
   it('writeCliSkill installs bundled guidance alongside the extracted skill', () => {
-    const outDir = mkdtempSync(path.join(os.tmpdir(), 'to-skills-cli-out-'));
-    const installDir = mkdtempSync(path.join(os.tmpdir(), 'to-skills-cli-install-'));
+    const outDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-cli-out-'));
+    const installDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-cli-install-'));
 
     try {
       writeCliSkill(
@@ -200,9 +200,9 @@ describe('extractCliSkill', () => {
       );
 
       expect(existsSync(path.join(outDir, 'demo-cli', 'SKILL.md'))).toBe(true);
-      expect(existsSync(path.join(outDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(outDir, 'skillit-cli-docs', 'SKILL.md'))).toBe(false);
       expect(existsSync(path.join(installDir, 'demo-cli', 'SKILL.md'))).toBe(true);
-      expect(existsSync(path.join(installDir, 'to-skills-cli-docs', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(installDir, 'skillit-cli-docs', 'SKILL.md'))).toBe(true);
     } finally {
       rmSync(outDir, { recursive: true, force: true });
       rmSync(installDir, { recursive: true, force: true });

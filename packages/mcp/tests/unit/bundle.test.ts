@@ -111,7 +111,7 @@ describe('bundleMcpSkill', () => {
   it('happy path: single-server config writes one skill directory', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
       }
     });
@@ -137,7 +137,7 @@ describe('bundleMcpSkill', () => {
   it('multi-server: writes one directory per entry independently', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: [
           { skillName: 'server-a', command: 'node', args: ['./a.js'] },
           { skillName: 'server-b', command: 'node', args: ['./b.js'] }
@@ -158,7 +158,7 @@ describe('bundleMcpSkill', () => {
     });
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: [
           { skillName: 'server-a', command: 'node', args: ['./a.js'] },
           { skillName: 'server-b', command: 'node', args: ['./b.js'] }
@@ -178,7 +178,7 @@ describe('bundleMcpSkill', () => {
       name: '@my/server',
       bin: './dist/server.js',
       files: ['README.md'],
-      'to-skills': { mcp: { skillName: 'my-server' } }
+      skillit: { mcp: { skillName: 'my-server' } }
     });
     const stderr: string[] = [];
     const orig = process.stderr.write.bind(process.stderr);
@@ -203,7 +203,7 @@ describe('bundleMcpSkill', () => {
   it('does not warn when package.json files is absent (implicit-include)', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
       }
     });
@@ -215,7 +215,7 @@ describe('bundleMcpSkill', () => {
     writePkg({
       name: '@my/server',
       files: ['dist', 'skills', 'README.md'],
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
       }
     });
@@ -226,7 +226,7 @@ describe('bundleMcpSkill', () => {
   it('multi-target entry renders one skill dir per target with disambiguation suffix', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: {
           skillName: 'my-server',
           command: 'node',
@@ -255,7 +255,7 @@ describe('bundleMcpSkill', () => {
   it('copies generated skills and bundled MCP guidance into install targets', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
       }
     });
@@ -264,12 +264,12 @@ describe('bundleMcpSkill', () => {
     expect(result.failures).toEqual({});
     expect(existsSync(path.join(workDir, 'skills', 'my-server', 'SKILL.md'))).toBe(true);
     expect(existsSync(path.join(installDir, 'my-server', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(workDir, 'skills', 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
-    expect(existsSync(path.join(installDir, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
-    expect(readFileSync(path.join(installDir, 'to-skills-mcp-docs', 'SKILL.md'), 'utf8')).toContain(
+    expect(existsSync(path.join(workDir, 'skills', 'skillit-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(installDir, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(readFileSync(path.join(installDir, 'skillit-mcp-docs', 'SKILL.md'), 'utf8')).toContain(
       'managed: bundled-guidance'
     );
-    expect(readFileSync(path.join(installDir, 'to-skills-mcp-docs', 'SKILL.md'), 'utf8')).toContain(
+    expect(readFileSync(path.join(installDir, 'skillit-mcp-docs', 'SKILL.md'), 'utf8')).toContain(
       'version: 0.1.0'
     );
   });
@@ -277,7 +277,7 @@ describe('bundleMcpSkill', () => {
   it('options.invocation overrides per-entry invocation', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: {
           skillName: 'my-server',
           command: 'node',
@@ -293,7 +293,7 @@ describe('bundleMcpSkill', () => {
   it('WrittenSkill.files relativizes nested reference paths regardless of adapter prefix', async () => {
     writePkg({
       name: '@my/server',
-      'to-skills': {
+      skillit: {
         mcp: { skillName: 'my-server', command: 'node', args: ['./a.js'] }
       }
     });

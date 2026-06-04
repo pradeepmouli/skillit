@@ -32,7 +32,7 @@ describe.skipIf(!RUN)('bundle integration: audit-failing-package', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-audit-it-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-audit-it-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });

@@ -489,7 +489,7 @@ function loadBundledTypeDocGuidanceSkill() {
   }
   return {
     skill: {
-      filename: 'to-skills-docs/SKILL.md',
+      filename: 'skillit-docs/SKILL.md',
       content
     },
     references: []

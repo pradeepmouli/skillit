@@ -1,11 +1,11 @@
 ---
-description: 'Autonomously improve an MCP skill via the to-skills audit→draft→review loop (build or runtime mode) Also: to-skills, refine, mcp, skill-generation, cli, audit, overlay.'
-name: to-skills-refine
+description: 'Autonomously improve an MCP skill via the skillit audit→draft→review loop (build or runtime mode) Also: skillit, refine, mcp, skill-generation, cli, audit, overlay.'
+name: skillit-refine
 ---
 
-# to-skills-refine
+# skillit-refine
 
-Autonomously improve an MCP skill via the to-skills audit→draft→review loop (build or runtime mode)
+Autonomously improve an MCP skill via the skillit audit→draft→review loop (build or runtime mode)
 
 ## Commands
 
@@ -37,4 +37,4 @@ Load these on demand — do NOT read all at once:
 
 ## Links
 
-- [Repository](https://github.com/pradeepmouli/to-skills)
+- [Repository](https://github.com/pradeepmouli/skillit)

@@ -43,7 +43,7 @@ describe.skipIf(!RUN)('bundle integration: cli:mcpc target', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-cli-it-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-cli-it-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });
@@ -133,8 +133,8 @@ describe.skipIf(!RUN)('bundle integration: cli:mcpc target', () => {
     );
 
     expect(existsSync(join(workDir, 'skills', 'my-server', 'SKILL.md'))).toBe(true);
-    expect(existsSync(join(workDir, 'skills', 'to-skills-mcp-docs', 'SKILL.md'))).toBe(false);
+    expect(existsSync(join(workDir, 'skills', 'skillit-mcp-docs', 'SKILL.md'))).toBe(false);
     expect(existsSync(join(installA, 'my-server', 'SKILL.md'))).toBe(true);
-    expect(existsSync(join(installA, 'to-skills-mcp-docs', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(installA, 'skillit-mcp-docs', 'SKILL.md'))).toBe(true);
   }, 90_000);
 });

@@ -8,7 +8,7 @@
     "skills"
   ],
   "type": "module",
-  "to-skills": {
+  "skillit": {
     "mcp": {
       "skillName": "audit-failing-server"
     }

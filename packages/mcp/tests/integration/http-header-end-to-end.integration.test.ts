@@ -37,7 +37,7 @@ describe.skipIf(!RUN)('CLI --header end-to-end (FR-H013, US9)', () => {
   let outDir: string;
 
   beforeEach(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-http-header-it-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-http-header-it-'));
   });
 
   afterEach(async () => {

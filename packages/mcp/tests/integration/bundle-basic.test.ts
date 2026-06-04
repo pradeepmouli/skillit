@@ -40,7 +40,7 @@ describe.skipIf(!RUN)('bundle integration: fake-server-package', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-it-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-it-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });

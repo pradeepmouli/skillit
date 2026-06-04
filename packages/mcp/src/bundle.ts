@@ -1,7 +1,7 @@
 /**
  * Bundle-mode orchestrator.
  *
- * `bundleMcpSkill(options)` reads `to-skills.mcp` from the host package's
+ * `bundleMcpSkill(options)` reads `skillit.mcp` from the host package's
  * `package.json`, then for each declared server it:
  *   1. spawns the server (stdio) and runs the existing extract pipeline,
  *   2. renders SKILL.md for each requested invocation target with
@@ -102,7 +102,7 @@ export async function bundleMcpSkill(options: McpBundleOptions = {}): Promise<Bu
     path.relative(packageRoot, outDir) || 'skills'
   );
   for (const w of result.packageJsonWarnings) {
-    process.stderr.write(`[to-skills-mcp] ${w}\n`);
+    process.stderr.write(`[skillit-mcp] ${w}\n`);
   }
 
   return result;

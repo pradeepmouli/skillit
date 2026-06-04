@@ -1,12 +1,12 @@
 ---
-name: to-skills-core
-description: 'Shared types, SKILL.md renderer, and token budgeting for to-skills plugins'
+name: skillit-core
+description: 'Shared types, SKILL.md renderer, and token budgeting for skillit plugins'
 license: MIT
 ---
 
 # @skillit/core
 
-Shared types, SKILL.md renderer, and token budgeting for to-skills plugins
+Shared types, SKILL.md renderer, and token budgeting for skillit plugins
 
 ## When to Use
 
@@ -69,5 +69,5 @@ Shared types, SKILL.md renderer, and token budgeting for to-skills plugins
 
 ## Links
 
-- [Repository](https://github.com/pradeepmouli/to-skills)
+- [Repository](https://github.com/pradeepmouli/skillit)
 - Author: Pradeep Mouli

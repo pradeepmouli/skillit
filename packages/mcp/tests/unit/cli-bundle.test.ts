@@ -67,7 +67,7 @@ describe('bundle subcommand', () => {
   let stderrLines: string[];
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-cli-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-cli-'));
     bundleCalls.length = 0;
     bundleResults.length = 0;
     configEntries.length = 0;
@@ -85,7 +85,7 @@ describe('bundle subcommand', () => {
     // doesn't blow up before our mock takes effect.
     writeFileSync(
       join(workDir, 'package.json'),
-      JSON.stringify({ name: 'fixture', 'to-skills': { mcp: { skillName: 'whatever' } } }, null, 2)
+      JSON.stringify({ name: 'fixture', skillit: { mcp: { skillName: 'whatever' } } }, null, 2)
     );
   });
 
@@ -186,13 +186,13 @@ describe('bundle subcommand', () => {
     configEntries.push({ skillName: 'my-server' });
     bundleResults.push({ skills: {}, failures: {}, packageJsonWarnings: [] });
     const installTarget = path.join(workDir, '.claude', 'skills');
-    const guidanceDir = path.join(installTarget, 'to-skills-mcp-docs');
+    const guidanceDir = path.join(installTarget, 'skillit-mcp-docs');
     mkdirSync(guidanceDir, { recursive: true });
     writeFileSync(
       path.join(guidanceDir, 'SKILL.md'),
       [
         '---',
-        'name: to-skills-mcp-docs',
+        'name: skillit-mcp-docs',
         'version: 0.7.0',
         'toSkills:',
         '  managed: bundled-guidance',

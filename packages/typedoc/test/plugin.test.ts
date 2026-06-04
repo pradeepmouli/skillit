@@ -112,9 +112,7 @@ describe('typedoc plugin install targets', () => {
       { outDir: string; installTargets?: string[]; includeOutDir?: boolean }
     ];
     expect(options.installTargets).toEqual(['.claude/skills']);
-    expect(rendered.some((entry) => entry.skill.filename === 'to-skills-docs/SKILL.md')).toBe(
-      false
-    );
+    expect(rendered.some((entry) => entry.skill.filename === 'skillit-docs/SKILL.md')).toBe(false);
 
     const [bundledRendered, bundledOptions] = writeSkillsMock.mock.calls[1] as [
       Array<{ skill: { filename: string; content: string } }>,
@@ -123,7 +121,7 @@ describe('typedoc plugin install targets', () => {
     expect(bundledOptions.installTargets).toEqual(['.claude/skills']);
     expect(bundledOptions.includeOutDir).toBe(false);
     expect(bundledRendered).toHaveLength(1);
-    expect(bundledRendered[0]!.skill.filename).toBe('to-skills-docs/SKILL.md');
+    expect(bundledRendered[0]!.skill.filename).toBe('skillit-docs/SKILL.md');
     expect(bundledRendered[0]!.skill.content).toContain('managed: bundled-guidance');
     expect(bundledRendered[0]!.skill.content).toContain('version:');
   });
@@ -139,9 +137,7 @@ describe('typedoc plugin install targets', () => {
 
     expect(writeSkillsMock).toHaveBeenCalledTimes(1);
     const [rendered] = writeSkillsMock.mock.calls[0] as [Array<{ skill: { filename: string } }>];
-    expect(rendered.some((entry) => entry.skill.filename === 'to-skills-docs/SKILL.md')).toBe(
-      false
-    );
+    expect(rendered.some((entry) => entry.skill.filename === 'skillit-docs/SKILL.md')).toBe(false);
   });
 
   it('publishes bundled guidance from both typedoc packages', () => {

@@ -2,7 +2,7 @@
  * Integration test (T068): multi-bin package → two skill directories.
  *
  * Drives the bundle pipeline against the multi-server-package fixture, which
- * declares two bins (`server-a`, `server-b`) and a `to-skills.mcp` array. The
+ * declares two bins (`server-a`, `server-b`) and a `skillit.mcp` array. The
  * generated SKILL.md frontmatter for each entry should use the npx
  * `--package=<pkg> <binName>` form (FR-034) so harnesses can launch the
  * specific bin from the published package.
@@ -46,7 +46,7 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-multi-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-multi-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });
@@ -95,7 +95,7 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
   }, 120_000);
 
   it('requires --force before a later bundle run overwrites an installed skill with the same name', async () => {
-    const secondPackageRoot = mkdtempSync(join(tmpdir(), 'to-skills-mcp-bundle-multi-second-'));
+    const secondPackageRoot = mkdtempSync(join(tmpdir(), 'skillit-mcp-bundle-multi-second-'));
     cpSync(FIXTURE_DIR, secondPackageRoot, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(secondPackageRoot, 'node_modules'), 'dir');
     const installDir = join(workDir, '.claude', 'skills');
@@ -103,13 +103,13 @@ describe.skipIf(!RUN)('bundle integration: multi-server-package', () => {
       const firstPkgPath = join(workDir, 'package.json');
       const secondPkgPath = join(secondPackageRoot, 'package.json');
       const firstPkg = JSON.parse(readFileSync(firstPkgPath, 'utf8')) as {
-        'to-skills': { mcp: Array<{ skillName: string; binName: string }> };
+        skillit: { mcp: Array<{ skillName: string; binName: string }> };
       };
       const secondPkg = JSON.parse(readFileSync(secondPkgPath, 'utf8')) as {
-        'to-skills': { mcp: Array<{ skillName: string; binName: string }> };
+        skillit: { mcp: Array<{ skillName: string; binName: string }> };
       };
-      firstPkg['to-skills'].mcp = [{ skillName: 'shared-server', binName: 'server-a' }];
-      secondPkg['to-skills'].mcp = [{ skillName: 'shared-server', binName: 'server-b' }];
+      firstPkg['skillit'].mcp = [{ skillName: 'shared-server', binName: 'server-a' }];
+      secondPkg['skillit'].mcp = [{ skillName: 'shared-server', binName: 'server-b' }];
       writeFileSync(firstPkgPath, JSON.stringify(firstPkg, null, 2));
       writeFileSync(secondPkgPath, JSON.stringify(secondPkg, null, 2));
 

@@ -67,7 +67,7 @@ describe.skipIf(!RUN)('config-file batch extract: partial failure', () => {
   let configPath: string;
 
   beforeAll(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cfg-partial-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cfg-partial-'));
     outDir = join(workDir, 'out');
     configPath = join(workDir, 'mcp.json');
     writeFileSync(

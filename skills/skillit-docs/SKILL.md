@@ -1,16 +1,16 @@
 ---
-name: to-skills-docs
+name: skillit-docs
 description: Generate AI agent skills from TypeScript documentation
 license: MIT
 ---
 
-# to-skills-docs
+# skillit-docs
 
 Generate AI agent skills from TypeScript documentation
 
 ## Documentation
 
-- **What is to-skills?** — # to-skills
+- **What is skillit?** — # skillit
 
 > Generate AI agent skills from your TypeScript documentation.
 

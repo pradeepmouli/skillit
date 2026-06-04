@@ -5,7 +5,7 @@
  * - `extract` — connects to a running MCP server (stdio via `--command`,
  *   HTTP via `--url`, or batch via `--config`), renders a SKILL.md per
  *   `--invocation` target, and writes it under the configured output dir.
- * - `bundle` — reads `to-skills.mcp` from the host package's `package.json`,
+ * - `bundle` — reads `skillit.mcp` from the host package's `package.json`,
  *   runs extract per declared server, and writes self-referential skills
  *   into `<packageRoot>/skills/` for dual-consumption packages.
  *
@@ -46,10 +46,10 @@ import { extractMcpSkill } from './extract.js';
 import { renderLlmsTxt } from './render/llms-txt.js';
 import { PACKAGE_VERSION } from './version.js';
 
-const BUNDLED_MCP_GUIDANCE_NAME = 'to-skills-mcp-docs';
+const BUNDLED_MCP_GUIDANCE_NAME = 'skillit-mcp-docs';
 
 /**
- * Standalone program (legacy `to-skills-mcp` shape) — kept for internal/testing
+ * Standalone program (legacy `skillit-mcp` shape) — kept for internal/testing
  * use.
  *
  * Consumers that want to embed the CLI into a parent program (e.g. a
@@ -254,7 +254,7 @@ async function runExtract(opts: ExtractOpts): Promise<void> {
   // rather than silent acceptance.
   if (!opts.canonicalize) {
     process.stderr.write(
-      '[to-skills-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
+      '[skillit-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
     );
   }
 
@@ -413,7 +413,7 @@ async function runConfigExtract(opts: ExtractOpts): Promise<void> {
   // many-server configs.
   if (!opts.canonicalize) {
     process.stderr.write(
-      '[to-skills-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
+      '[skillit-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
     );
   }
   const entries = await readMcpConfigFile(opts.config!);
@@ -775,7 +775,7 @@ async function validateTargets(targets: readonly InvocationTarget[]): Promise<In
  *
  * The known-target list is hardcoded — for now we only ship `mcp-protocol`,
  * `cli:mcpc`, `cli:fastmcp`. Third-party adapters that follow the
- * `to-skills-target-<name>` naming convention won't appear in this hint, but
+ * `skillit-target-<name>` naming convention won't appear in this hint, but
  * they remain loadable.
  */
 async function formatInstalledAdaptersHint(): Promise<string> {
@@ -798,7 +798,7 @@ async function formatInstalledAdaptersHint(): Promise<string> {
       // Surface the underlying message under DEBUG so the user has a breadcrumb.
       if (process.env['DEBUG']) {
         const msg = err instanceof Error ? err.message : String(err);
-        process.stderr.write(`[to-skills-mcp DEBUG] adapter ${t} probe failed: ${msg}\n`);
+        process.stderr.write(`[skillit-mcp DEBUG] adapter ${t} probe failed: ${msg}\n`);
       }
     }
   }
@@ -827,7 +827,7 @@ interface BundleOpts {
 }
 
 /**
- * `bundle` action body. Reads `to-skills.mcp` from the host package, performs
+ * `bundle` action body. Reads `skillit.mcp` from the host package, performs
  * a pre-flight collision check (so --force semantics fire BEFORE writeSkills
  * does an unconditional rmSync on each destination), then runs
  * `bundleMcpSkill` and surfaces per-skill stdout / per-failure stderr lines.
@@ -847,7 +847,7 @@ async function runBundle(opts: BundleOpts): Promise<void> {
   // users get explicit feedback rather than silent acceptance.
   if (!opts.canonicalize) {
     process.stderr.write(
-      '[to-skills-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
+      '[skillit-mcp] --no-canonicalize is not yet wired; canonicalization currently always runs.\n'
     );
   }
   // --max-tokens is parsed for forward-compatibility but not yet threaded into
@@ -855,7 +855,7 @@ async function runBundle(opts: BundleOpts): Promise<void> {
   // they explicitly chose a non-default value, so the default 4000 stays quiet.
   if (opts.maxTokens !== 4000) {
     process.stderr.write(
-      '[to-skills-mcp] --max-tokens is not yet threaded into bundle mode; value ignored.\n'
+      '[skillit-mcp] --max-tokens is not yet threaded into bundle mode; value ignored.\n'
     );
   }
 

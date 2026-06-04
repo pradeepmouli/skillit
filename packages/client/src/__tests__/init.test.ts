@@ -181,7 +181,7 @@ describe('buildInitCommand', () => {
     const out = logged.join('\n');
     expect(out).toMatch(/Installed @skillit\/cli/);
     expect(out).toMatch(/not a commander program/);
-    expect(out).toMatch(/to-skills refine --source cli --program/);
+    expect(out).toMatch(/skillit refine --source cli --program/);
   });
 
   it('installs @skillit/mcp but skips generate + refine for an mcp project', async () => {
@@ -204,7 +204,7 @@ describe('buildInitCommand', () => {
     // CLI-first: no auto generate or refine for the mcp source this pass.
     expect(generateCalls).toHaveLength(0);
     expect(refineCalls).toHaveLength(0);
-    expect(logged.join('\n')).toMatch(/to-skills refine --source mcp/);
+    expect(logged.join('\n')).toMatch(/skillit refine --source mcp/);
   });
 
   it('threads --model-client and --model-cli-timeout into the refine dispatch', async () => {

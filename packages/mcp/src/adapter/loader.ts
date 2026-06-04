@@ -28,7 +28,7 @@ function isEsmOnlyPackageError(err: unknown): boolean {
  *
  * Resolution algorithm (per research.md §5):
  * - `mcp-protocol` → `@skillit/target-mcp-protocol`
- * - `cli:<name>` → tries `@skillit/target-<name>` first, then `to-skills-target-<name>`
+ * - `cli:<name>` → tries `@skillit/target-<name>` first, then `skillit-target-<name>`
  *
  * The module's default export MUST be an `InvocationAdapter`. Results are cached
  * per-process — calling twice with the same target returns the same adapter instance.
@@ -81,7 +81,7 @@ function resolveCandidates(target: InvocationTarget): string[] {
         'UNKNOWN_TARGET'
       );
     }
-    return [`@skillit/target-${name}`, `to-skills-target-${name}`];
+    return [`@skillit/target-${name}`, `skillit-target-${name}`];
   }
   throw new McpError(`Unknown target form: '${target}'`, 'UNKNOWN_TARGET');
 }

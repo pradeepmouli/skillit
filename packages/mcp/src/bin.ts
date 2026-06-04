@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Executable entry point for `to-skills-mcp`.
+ * Executable entry point for `skillit-mcp`.
  *
  * Constructs the commander program and parses `process.argv`. Any thrown
  * error surfaces here — `McpError` instances map to deterministic exit codes

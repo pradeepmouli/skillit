@@ -117,7 +117,7 @@ export class CliRefineSource implements RefineSource {
       const file = this.findInterfaceFile(iface, sources);
       if (!file) {
         process.stderr.write(
-          `[to-skills] no ${iface} interface for command '${fix.toolName}'; skipped ${fix.tag}\n`
+          `[skillit] no ${iface} interface for command '${fix.toolName}'; skipped ${fix.tag}\n`
         );
         continue;
       }

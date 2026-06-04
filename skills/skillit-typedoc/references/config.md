@@ -2,7 +2,7 @@
 
 ## SkillsPluginOptions
 
-Configuration options for typedoc-plugin-to-skills.
+Configuration options for typedoc-plugin-skillit.
 
 ### Properties
 

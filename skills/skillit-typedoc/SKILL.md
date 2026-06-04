@@ -1,5 +1,5 @@
 ---
-name: to-skills-typedoc
+name: skillit-typedoc
 description: 'TypeDoc plugin that generates AI agent skills (SKILL.md) from TypeScript API documentation Use when working with agent-skills, ai, documentation, llm, skill-md, typedoc, typedoc-plugin.'
 license: MIT
 ---
@@ -15,7 +15,7 @@ TypeDoc plugin that generates AI agent skills (SKILL.md) from TypeScript API doc
 
 ## Configuration
 
-**SkillsPluginOptions** — Configuration options for typedoc-plugin-to-skills. (14 options — see references/config.md)
+**SkillsPluginOptions** — Configuration options for typedoc-plugin-skillit. (14 options — see references/config.md)
 
 ## Quick Reference
 
@@ -23,5 +23,5 @@ TypeDoc plugin that generates AI agent skills (SKILL.md) from TypeScript API doc
 
 ## Links
 
-- [Repository](https://github.com/pradeepmouli/to-skills)
+- [Repository](https://github.com/pradeepmouli/skillit)
 - Author: Pradeep Mouli

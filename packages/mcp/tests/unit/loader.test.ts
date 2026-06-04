@@ -96,7 +96,7 @@ describe('loadAdapter', () => {
       const mcpErr = err as McpError;
       expect(mcpErr.code).toBe('ADAPTER_NOT_FOUND');
       expect(mcpErr.message).toContain('@skillit/target-nonexistent-xyz-never');
-      expect(mcpErr.message).toContain('to-skills-target-nonexistent-xyz-never');
+      expect(mcpErr.message).toContain('skillit-target-nonexistent-xyz-never');
     }
   });
 
@@ -131,7 +131,7 @@ describe('loadAdapter', () => {
       throw Object.assign(new Error('err'), { code: 'ERR_MODULE_NOT_FOUND' });
     };
     overrides.set('@skillit/target-ghost-pkg', thrower);
-    overrides.set('to-skills-target-ghost-pkg', thrower);
+    overrides.set('skillit-target-ghost-pkg', thrower);
     try {
       loadAdapter('cli:ghost-pkg');
       throw new Error('expected loadAdapter to throw');
@@ -140,13 +140,13 @@ describe('loadAdapter', () => {
       const mcpErr = err as McpError;
       expect(mcpErr.code).toBe('ADAPTER_NOT_FOUND');
       expect(mcpErr.message).toContain('@skillit/target-ghost-pkg');
-      expect(mcpErr.message).toContain('to-skills-target-ghost-pkg');
+      expect(mcpErr.message).toContain('skillit-target-ghost-pkg');
     }
   });
 
   it('falls back to message-substring match when error lacks a MODULE_NOT_FOUND code', () => {
     const scoped = '@skillit/target-weirdbundler';
-    const unscoped = 'to-skills-target-weirdbundler';
+    const unscoped = 'skillit-target-weirdbundler';
     overrides.set(scoped, () => {
       throw new Error(`Cannot find module '${scoped}'`);
     });

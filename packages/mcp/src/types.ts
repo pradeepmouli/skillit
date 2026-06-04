@@ -105,7 +105,7 @@ export interface McpBundleOptions {
   installTargets?: readonly string[];
   /**
    * Invocation target(s). When set, overrides the per-entry `invocation` field
-   * in `to-skills.mcp`. When omitted, each entry's declared invocation applies
+   * in `skillit.mcp`. When omitted, each entry's declared invocation applies
    * (defaulting to `'mcp-protocol'` if the entry omits it as well).
    */
   invocation?: InvocationTarget | InvocationTarget[];

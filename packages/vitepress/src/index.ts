@@ -61,7 +61,7 @@ export function toSkills(options?: ToSkillsVitePressOptions): VitePlugin {
   let srcDir = '';
 
   return {
-    name: 'to-skills-vitepress',
+    name: 'skillit-vitepress',
     enforce: 'post',
 
     config(config: any) {
@@ -134,7 +134,7 @@ export function toSkills(options?: ToSkillsVitePressOptions): VitePlugin {
 
       // 6. Log output
       const allFiles = [rendered.skill, ...rendered.references];
-      console.log(`[to-skills] Generated ${allFiles.length} file(s) → ${skillsOutDir}`);
+      console.log(`[skillit] Generated ${allFiles.length} file(s) → ${skillsOutDir}`);
       for (const file of allFiles) {
         console.log(`  ${file.filename}`);
       }

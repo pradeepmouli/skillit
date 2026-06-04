@@ -96,9 +96,9 @@ describe('writeSkills', () => {
   });
 
   it('writes rendered skills to outDir and install targets', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installA = tempDir('to-skills-install-a-');
-    const installB = tempDir('to-skills-install-b-');
+    const outDir = tempDir('skillit-out-');
+    const installA = tempDir('skillit-install-a-');
+    const installB = tempDir('skillit-install-b-');
     const rendered = makeRenderedSkill();
 
     writeSkills([rendered], { outDir, installTargets: [installA, installB] });
@@ -110,8 +110,8 @@ describe('writeSkills', () => {
   });
 
   it('deduplicates install targets and ignores targets that resolve to outDir', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     const rendered = makeRenderedSkill();
 
     writeSkills([rendered], {
@@ -124,8 +124,8 @@ describe('writeSkills', () => {
   });
 
   it('preserves curated skills in both outDir and install targets', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     writeCuratedSkill(outDir, 'writer-lib', '# keep-outdir\n');
     writeCuratedSkill(installDir, 'writer-lib', '# keep-install\n');
 
@@ -138,8 +138,8 @@ describe('writeSkills', () => {
   });
 
   it('preserves legacy curated skills marked by HTML comment', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     writeLegacyCuratedSkill(outDir, 'writer-lib');
     writeLegacyCuratedSkill(installDir, 'writer-lib');
 
@@ -154,8 +154,8 @@ describe('writeSkills', () => {
   });
 
   it('replaces stale install target content for non-curated skills', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     const staleDir = join(installDir, 'writer-lib', 'references');
     mkdirSync(staleDir, { recursive: true });
     writeFileSync(join(installDir, 'writer-lib', 'SKILL.md'), 'stale', 'utf8');
@@ -170,14 +170,14 @@ describe('writeSkills', () => {
   });
 
   it('upgrades bundled skills when the installed version is older', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', '1.3.0');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', '1.3.0');
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -189,23 +189,23 @@ describe('writeSkills', () => {
 
     const results = writeSkills([bundled], { outDir, installTargets: [installDir] });
 
-    expect(readFileSync(join(installDir, 'to-skills-docs', 'SKILL.md'), 'utf8')).toContain(
+    expect(readFileSync(join(installDir, 'skillit-docs', 'SKILL.md'), 'utf8')).toContain(
       'version: 1.4.0'
     );
     expect(results.find((result) => result.root === installDir)?.action).toBe('written');
   });
 
   it('preserves custom bundled skills when version metadata is absent', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', undefined, 'to-skills-docs', {
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', undefined, 'skillit-docs', {
       managed: false
     });
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -217,7 +217,7 @@ describe('writeSkills', () => {
 
     const results = writeSkills([bundled], { outDir, installTargets: [installDir] });
 
-    expect(readFileSync(join(installDir, 'to-skills-docs', 'SKILL.md'), 'utf8')).not.toContain(
+    expect(readFileSync(join(installDir, 'skillit-docs', 'SKILL.md'), 'utf8')).not.toContain(
       'version: 1.4.0'
     );
     expect(results.find((result) => result.root === installDir)?.preserveReason).toBe(
@@ -226,14 +226,14 @@ describe('writeSkills', () => {
   });
 
   it('preserves bundled skills when the installed frontmatter name differs', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', '9.9.9', 'custom-docs');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', '9.9.9', 'custom-docs');
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -245,7 +245,7 @@ describe('writeSkills', () => {
 
     const results = writeSkills([bundled], { outDir, installTargets: [installDir] });
 
-    expect(readFileSync(join(installDir, 'to-skills-docs', 'SKILL.md'), 'utf8')).toContain(
+    expect(readFileSync(join(installDir, 'skillit-docs', 'SKILL.md'), 'utf8')).toContain(
       'name: custom-docs'
     );
     expect(results.find((result) => result.root === installDir)?.preserveReason).toBe(
@@ -254,14 +254,14 @@ describe('writeSkills', () => {
   });
 
   it('preserves same-version bundled guidance explicitly', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', '1.4.0');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', '1.4.0');
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -283,14 +283,14 @@ describe('writeSkills', () => {
   });
 
   it('preserves newer bundled guidance instead of downgrading it', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', '1.5.0');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', '1.5.0');
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -312,14 +312,14 @@ describe('writeSkills', () => {
   });
 
   it('treats stable releases as newer than prereleases', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', '1.4.0-alpha.1');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', '1.4.0-alpha.1');
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -334,22 +334,22 @@ describe('writeSkills', () => {
 
     writeSkills([bundled], { outDir, installTargets: [installDir] });
 
-    expect(readFileSync(join(installDir, 'to-skills-docs', 'SKILL.md'), 'utf8')).toContain(
+    expect(readFileSync(join(installDir, 'skillit-docs', 'SKILL.md'), 'utf8')).toContain(
       'version: 1.4.0'
     );
   });
 
   it('parses CRLF frontmatter when deciding bundled guidance upgrades', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    writeBundledSkill(installDir, 'to-skills-docs', '1.3.0', 'to-skills-docs', {
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'skillit-docs', '1.3.0', 'skillit-docs', {
       lineEnding: '\r\n'
     });
 
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -364,14 +364,14 @@ describe('writeSkills', () => {
 
     writeSkills([bundled], { outDir, installTargets: [installDir] });
 
-    expect(readFileSync(join(installDir, 'to-skills-docs', 'SKILL.md'), 'utf8')).toContain(
+    expect(readFileSync(join(installDir, 'skillit-docs', 'SKILL.md'), 'utf8')).toContain(
       'version: 1.4.0'
     );
   });
 
   it('overwrites malformed installed frontmatter when the skill is replaceable', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     const skillDir = join(installDir, 'writer-lib');
     mkdirSync(skillDir, { recursive: true });
     writeFileSync(
@@ -387,8 +387,8 @@ describe('writeSkills', () => {
   });
 
   it('preserves malformed installed frontmatter when a curated marker is still present', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     const skillDir = join(installDir, 'writer-lib');
     mkdirSync(skillDir, { recursive: true });
     writeFileSync(
@@ -403,15 +403,15 @@ describe('writeSkills', () => {
   });
 
   it('preserves malformed bundled guidance when lenient metadata shows the installed version is newer', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
-    const skillDir = join(installDir, 'to-skills-docs');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    const skillDir = join(installDir, 'skillit-docs');
     mkdirSync(skillDir, { recursive: true });
     writeFileSync(
       join(skillDir, 'SKILL.md'),
       [
         '---',
-        'name: to-skills-docs',
+        'name: skillit-docs',
         'description: [broken',
         'toSkills:',
         '  managed: bundled-guidance',
@@ -428,7 +428,7 @@ describe('writeSkills', () => {
     const bundled = renderSkill(
       {
         ...minimalSkill,
-        name: 'to-skills-docs',
+        name: 'skillit-docs',
         description: 'Bundled guidance skill',
         functions: [],
         examples: []
@@ -451,8 +451,8 @@ describe('writeSkills', () => {
   });
 
   it('uses last-wins semantics when multiple rendered skills resolve to the same directory', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     const first = makeRenderedSkill({ description: 'First description' });
     const second = makeRenderedSkill({ description: 'Second description' });
 
@@ -466,8 +466,8 @@ describe('writeSkills', () => {
   });
 
   it('preserves a curated router while refreshing per-package skills', () => {
-    const outDir = tempDir('to-skills-out-');
-    const installDir = tempDir('to-skills-install-');
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
     const rendered = renderSkills([
       { ...minimalSkill, name: '@scope/pkg-a', description: 'Package A', functions: [] },
       { ...minimalSkill, name: '@scope/pkg-b', description: 'Package B', functions: [] }

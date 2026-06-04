@@ -1,5 +1,5 @@
 ---
-name: to-skills-cli
+name: skillit-cli
 description: 'Extract CLI command structure from commander/yargs for AI agent skill generation Use when working with agent-skills, cli, commander, documentation, skill-generation, yargs.'
 license: MIT
 ---
@@ -43,5 +43,5 @@ Extract CLI command structure from commander/yargs for AI agent skill generation
 
 ## Links
 
-- [Repository](https://github.com/pradeepmouli/to-skills)
+- [Repository](https://github.com/pradeepmouli/skillit)
 - Author: Pradeep Mouli

@@ -53,10 +53,10 @@ afterEach(() => {
 // ─── Plugin shape ─────────────────────────────────────────────────────────────
 
 describe('toSkills() plugin shape', () => {
-  it('returns a Vite Plugin object with name to-skills-vitepress', () => {
+  it('returns a Vite Plugin object with name skillit-vitepress', () => {
     const plugin = toSkills();
     expect(plugin).toBeDefined();
-    expect(plugin.name).toBe('to-skills-vitepress');
+    expect(plugin.name).toBe('skillit-vitepress');
   });
 
   it('has enforce: post', () => {

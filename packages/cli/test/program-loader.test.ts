@@ -27,7 +27,7 @@ describe('loadProgram', () => {
   });
 
   it('auto-finds the program from package.json bin (program export)', async () => {
-    const cwd = mkdtempSync(path.join(os.tmpdir(), 'to-skills-loader-'));
+    const cwd = mkdtempSync(path.join(os.tmpdir(), 'skillit-loader-'));
     try {
       writeFileSync(
         path.join(cwd, 'package.json'),
@@ -44,7 +44,7 @@ describe('loadProgram', () => {
   });
 
   it('throws a guiding error when no usable export exists', async () => {
-    const cwd = mkdtempSync(path.join(os.tmpdir(), 'to-skills-loader-'));
+    const cwd = mkdtempSync(path.join(os.tmpdir(), 'skillit-loader-'));
     try {
       writeFileSync(
         path.join(cwd, 'package.json'),

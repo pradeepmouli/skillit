@@ -7,7 +7,7 @@ import type { RenderedFile, RenderedSkill } from '@skillit/core';
 const SKILLS_ROOT = fileURLToPath(new URL('../skills', import.meta.url));
 
 export function loadBundledMcpGuidanceSkill(): RenderedSkill {
-  return loadBundledSkill('to-skills-mcp-docs');
+  return loadBundledSkill('skillit-mcp-docs');
 }
 
 function loadBundledSkill(skillName: string): RenderedSkill {

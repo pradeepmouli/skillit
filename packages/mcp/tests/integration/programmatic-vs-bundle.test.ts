@@ -86,7 +86,7 @@ describe.skipIf(!RUN)('programmatic vs bundle — byte-identical output (SC-007)
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-prog-vs-bundle-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-prog-vs-bundle-'));
     cpSync(FIXTURE_DIR, workDir, { recursive: true });
     symlinkSync(PKG_NODE_MODULES, join(workDir, 'node_modules'), 'dir');
   });

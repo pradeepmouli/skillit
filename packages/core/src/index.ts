@@ -1,5 +1,5 @@
 /**
- * Shared types, renderers, and utilities for the to-skills ecosystem.
+ * Shared types, renderers, and utilities for the skillit ecosystem.
  *
  * Core provides the intermediate representation (ExtractedSkill), the SKILL.md renderer
  * with progressive disclosure (lean discovery file + on-demand reference files), the

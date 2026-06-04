@@ -55,7 +55,7 @@ export class TypeScriptMcpRefineSource implements RefineSource {
     }
 
     for (const warning of allWarnings) {
-      process.stderr.write(`[to-skills] ${warning}\n`);
+      process.stderr.write(`[skillit] ${warning}\n`);
     }
 
     const byFile = new Map<string, DraftedFix[]>();
@@ -63,7 +63,7 @@ export class TypeScriptMcpRefineSource implements RefineSource {
       const loc = allTools.get(fix.toolName);
       if (!loc) {
         process.stderr.write(
-          `[to-skills] tool '${fix.toolName}' not found in source files; skipping.\n`
+          `[skillit] tool '${fix.toolName}' not found in source files; skipping.\n`
         );
         continue;
       }

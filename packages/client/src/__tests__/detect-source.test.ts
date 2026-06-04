@@ -50,7 +50,7 @@ describe('detectRefineSource', () => {
     expect(await detectRefineSource(dir)).toBe('ambiguous');
   });
 
-  it('returns none when no to-skills source package is installed', async () => {
+  it('returns none when no skillit source package is installed', async () => {
     const dir = await writePkg({ dependencies: { commander: '^14.0.0' } });
     expect(await detectRefineSource(dir)).toBe('none');
   });

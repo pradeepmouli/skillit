@@ -135,7 +135,7 @@ describe('FastMcpAdapter', () => {
       makeCtx({ launchCommand: { command: 'python', args: ['./server.py'] } })
     );
     expect(out.skill.content).toMatch(
-      /Generated for fastmcp 2\.x via @to-skills\/target-fastmcp \d+\.\d+\.\d+/
+      /Generated for fastmcp 2\.x via @skillit\/target-fastmcp \d+\.\d+\.\d+/
     );
   });
 

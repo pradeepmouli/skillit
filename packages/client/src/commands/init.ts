@@ -117,7 +117,7 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
 
   return new Command('init')
     .description(
-      'Detect the project, install the right @to-skills package, generate + refine a skill'
+      'Detect the project, install the right @skillit package, generate + refine a skill'
     )
     .option('--source <kind>', 'cli | mcp | typedoc (auto-detected if omitted)')
     .option('--program <file#export>', 'commander program entry (cli source)')
@@ -180,7 +180,7 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
           const reason = error instanceof Error ? error.message : String(error);
           console.log(
             `Installed ${pkg}, but couldn't auto-load a commander program (${reason}). ` +
-              `If this is a commander CLI, run: to-skills refine --source cli --program <file#export>. ` +
+              `If this is a commander CLI, run: skillit refine --source cli --program <file#export>. ` +
               `(yargs/other CLIs aren't auto-generated yet.)`
           );
           return;
@@ -200,7 +200,7 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
       } else {
         const extra = nature === 'mcp' ? ' [--mcp <path>]' : '';
         console.log(
-          `Installed ${pkg}. Skill generation + refine for the ${nature} source isn't automated yet — run: to-skills refine --source ${nature}${extra}`
+          `Installed ${pkg}. Skill generation + refine for the ${nature} source isn't automated yet — run: skillit refine --source ${nature}${extra}`
         );
       }
     });

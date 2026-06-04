@@ -27,7 +27,7 @@ describe('readMcpConfigFile', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cfg-'));
+    workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cfg-'));
   });
 
   afterEach(() => {

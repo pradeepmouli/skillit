@@ -40,8 +40,8 @@ describe.skipIf(!RUN)('programmatic render twice — SC-011', () => {
   let outCli: string;
 
   beforeEach(() => {
-    outMcp = mkdtempSync(join(tmpdir(), 'to-skills-render-twice-mcp-'));
-    outCli = mkdtempSync(join(tmpdir(), 'to-skills-render-twice-cli-'));
+    outMcp = mkdtempSync(join(tmpdir(), 'skillit-render-twice-mcp-'));
+    outCli = mkdtempSync(join(tmpdir(), 'skillit-render-twice-cli-'));
   });
 
   afterEach(() => {

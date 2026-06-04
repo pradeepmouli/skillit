@@ -38,7 +38,7 @@ describe('cli:mcpc extract works without the mcpc binary on PATH', () => {
     let workDir: string;
 
     beforeEach(() => {
-      workDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-cli-no-bin-'));
+      workDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-cli-no-bin-'));
     });
 
     afterEach(() => {

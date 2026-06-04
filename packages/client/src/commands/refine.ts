@@ -61,12 +61,12 @@ export function resolveRefineSource(
     kind = opts.source as RefineSourceKind;
   } else if (detected === 'ambiguous') {
     return {
-      error: `Cannot determine refine source: multiple @to-skills sources installed (found: ${candidates.join(', ')}).
+      error: `Cannot determine refine source: multiple @skillit sources installed (found: ${candidates.join(', ')}).
 Pass ${SOURCE_FORM} to choose one.`
     };
   } else if (detected === 'none') {
     return {
-      error: `Cannot determine refine source: no @to-skills source package detected.
+      error: `Cannot determine refine source: no @skillit source package detected.
 Pass ${SOURCE_FORM} to choose one.`
     };
   } else {
@@ -104,7 +104,7 @@ export function resolveModelClientKind(raw: string | undefined): string {
 
 /**
  * The body of the `refine` command action, extracted so it can be reused
- * programmatically (e.g. by `to-skills init`) without argv gymnastics. Sets
+ * programmatically (e.g. by `skillit init`) without argv gymnastics. Sets
  * `process.exitCode` and writes progress/errors to the console exactly as the
  * CLI does.
  */
@@ -149,7 +149,7 @@ export async function runRefineCommand(opts: RefineCommandOpts): Promise<void> {
   } else {
     // mcp source: --mcp guaranteed present by resolveRefineSource.
     const mcpPath = opts.mcp!;
-    const overlayPath = opts.overlay ?? join(cwd, '.to-skills-overlay.json');
+    const overlayPath = opts.overlay ?? join(cwd, '.skillit-overlay.json');
 
     let mode: 'build' | 'runtime';
     if (opts.mode === 'build' || opts.mode === 'runtime') {

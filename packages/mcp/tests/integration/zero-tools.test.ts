@@ -26,7 +26,7 @@ describe.skipIf(!RUN)('extract integration: zero-tools server', () => {
   let outDir: string;
 
   beforeAll(() => {
-    outDir = mkdtempSync(join(tmpdir(), 'to-skills-mcp-zerotools-'));
+    outDir = mkdtempSync(join(tmpdir(), 'skillit-mcp-zerotools-'));
     // The fixture imports `@modelcontextprotocol/sdk` directly. Symlink the
     // mcp package's node_modules so the fixture resolves it without a local
     // install.
