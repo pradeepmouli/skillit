@@ -23,11 +23,11 @@ export function runCli(opts: RunCliOptions): Promise<string> {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   return new Promise<string>((resolve, reject) => {
     // On Windows, npm-installed CLIs are `.cmd`/`.bat` shims that Node cannot
-    // exec directly — they must go through the shell. On POSIX we keep the
-    // no-shell path (no injection/escaping concerns). Note: under the Windows
-    // shell, args are not auto-escaped, so an adapter that passes the prompt as
-    // an argument (copilot) may mis-parse a prompt containing shell
-    // metacharacters; claude/codex pipe the prompt via stdin and are unaffected.
+    // exec directly — they must go through the shell. This is injection-safe
+    // because every adapter delivers the (untrusted) prompt via stdin, so
+    // `args` only ever holds static flags and hardcoded model ids — no
+    // untrusted content reaches argv on any platform. On POSIX we keep the
+    // no-shell path regardless.
     const child = spawn(opts.cmd, opts.args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: process.platform === 'win32'

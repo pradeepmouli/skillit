@@ -69,11 +69,12 @@ describe('codexAdapter', () => {
 });
 
 describe('copilotAdapter', () => {
-  it('passes the prompt as an argument', () => {
+  it('pipes the prompt via stdin (not argv) so untrusted content stays out of argv', () => {
     const inv = copilotAdapter.invocation('draft', 'PROMPT');
     expect(inv.cmd).toBe('copilot');
-    expect(inv.args).toEqual(['-p', 'PROMPT', '--output-format', 'json', '--no-color']);
-    expect(inv.input).toBeUndefined();
+    expect(inv.args).toEqual(['--output-format', 'json', '--no-color']);
+    expect(inv.args).not.toContain('PROMPT');
+    expect(inv.input).toBe('PROMPT');
   });
 
   it('extracts the last assistant.message content from the jsonl stream, skipping deltas/result', () => {

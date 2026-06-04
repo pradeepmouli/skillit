@@ -140,8 +140,10 @@ export const codexAdapter: CliAdapter = {
 export const copilotAdapter: CliAdapter = {
   name: 'copilot',
   invocation(_role, prompt) {
-    // copilot uses its default model; prompt passed as an argument.
-    return { cmd: 'copilot', args: ['-p', prompt, '--output-format', 'json', '--no-color'] };
+    // copilot uses its default model; prompt piped via stdin (not `-p <text>`)
+    // so untrusted prompt content never reaches argv — keeps the Windows
+    // shell-launch path injection-safe (only static flags are args).
+    return { cmd: 'copilot', args: ['--output-format', 'json', '--no-color'], input: prompt };
   },
   extractResult(stdout) {
     // copilot emits JSONL; the answer is the last `assistant.message` event's
