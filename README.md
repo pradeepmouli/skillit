@@ -158,7 +158,10 @@ transport changes. `claude` maps the drafter/reviewer split to Sonnet/Opus via
 `--model`; `codex`/`copilot` use their configured default model. Each CLI must be
 installed and authenticated. Note: `copilot` prioritizes a `GH_TOKEN`/`GITHUB_TOKEN`
 environment variable over its `/login` credential — if that token lacks the
-"Copilot Requests" permission, unset it so copilot uses your login.
+"Copilot Requests" permission, unset it so copilot uses your login. On Windows the
+CLIs are launched through the shell to support `.cmd` shims; `claude`/`codex`
+receive the prompt on stdin, but a `copilot` prompt containing shell
+metacharacters may mis-parse on Windows.
 
 ## Why Inline?
 

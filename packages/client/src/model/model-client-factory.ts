@@ -19,10 +19,13 @@ export interface CreateModelClientOptions {
 
 function defaultHasBinary(cmd: string): boolean {
   try {
-    execFileSync(process.platform === 'win32' ? 'where' : 'command', ['-v', cmd], {
-      stdio: 'ignore',
-      shell: process.platform !== 'win32'
-    });
+    if (process.platform === 'win32') {
+      // `where` has no `-v` flag; `where <cmd>` exits non-zero when not found.
+      execFileSync('where', [cmd], { stdio: 'ignore' });
+    } else {
+      // POSIX: `command -v <cmd>` is a shell builtin, so run it through a shell.
+      execFileSync('command', ['-v', cmd], { stdio: 'ignore', shell: true });
+    }
     return true;
   } catch {
     return false;
@@ -52,5 +55,8 @@ export function createModelClient(
       `${kind} CLI not found on PATH — install it, or use --model-client api (requires ANTHROPIC_API_KEY).`
     );
   }
-  return new CliModelClient(adapterFor(kind), (options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}));
+  return new CliModelClient(
+    adapterFor(kind),
+    options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}
+  );
 }

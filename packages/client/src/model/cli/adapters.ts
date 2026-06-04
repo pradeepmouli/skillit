@@ -17,7 +17,11 @@ export interface CliAdapter {
   readonly name: CliModelClientKind;
   /** How to invoke the CLI for a given role with a given prompt. */
   invocation(role: ModelRole, prompt: string): CliInvocation;
-  /** Extract the model's answer text from the CLI's stdout. Throws on error/empty. */
+  /**
+   * Extract the model's answer text from the CLI's stdout. An empty-string
+   * answer is valid and returned as-is; throws only when no answer message is
+   * present or the CLI reported an in-band error.
+   */
   extractResult(stdout: string): string;
 }
 

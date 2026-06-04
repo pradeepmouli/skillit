@@ -20,7 +20,18 @@ describe('runCli', () => {
   it('throws with the command and a stderr tail on non-zero exit', async () => {
     await expect(
       runCli({ cmd: 'node', args: ['-e', 'process.stderr.write("boom"); process.exit(3)'] })
-    ).rejects.toThrow(/node.*exit code 3.*boom/s);
+    ).rejects.toThrow(/node.*code 3.*boom/s);
+  });
+
+  it('does not leak args (e.g. a prompt passed as an argument) in the error', async () => {
+    let message = '';
+    try {
+      await runCli({ cmd: 'node', args: ['-e', 'process.exit(2)', 'SENSITIVE_PROMPT_TEXT'] });
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).toMatch(/code 2/);
+    expect(message).not.toContain('SENSITIVE_PROMPT_TEXT');
   });
 
   it('throws a timeout error when the command exceeds timeoutMs', async () => {
