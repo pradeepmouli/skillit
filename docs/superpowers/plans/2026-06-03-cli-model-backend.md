@@ -217,7 +217,7 @@ Adapter contract: `invocation(role, prompt)` returns how to run the CLI (the ada
 
 - **claude**: `claude -p --output-format json --model <m>` (prompt on stdin) → stdout is one JSON object `{ "type":"result", "is_error":false, "result":"<answer>", ... }`.
 - **codex**: `codex exec --json` (prompt on stdin) → stdout is JSONL; the answer is the last line `{"type":"item.completed","item":{"type":"agent_message","text":"<answer>"}}`. Non-JSON log lines may be interleaved — skip lines that don't `JSON.parse`.
-- **copilot**: `copilot -p <prompt> --output-format json --no-color` (prompt as arg). Could not be live-verified (local copilot token was unauthenticated). Implement `extractResult` to `JSON.parse(stdout)` and read the final assistant message text; **during implementation, run `copilot -p "say ok" --output-format json` once authenticated and adjust the field path to match — the test fixture below encodes the assumed shape and is the contract to reconcile.**
+- **copilot**: `copilot -p <prompt> --output-format json --no-color` (prompt as arg) → stdout is JSONL; the answer is the last `{"type":"assistant.message","data":{"content":"<answer>","model":"...","toolRequests":[]}}` event (there are also `assistant.message_delta` streaming events — skip those — and a final `{"type":"result","exitCode":0,...}` with no content). Skip lines that don't `JSON.parse`. **Auth gotcha (verified):** copilot prioritizes a `GH_TOKEN`/`GITHUB_TOKEN`/`COPILOT_GITHUB_TOKEN` env var over its stored `/login` credential; if that env token lacks the "Copilot Requests" permission, copilot fails auth even though `/login` is valid. This is the consumer's environment concern (do NOT strip env vars in the shipped adapter — that would break users whose env token IS the valid cred). When live-testing copilot during implementation, run it with those vars cleared (`env -u GH_TOKEN -u GITHUB_TOKEN -u COPILOT_GITHUB_TOKEN copilot ...`) if the ambient token is stale.
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -282,10 +282,23 @@ describe('copilotAdapter', () => {
     expect(inv.input).toBeUndefined();
   });
 
-  it('extracts the assistant message text from the copilot json envelope', () => {
-    // Assumed shape — reconcile with live `copilot -p --output-format json` output.
-    const stdout = JSON.stringify({ type: 'result', result: 'the answer' });
+  it('extracts the last assistant.message content from the jsonl stream, skipping deltas/result', () => {
+    const stdout = [
+      JSON.stringify({ type: 'assistant.message_delta', data: { deltaContent: 'the ' } }),
+      JSON.stringify({ type: 'assistant.message_delta', data: { deltaContent: 'answer' } }),
+      JSON.stringify({
+        type: 'assistant.message',
+        data: { content: 'the answer', toolRequests: [] }
+      }),
+      JSON.stringify({ type: 'result', exitCode: 0 })
+    ].join('\n');
     expect(copilotAdapter.extractResult(stdout)).toBe('the answer');
+  });
+
+  it('throws when no assistant.message is present', () => {
+    expect(() => copilotAdapter.extractResult('{"type":"result","exitCode":0}')).toThrow(
+      /copilot/i
+    );
   });
 });
 
@@ -391,17 +404,27 @@ export const copilotAdapter: CliAdapter = {
     return { cmd: 'copilot', args: ['-p', prompt, '--output-format', 'json', '--no-color'] };
   },
   extractResult(stdout) {
-    // Assumed envelope — reconcile with live `copilot -p --output-format json`.
-    let parsed: { result?: string };
-    try {
-      parsed = JSON.parse(stdout) as typeof parsed;
-    } catch {
-      throw new Error(`copilot: could not parse JSON output: ${stdout.slice(0, 200)}`);
+    // copilot emits JSONL; the answer is the last `assistant.message` event's
+    // data.content (skip `assistant.message_delta` streaming events + the final
+    // `result` event). Verified live 2026-06-03.
+    let last: string | undefined;
+    for (const line of stdout.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('{')) continue;
+      let evt: { type?: string; data?: { content?: string } };
+      try {
+        evt = JSON.parse(trimmed) as typeof evt;
+      } catch {
+        continue;
+      }
+      if (evt.type === 'assistant.message' && typeof evt.data?.content === 'string') {
+        last = evt.data.content;
+      }
     }
-    if (typeof parsed.result !== 'string') {
-      throw new Error(`copilot: no result field in output: ${stdout.slice(0, 200)}`);
+    if (last === undefined) {
+      throw new Error(`copilot: no assistant.message in output: ${stdout.slice(0, 200)}`);
     }
-    return parsed.result;
+    return last;
   }
 };
 
@@ -933,7 +956,10 @@ And add a short paragraph under the refine section:
 drive the loop through an already-authenticated agent CLI — `--model-client claude`,
 `codex`, or `copilot`. The drafter/reviewer prompts are identical; only the
 transport changes. `claude` maps the drafter/reviewer split to Sonnet/Opus via
-`--model`; `codex`/`copilot` use their configured default model.
+`--model`; `codex`/`copilot` use their configured default model. Each CLI must be
+installed and authenticated. Note: `copilot` prioritizes a `GH_TOKEN`/`GITHUB_TOKEN`
+environment variable over its `/login` credential — if that token lacks the
+"Copilot Requests" permission, unset it so copilot uses your login.
 ```
 
 - [ ] **Step 2: Create the changeset.**
@@ -983,6 +1009,6 @@ git commit -m "docs: document --model-client cli backends + changeset"
 
 **Type consistency:** `ModelClientKind`/`CliModelClientKind`, `CliAdapter.invocation(role, prompt)`, `CliInvocation {cmd,args,input?}`, `CliRunner`, `RunCliOptions {cmd,args,input?,timeoutMs?}`, `createModelClient(kind, {timeoutMs?, hasBinary?})` are consistent across tasks. `runRefine` gains a `model: ModelClient` 2nd param (Task 3.2) — both call sites updated.
 
-**Placeholder scan:** The copilot `extractResult` envelope is an explicit, bounded reconcile-on-auth step (claude/codex are live-verified); the code is concrete and the test fixture is the contract — not a TODO.
+**Placeholder scan:** None. All three CLI envelopes (claude single-object, codex JSONL `agent_message`, copilot JSONL `assistant.message`) are live-verified (2026-06-03); every step has concrete code.
 
-**Known follow-up (out of scope, noted):** confirm/adjust the copilot JSON field path against a live authenticated `copilot -p --output-format json` run.
+**Auth note (not a code change):** copilot prioritizes a `GH_TOKEN`/`GITHUB_TOKEN`/`COPILOT_GITHUB_TOKEN` env var over its `/login` credential. The adapter deliberately does NOT strip these (a user's env token may be the valid cred); the README/error guidance documents the gotcha. When live-testing copilot during implementation with a stale ambient token, run with those vars cleared.
