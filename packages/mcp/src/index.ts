@@ -45,7 +45,8 @@ export { readMcpConfigFile } from './config/file-reader.js';
 
 // CLI program builder — exposed so consumers can embed the commander program
 // into a parent CLI. The `bin.ts` executable entry point is not exported.
-export { buildProgram } from './cli.js';
+export { buildMcpCommand, buildProgram } from './cli.js';
+export { mcpErrorExitCode, reportMcpErrorAndExit } from './error-exit.js';
 
 // Render helpers (token-aware splitting for adapter `tools.md` emission)
 export { splitToolsByNamespace } from './render/split-by-namespace.js';

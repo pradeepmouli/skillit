@@ -49,20 +49,41 @@ import { PACKAGE_VERSION } from './version.js';
 const BUNDLED_MCP_GUIDANCE_NAME = 'to-skills-mcp-docs';
 
 /**
- * Build the top-level commander program for `to-skills-mcp`.
+ * Standalone program (legacy `to-skills-mcp` shape) — kept for internal/testing
+ * use.
  *
  * Consumers that want to embed the CLI into a parent program (e.g. a
- * monorepo-wide `to-skills` wrapper) can call this and attach the returned
- * `Command` as a subcommand.
+ * monorepo-wide `skillit` wrapper) should prefer {@link buildMcpCommand}.
  *
  * @public
  */
 export function buildProgram(): Command {
-  const program = new Command()
-    .name('to-skills-mcp')
-    .description('Extract or bundle MCP servers as Agent Skills')
-    .version(PACKAGE_VERSION);
+  return attachMcpSubcommands(
+    new Command()
+      .name('skillit-mcp')
+      .description('Extract or bundle MCP servers as Agent Skills')
+      .version(PACKAGE_VERSION)
+  );
+}
 
+/**
+ * The `mcp` command for mounting under the top-level `skillit` program:
+ * `skillit mcp extract|bundle …`.
+ * @public
+ */
+export function buildMcpCommand(): Command {
+  return attachMcpSubcommands(
+    new Command('mcp').description('Extract or bundle MCP servers as Agent Skills')
+  );
+}
+
+/**
+ * Attach the `extract` / `bundle` subcommands to a commander program. Shared by
+ * {@link buildProgram} (standalone) and {@link buildMcpCommand} (mounted under
+ * `skillit`).
+ * @internal
+ */
+function attachMcpSubcommands(program: Command): Command {
   program
     .command('extract')
     .description('Extract a SKILL.md from a running MCP server')

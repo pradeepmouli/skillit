@@ -22,43 +22,7 @@
  */
 
 import { buildProgram } from './cli.js';
-import { McpError } from './errors.js';
-
-const ERROR_EXIT_CODES: Record<string, number> = {
-  LOCAL_IO_FAILED: 2,
-  TRANSPORT_FAILED: 2,
-  INITIALIZE_FAILED: 2,
-  PROTOCOL_VERSION_UNSUPPORTED: 2,
-  SCHEMA_REF_CYCLE: 3,
-  SERVER_EXITED_EARLY: 3,
-  // Audit-failure exit code shares the 3 bucket alongside other "output is
-  // structurally well-formed but operationally broken" codes — distinct from
-  // the 2 bucket (transport/init failures, where we never produced output).
-  AUDIT_FAILED: 3,
-  DUPLICATE_SKILL_NAME: 4,
-  // Spec contract (contracts/package-json-config.md): MISSING_LAUNCH_COMMAND
-  // is exit 5 — distinguishes "config exists but is incomplete" (5) from
-  // "two entries collide" (4). The neighboring DUPLICATE_SKILL_NAME stays at 4.
-  MISSING_LAUNCH_COMMAND: 5,
-  ADAPTER_NOT_FOUND: 5,
-  UNKNOWN_TARGET: 5
-};
-
-function reportAndExit(err: unknown): never {
-  if (err instanceof McpError) {
-    process.stderr.write(`Error [${err.code}]: ${err.message}\n`);
-    if (err.cause instanceof Error) {
-      process.stderr.write(`  Caused by: ${err.cause.message}\n`);
-    }
-    process.exit(ERROR_EXIT_CODES[err.code] ?? 1);
-  }
-  if (err instanceof Error) {
-    process.stderr.write(`Error: ${err.message}\n`);
-    process.exit(1);
-  }
-  process.stderr.write(`Unknown error: ${String(err)}\n`);
-  process.exit(1);
-}
+import { reportMcpErrorAndExit } from './error-exit.js';
 
 const program = buildProgram();
 
@@ -73,10 +37,10 @@ let interrupted = false;
 const onInterrupt = (): void => {
   if (interrupted) return; // ignore subsequent signals
   interrupted = true;
-  process.stderr.write('\n[to-skills-mcp] Interrupted. Cleaning up...\n');
+  process.stderr.write('\n[skillit-mcp] Interrupted. Cleaning up...\n');
   process.exit(130);
 };
 process.on('SIGINT', onInterrupt);
 process.on('SIGTERM', onInterrupt);
 
-program.parseAsync(process.argv).catch(reportAndExit);
+program.parseAsync(process.argv).catch(reportMcpErrorAndExit);

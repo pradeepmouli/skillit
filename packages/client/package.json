@@ -5,7 +5,7 @@
   "license": "MIT",
   "author": "Pradeep Mouli",
   "bin": {
-    "to-skills": "./dist/bin.js"
+    "skillit": "./dist/bin.js"
   },
   "type": "module",
   "main": "./dist/index.js",

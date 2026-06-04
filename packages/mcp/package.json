@@ -23,9 +23,6 @@
     "type": "github",
     "url": "https://github.com/sponsors/pradeepmouli"
   },
-  "bin": {
-    "to-skills-mcp": "./dist/bin.js"
-  },
   "files": [
     "dist",
     "README.md",
