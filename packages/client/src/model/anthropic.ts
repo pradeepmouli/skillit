@@ -1,10 +1,7 @@
 // packages/client/src/model/anthropic.ts
 import Anthropic from '@anthropic-ai/sdk';
 import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@to-skills/core';
-
-const DRAFTER = 'claude-sonnet-4-6';
-const REVIEWER = 'claude-opus-4-7';
-const MAX_TOKENS = 1024;
+import { DRAFTER, REVIEWER, MAX_TOKENS } from './models.js';
 
 export function parseReviewVerdict(text: string): ReviewResult {
   // Prefer {"verdict" anchor to skip stray {braces} in prose.

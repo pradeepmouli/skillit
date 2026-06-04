@@ -139,15 +139,29 @@ pass `--mode` explicitly.
 
 Key flags:
 
-| Flag                           | Default   | Description                                          |
-| ------------------------------ | --------- | ---------------------------------------------------- |
-| `--source <cli\|mcp\|typedoc>` | auto      | Refine source (auto-detected from installed package) |
-| `--program <file#export>`      | —         | Commander program entry (cli source)                 |
-| `--mode build\|runtime`        | auto      | Override auto-detection                              |
-| `--mcp <path>`                 | —         | Path to `mcp.json` or `claude_desktop_config.json`   |
-| `--source-glob <glob>`         | `**/*.ts` | Glob for TypeScript files to scan (build mode)       |
-| `--max-iterations <n>`         | `5`       | Iteration cap for the audit→draft→review loop        |
-| `--items <n>`                  | `5`       | Work items per iteration                             |
+| Flag                           | Default   | Description                                                                       |
+| ------------------------------ | --------- | --------------------------------------------------------------------------------- |
+| `--source <cli\|mcp\|typedoc>` | auto      | Refine source (auto-detected from installed package)                              |
+| `--program <file#export>`      | —         | Commander program entry (cli source)                                              |
+| `--mode build\|runtime`        | auto      | Override auto-detection                                                           |
+| `--mcp <path>`                 | —         | Path to `mcp.json` or `claude_desktop_config.json`                                |
+| `--source-glob <glob>`         | `**/*.ts` | Glob for TypeScript files to scan (build mode)                                    |
+| `--max-iterations <n>`         | `5`       | Iteration cap for the audit→draft→review loop                                     |
+| `--items <n>`                  | `5`       | Work items per iteration                                                          |
+| `--model-client <kind>`        | `api`     | Model backend: `api` (ANTHROPIC_API_KEY) or a CLI: `claude` / `codex` / `copilot` |
+| `--model-cli-timeout <ms>`     | `120000`  | Per-call timeout for CLI model backends                                           |
+
+**CLI model backends.** Instead of the Anthropic API, `refine` (and `init`) can
+drive the loop through an already-authenticated agent CLI — `--model-client claude`,
+`codex`, or `copilot`. The drafter/reviewer prompts are identical; only the
+transport changes. `claude` maps the drafter/reviewer split to Sonnet/Opus via
+`--model`; `codex`/`copilot` use their configured default model. Each CLI must be
+installed and authenticated. Note: `copilot` prioritizes a `GH_TOKEN`/`GITHUB_TOKEN`
+environment variable over its `/login` credential — if that token lacks the
+"Copilot Requests" permission, unset it so copilot uses your login. On Windows the
+CLIs are launched through the shell to support `.cmd` shims; the prompt is always
+piped via stdin (never passed as a command argument), so untrusted content never
+reaches the command line.
 
 ## Why Inline?
 

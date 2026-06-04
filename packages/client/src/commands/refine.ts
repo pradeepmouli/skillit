@@ -7,8 +7,8 @@ import {
   readMcpConfigFile
 } from '@to-skills/mcp';
 import { CliRefineSource, loadProgram } from '@to-skills/cli';
-import { refineSkill, type RefineSource } from '@to-skills/core';
-import { AnthropicModelClient } from '../model/anthropic.js';
+import { refineSkill, type ModelClient, type RefineSource } from '@to-skills/core';
+import { createModelClient } from '../model/model-client-factory.js';
 import { detectRefineMode } from '../detect-mode.js';
 import {
   classifyRefineSources,
@@ -93,6 +93,13 @@ export interface RefineCommandOpts {
   sourceGlob?: string;
   maxIterations: string;
   items: string;
+  modelClient?: string;
+  modelCliTimeout?: string;
+}
+
+/** The model backend to use; defaults to the API client. */
+export function resolveModelClientKind(raw: string | undefined): string {
+  return raw ?? 'api';
 }
 
 /**
@@ -105,6 +112,19 @@ export async function runRefineCommand(opts: RefineCommandOpts): Promise<void> {
   const cwd = process.cwd();
   const maxIterations = parsePositiveInt(opts.maxIterations, '--max-iterations');
   const itemsPerIteration = parsePositiveInt(opts.items, '--items');
+
+  const timeoutMs =
+    opts.modelCliTimeout !== undefined
+      ? parsePositiveInt(opts.modelCliTimeout, '--model-cli-timeout')
+      : undefined;
+  let model: ModelClient;
+  try {
+    model = createModelClient(resolveModelClientKind(opts.modelClient), (timeoutMs !== undefined ? { timeoutMs } : {}));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+    return;
+  }
 
   const candidates = await detectInstalledSources(cwd);
   const detected = classifyRefineSources(candidates);
@@ -176,13 +196,13 @@ Use --mode build  (TypeScript MCP server you own)
       });
     }
 
-    const result = await runRefine(source, maxIterations, itemsPerIteration);
+    const result = await runRefine(source, model, maxIterations, itemsPerIteration);
     reportResult(result, { reportInPlace, overlayPath });
     process.exitCode = result.passed ? 0 : 1;
     return;
   }
 
-  const result = await runRefine(source, maxIterations, itemsPerIteration);
+  const result = await runRefine(source, model, maxIterations, itemsPerIteration);
   reportResult(result, { reportInPlace });
   process.exitCode = result.passed ? 0 : 1;
 }
@@ -199,17 +219,20 @@ export function buildRefineCommand(): Command {
     .option('--source-glob <glob>', 'glob pattern for TypeScript source files')
     .option('--max-iterations <n>', 'iteration cap (default 5)', '5')
     .option('--items <n>', 'work items per iteration (default 5)', '5')
+    .option('--model-client <kind>', 'model backend: api | claude | codex | copilot', 'api')
+    .option('--model-cli-timeout <ms>', 'per-call timeout for cli model backends (ms)')
     .action((opts: RefineCommandOpts) => runRefineCommand(opts));
 }
 
 function runRefine(
   source: RefineSource,
+  model: ModelClient,
   maxIterations: number,
   itemsPerIteration: number
 ): ReturnType<typeof refineSkill> {
   return refineSkill({
     source,
-    model: new AnthropicModelClient(),
+    model,
     maxIterations,
     itemsPerIteration,
     onIteration: (iter) => {
