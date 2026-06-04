@@ -1,6 +1,6 @@
 {
   "name": "@skillit/docusaurus",
-  "version": "0.2.26",
+  "version": "0.3.0",
   "description": "Extract Docusaurus documentation structure for AI agent skill generation",
   "keywords": [
     "agent-skills",
