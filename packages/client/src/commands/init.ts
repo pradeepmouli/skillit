@@ -162,7 +162,21 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
           outDir,
           ...(opts.program !== undefined ? { program: opts.program } : {})
         };
-        await generateSkill(generateOpts);
+        try {
+          await generateSkill(generateOpts);
+        } catch (error) {
+          // The cli source only auto-loads a commander program. A yargs/other
+          // CLI (still classified as 'cli') can't be generated yet — degrade
+          // gracefully: surface the reason and how to proceed, do NOT crash,
+          // and do NOT run refine/regenerate on a failed generate.
+          const reason = error instanceof Error ? error.message : String(error);
+          console.log(
+            `Installed ${pkg}, but couldn't auto-load a commander program (${reason}). ` +
+              `If this is a commander CLI, run: to-skills refine --source cli --program <file#export>. ` +
+              `(yargs/other CLIs aren't auto-generated yet.)`
+          );
+          return;
+        }
         await runRefine({
           source: nature,
           ...(opts.program !== undefined ? { program: opts.program } : {}),

@@ -155,6 +155,34 @@ describe('buildInitCommand', () => {
     await expect(run(deps, ['--source', 'bogus'])).rejects.toThrow(/cli\|mcp\|typedoc/);
   });
 
+  it("degrades gracefully (no throw, no refine, prints guidance) when the cli program won't load", async () => {
+    await writeCliFixture();
+    const refine = vi.fn();
+    const { deps } = makeStubs({
+      generateSkill: async () => {
+        throw new Error('not a commander program');
+      },
+      runRefine: refine
+    });
+    // Capture via plain reassignment: vitest's console interceptor bypasses
+    // vi.spyOn(console, 'log') under this config.
+    const logged: string[] = [];
+    const originalLog = console.log;
+    console.log = (...args: unknown[]): void => {
+      logged.push(String(args[0]));
+    };
+    try {
+      await expect(run(deps)).resolves.toBeUndefined();
+    } finally {
+      console.log = originalLog;
+    }
+    expect(refine).not.toHaveBeenCalled();
+    const out = logged.join('\n');
+    expect(out).toMatch(/Installed @to-skills\/cli/);
+    expect(out).toMatch(/not a commander program/);
+    expect(out).toMatch(/to-skills refine --source cli --program/);
+  });
+
   it('installs @to-skills/mcp but skips generate + refine for an mcp project', async () => {
     await writeMcpFixture();
     const { deps, installCalls, generateCalls, refineCalls } = makeStubs();
