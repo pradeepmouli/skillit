@@ -69,6 +69,12 @@ export function runCli(opts: RunCliOptions): Promise<string> {
       }
     });
 
+    // The child may exit before consuming stdin (e.g. an auth/usage failure),
+    // in which case writing a large prompt emits EPIPE. Swallow stdin errors so
+    // they don't crash the process as an unhandled stream error — the `close`
+    // handler still rejects with the real exit code + stderr. Also omit args
+    // from that message: the prompt is delivered here, not via argv.
+    child.stdin.on('error', () => {});
     if (opts.input !== undefined) {
       child.stdin.write(opts.input);
     }

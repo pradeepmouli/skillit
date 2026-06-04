@@ -34,6 +34,16 @@ describe('runCli', () => {
     expect(message).not.toContain('SENSITIVE_PROMPT_TEXT');
   });
 
+  it('rejects (does not crash on EPIPE) when the child exits before reading a large stdin prompt', async () => {
+    // 256 KB overflows the OS pipe buffer; the child exits without reading it,
+    // so the stdin write would EPIPE. Must reject with the exit code, not throw
+    // an unhandled stream error.
+    const bigPrompt = 'x'.repeat(256 * 1024);
+    await expect(
+      runCli({ cmd: 'node', args: ['-e', 'process.exit(1)'], input: bigPrompt })
+    ).rejects.toThrow(/code 1/);
+  });
+
   it('throws a timeout error when the command exceeds timeoutMs', async () => {
     await expect(
       runCli({ cmd: 'node', args: ['-e', 'setTimeout(()=>{}, 10000)'], timeoutMs: 100 })
