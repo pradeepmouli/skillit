@@ -1,5 +1,5 @@
 ---
-'@to-skills/client': minor
+'@skillit/client': minor
 ---
 
 `refine` and `init` gain `--model-client api|claude|codex|copilot`: drive the

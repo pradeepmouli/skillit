@@ -1,5 +1,5 @@
 ---
-'@to-skills/cli': patch
+'@skillit/cli': patch
 ---
 
 fix(cli): only mark `.requiredOption()` flags as required
