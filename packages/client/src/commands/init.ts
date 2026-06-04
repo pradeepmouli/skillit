@@ -45,6 +45,8 @@ interface InitOpts {
   source?: string;
   program?: string;
   out: string;
+  modelClient?: string;
+  modelCliTimeout?: string;
 }
 
 const VALID_SOURCES: readonly RefineSourceKind[] = ['cli', 'mcp', 'typedoc'];
@@ -120,6 +122,12 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
     .option('--source <kind>', 'cli | mcp | typedoc (auto-detected if omitted)')
     .option('--program <file#export>', 'commander program entry (cli source)')
     .option('--out <dir>', 'output directory for the generated skill', 'skills')
+    .option(
+      '--model-client <kind>',
+      'model backend for refine: api | claude | codex | copilot',
+      'api'
+    )
+    .option('--model-cli-timeout <ms>', 'per-call timeout for cli model backends (ms)')
     .action(async (opts: InitOpts) => {
       const cwd = process.cwd();
 
@@ -180,6 +188,8 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
         await runRefine({
           source: nature,
           ...(opts.program !== undefined ? { program: opts.program } : {}),
+          ...(opts.modelClient !== undefined ? { modelClient: opts.modelClient } : {}),
+          ...(opts.modelCliTimeout !== undefined ? { modelCliTimeout: opts.modelCliTimeout } : {}),
           maxIterations: '5',
           items: '5'
         });

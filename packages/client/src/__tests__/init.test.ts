@@ -1,4 +1,5 @@
 import { buildInitCommand, type GenerateSkillOpts, type InitDeps } from '../commands/init.js';
+import type { RefineCommandOpts } from '../commands/refine.js';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -204,5 +205,14 @@ describe('buildInitCommand', () => {
     expect(generateCalls).toHaveLength(0);
     expect(refineCalls).toHaveLength(0);
     expect(logged.join('\n')).toMatch(/to-skills refine --source mcp/);
+  });
+
+  it('threads --model-client and --model-cli-timeout into the refine dispatch', async () => {
+    await writeCliFixture();
+    const { deps, refineCalls } = makeStubs();
+    await run(deps, ['--source', 'cli', '--model-client', 'claude', '--model-cli-timeout', '7000']);
+    const opts = refineCalls[0] as RefineCommandOpts;
+    expect(opts.modelClient).toBe('claude');
+    expect(opts.modelCliTimeout).toBe('7000');
   });
 });
