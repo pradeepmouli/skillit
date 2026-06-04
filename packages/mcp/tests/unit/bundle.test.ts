@@ -10,7 +10,7 @@
 import { existsSync, mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { ExtractedSkill, InvocationAdapter, RenderedSkill } from '@to-skills/core';
+import type { ExtractedSkill, InvocationAdapter, RenderedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock state shared across helpers.

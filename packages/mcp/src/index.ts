@@ -1,4 +1,4 @@
-// Public surface for @to-skills/mcp.
+// Public surface for @skillit/mcp.
 // See specs/001-mcp-extract-bundle/tasks.md for the implementation plan.
 
 // Version — kept for downstream tests that may want to assert against it.
@@ -82,11 +82,6 @@ export type {
 } from './types.js';
 
 // Re-export useful core types for adapter/author ergonomics
-export type {
-  ExtractedSkill,
-  ExtractedResource,
-  ExtractedPrompt,
-  SkillSetup
-} from '@to-skills/core';
+export type { ExtractedSkill, ExtractedResource, ExtractedPrompt, SkillSetup } from '@skillit/core';
 
 export * from './refine/index.js';

@@ -4,7 +4,7 @@
 
 **Goal:** Add a documentation audit engine that checks extracted skills against the conventions spec (fatal/error/warning/alert), integrated into the TypeDoc plugin lifecycle, plus a bundled Claude Code skill that documents conventions and helps fix issues.
 
-**Architecture:** The audit engine lives in `@to-skills/core` as a pure function `auditSkill(skill, context) → AuditResult`. The plugin calls it after extraction and logs results via TypeDoc's logger. The README parser lives in core too (reusable). The bundled skill is a SKILL.md file in the typedoc-plugin package.
+**Architecture:** The audit engine lives in `@skillit/core` as a pure function `auditSkill(skill, context) → AuditResult`. The plugin calls it after extraction and logs results via TypeDoc's logger. The README parser lives in core too (reusable). The bundled skill is a SKILL.md file in the typedoc-plugin package.
 
 **Tech Stack:** TypeScript 5.9, TypeDoc 0.28, Vitest 4.1, pnpm workspaces
 
@@ -1530,8 +1530,8 @@ app.options.addDeclaration({
 - [ ] **Step 2: Add audit imports**
 
 ```typescript
-import { auditSkill, formatAuditText, formatAuditJson, parseReadme } from '@to-skills/core';
-import type { AuditContext } from '@to-skills/core';
+import { auditSkill, formatAuditText, formatAuditJson, parseReadme } from '@skillit/core';
+import type { AuditContext } from '@skillit/core';
 ```
 
 - [ ] **Step 3: Wire audit into EVENT_RESOLVE_END handler**
@@ -1722,7 +1722,7 @@ export interface Config {
 /**
  * @example
  * ```typescript
- * import { renderSkills, writeSkills } from '@to-skills/core';
+ * import { renderSkills, writeSkills } from '@skillit/core';
  * const rendered = renderSkills(extracted, { maxTokens: 4000 });
  * writeSkills(rendered, { outDir: 'skills' });
  * ```
@@ -1817,8 +1817,8 @@ Verify: audit output appears in the TypeDoc log showing the to-skills project's 
 ```bash
 cat > .changeset/audit-engine.md << 'EOF'
 ---
-'@to-skills/core': minor
-'@to-skills/typedoc': minor
+'@skillit/core': minor
+'@skillit/typedoc': minor
 'typedoc-plugin-to-skills': minor
 ---
 

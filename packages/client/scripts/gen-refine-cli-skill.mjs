@@ -1,13 +1,13 @@
 // Dogfood: generate a skill for the `to-skills` CLI binary (the `refine` command)
-// using @to-skills/cli's own commander introspection.
+// using @skillit/cli's own commander introspection.
 //
-// Run via the package script (builds first):  pnpm --filter @to-skills/client gen-cli-skill
-// Or directly, after building @to-skills/client:  node packages/client/scripts/gen-refine-cli-skill.mjs
+// Run via the package script (builds first):  pnpm --filter @skillit/client gen-cli-skill
+// Or directly, after building @skillit/client:  node packages/client/scripts/gen-refine-cli-skill.mjs
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { Command } from 'commander';
-import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
+import { extractCliSkill, writeCliSkill } from '@skillit/cli';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../..');
@@ -18,7 +18,7 @@ const repoRoot = resolve(here, '../../..');
 const refineDist = resolve(here, '../dist/commands/refine.js');
 if (!existsSync(refineDist)) {
   console.error(
-    `Cannot find ${refineDist}.\nBuild @to-skills/client first:  pnpm --filter @to-skills/client build`
+    `Cannot find ${refineDist}.\nBuild @skillit/client first:  pnpm --filter @skillit/client build`
   );
   process.exit(1);
 }

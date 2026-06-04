@@ -21,17 +21,17 @@
 
 <p>One skill per package — each with its own <a href="http://SKILL.md">SKILL.md</a>, references, and config surfaces.</p>
 <h3 id="cli-tool-commanderyargs" class="tsd-anchor-link">CLI Tool (commander/yargs)<a href="#cli-tool-commanderyargs" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code class="typescript"><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">extractCliSkill</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@to-skills/cli&#39;</span><span class="hl-4">;</span><br/><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">renderSkill</span><span class="hl-4">, </span><span class="hl-2">writeSkills</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@to-skills/core&#39;</span><span class="hl-4">;</span><br/><br/><span class="hl-1">const</span><span class="hl-4"> </span><span class="hl-9">skill</span><span class="hl-4"> = </span><span class="hl-3">await</span><span class="hl-4"> </span><span class="hl-5">extractCliSkill</span><span class="hl-4">({</span><br/><span class="hl-4">  </span><span class="hl-2">program</span><span class="hl-4">, </span><span class="hl-0">// commander Program object</span><br/><span class="hl-4">  </span><span class="hl-2">metadata:</span><span class="hl-4"> { </span><span class="hl-2">name:</span><span class="hl-4"> </span><span class="hl-7">&#39;my-tool&#39;</span><span class="hl-4">, </span><span class="hl-2">keywords:</span><span class="hl-4"> [</span><span class="hl-7">&#39;build&#39;</span><span class="hl-4">, </span><span class="hl-7">&#39;deploy&#39;</span><span class="hl-4">] }</span><br/><span class="hl-4">});</span><br/><span class="hl-5">writeSkills</span><span class="hl-4">([</span><span class="hl-5">renderSkill</span><span class="hl-4">(</span><span class="hl-2">skill</span><span class="hl-4">)], { </span><span class="hl-2">outDir:</span><span class="hl-4"> </span><span class="hl-7">&#39;skills&#39;</span><span class="hl-4"> });</span>
+<pre><code class="typescript"><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">extractCliSkill</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@skillit/cli&#39;</span><span class="hl-4">;</span><br/><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">renderSkill</span><span class="hl-4">, </span><span class="hl-2">writeSkills</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@skillit/core&#39;</span><span class="hl-4">;</span><br/><br/><span class="hl-1">const</span><span class="hl-4"> </span><span class="hl-9">skill</span><span class="hl-4"> = </span><span class="hl-3">await</span><span class="hl-4"> </span><span class="hl-5">extractCliSkill</span><span class="hl-4">({</span><br/><span class="hl-4">  </span><span class="hl-2">program</span><span class="hl-4">, </span><span class="hl-0">// commander Program object</span><br/><span class="hl-4">  </span><span class="hl-2">metadata:</span><span class="hl-4"> { </span><span class="hl-2">name:</span><span class="hl-4"> </span><span class="hl-7">&#39;my-tool&#39;</span><span class="hl-4">, </span><span class="hl-2">keywords:</span><span class="hl-4"> [</span><span class="hl-7">&#39;build&#39;</span><span class="hl-4">, </span><span class="hl-7">&#39;deploy&#39;</span><span class="hl-4">] }</span><br/><span class="hl-4">});</span><br/><span class="hl-5">writeSkills</span><span class="hl-4">([</span><span class="hl-5">renderSkill</span><span class="hl-4">(</span><span class="hl-2">skill</span><span class="hl-4">)], { </span><span class="hl-2">outDir:</span><span class="hl-4"> </span><span class="hl-7">&#39;skills&#39;</span><span class="hl-4"> });</span>
 </code><button type="button">Copy</button></pre>
 
 <p>Introspects command definitions and correlates flags with typed <code>*Options</code> interfaces for JSDoc enrichment.</p>
 <h3 id="library-with-docs-site-vitepress" class="tsd-anchor-link">Library with Docs Site (VitePress)<a href="#library-with-docs-site-vitepress" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code class="typescript"><span class="hl-0">// .vitepress/config.mts</span><br/><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">defineConfig</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;vitepress&#39;</span><span class="hl-4">;</span><br/><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">toSkills</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@to-skills/vitepress&#39;</span><span class="hl-4">;</span><br/><br/><span class="hl-3">export</span><span class="hl-4"> </span><span class="hl-3">default</span><span class="hl-4"> </span><span class="hl-5">defineConfig</span><span class="hl-4">({</span><br/><span class="hl-4">  </span><span class="hl-2">vite:</span><span class="hl-4"> {</span><br/><span class="hl-4">    </span><span class="hl-2">plugins:</span><span class="hl-4"> [</span><span class="hl-5">toSkills</span><span class="hl-4">({ </span><span class="hl-2">skillsOutDir:</span><span class="hl-4"> </span><span class="hl-7">&#39;skills&#39;</span><span class="hl-4"> })]</span><br/><span class="hl-4">  },</span><br/><span class="hl-4">  </span><span class="hl-2">themeConfig:</span><span class="hl-4"> { </span><span class="hl-2">sidebar:</span><span class="hl-4"> [...] }</span><br/><span class="hl-4">});</span>
+<pre><code class="typescript"><span class="hl-0">// .vitepress/config.mts</span><br/><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">defineConfig</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;vitepress&#39;</span><span class="hl-4">;</span><br/><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">toSkills</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@skillit/vitepress&#39;</span><span class="hl-4">;</span><br/><br/><span class="hl-3">export</span><span class="hl-4"> </span><span class="hl-3">default</span><span class="hl-4"> </span><span class="hl-5">defineConfig</span><span class="hl-4">({</span><br/><span class="hl-4">  </span><span class="hl-2">vite:</span><span class="hl-4"> {</span><br/><span class="hl-4">    </span><span class="hl-2">plugins:</span><span class="hl-4"> [</span><span class="hl-5">toSkills</span><span class="hl-4">({ </span><span class="hl-2">skillsOutDir:</span><span class="hl-4"> </span><span class="hl-7">&#39;skills&#39;</span><span class="hl-4"> })]</span><br/><span class="hl-4">  },</span><br/><span class="hl-4">  </span><span class="hl-2">themeConfig:</span><span class="hl-4"> { </span><span class="hl-2">sidebar:</span><span class="hl-4"> [...] }</span><br/><span class="hl-4">});</span>
 </code><button type="button">Copy</button></pre>
 
 <p>The VitePress plugin uses your sidebar for authoritative page ordering — no frontmatter heuristics.</p>
 <h3 id="library-with-docs-site-docusaurus" class="tsd-anchor-link">Library with Docs Site (Docusaurus)<a href="#library-with-docs-site-docusaurus" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code class="typescript"><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">extractDocusaurusDocs</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@to-skills/docusaurus&#39;</span><span class="hl-4">;</span><br/><br/><span class="hl-1">const</span><span class="hl-4"> </span><span class="hl-9">docs</span><span class="hl-4"> = </span><span class="hl-5">extractDocusaurusDocs</span><span class="hl-4">({ </span><span class="hl-2">projectRoot:</span><span class="hl-4"> </span><span class="hl-7">&#39;.&#39;</span><span class="hl-4"> });</span><br/><span class="hl-0">// Returns ExtractedDocument[] — merge into your skill</span>
+<pre><code class="typescript"><span class="hl-3">import</span><span class="hl-4"> { </span><span class="hl-2">extractDocusaurusDocs</span><span class="hl-4"> } </span><span class="hl-3">from</span><span class="hl-4"> </span><span class="hl-7">&#39;@skillit/docusaurus&#39;</span><span class="hl-4">;</span><br/><br/><span class="hl-1">const</span><span class="hl-4"> </span><span class="hl-9">docs</span><span class="hl-4"> = </span><span class="hl-5">extractDocusaurusDocs</span><span class="hl-4">({ </span><span class="hl-2">projectRoot:</span><span class="hl-4"> </span><span class="hl-7">&#39;.&#39;</span><span class="hl-4"> });</span><br/><span class="hl-0">// Returns ExtractedDocument[] — merge into your skill</span>
 </code><button type="button">Copy</button></pre>
 
 <p>Reads <code>_category_.json</code> for folder labels and ordering. Excludes <code>api/</code> and <code>blog/</code> by default.</p>
@@ -83,27 +83,27 @@
 </tr>
 <tr>
 <td>Commander/yargs programs</td>
-<td><code>@to-skills/cli</code></td>
+<td><code>@skillit/cli</code></td>
 <td>CLI commands + flags in references/commands.md</td>
 </tr>
 <tr>
 <td><code>examples/</code> directory</td>
-<td><code>@to-skills/core</code></td>
+<td><code>@skillit/core</code></td>
 <td>Linked to matching exports by import analysis</td>
 </tr>
 <tr>
 <td><code>docs/</code> directory</td>
-<td><code>@to-skills/core</code> or VitePress/Docusaurus plugin</td>
+<td><code>@skillit/core</code> or VitePress/Docusaurus plugin</td>
 <td>Prose docs as reference files</td>
 </tr>
 <tr>
 <td>Root <code>.md</code> files</td>
-<td><code>@to-skills/core</code></td>
+<td><code>@skillit/core</code></td>
 <td><a href="http://ARCHITECTURE.md">ARCHITECTURE.md</a>, <a href="http://MIGRATION.md">MIGRATION.md</a>, etc. as references</td>
 </tr>
 <tr>
 <td><a href="http://README.md">README.md</a></td>
-<td><code>@to-skills/core</code></td>
+<td><code>@skillit/core</code></td>
 <td>Blockquote description, ## Features, ## Quick Start, ## Troubleshooting</td>
 </tr>
 <tr>
@@ -148,7 +148,7 @@
 </table>
 <p>Enable CI enforcement: <code>&quot;skillsAuditFailOnError&quot;: true</code></p>
 <h3 id="generated-output" class="tsd-anchor-link">Generated Output<a href="#generated-output" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code><span class="hl-2">skills</span><span class="hl-4">/&lt;</span><span class="hl-3">package</span><span class="hl-4">-</span><span class="hl-2">name</span><span class="hl-4">&gt;/</span><br/><span class="hl-4">  </span><span class="hl-9">SKILL</span><span class="hl-4">.</span><span class="hl-2">md</span><span class="hl-4">                     # </span><span class="hl-2">Discovery</span><span class="hl-4"> </span><span class="hl-5">file</span><span class="hl-4"> (~</span><span class="hl-10">200</span><span class="hl-4"> </span><span class="hl-2">tokens</span><span class="hl-4">)</span><br/><span class="hl-4">  </span><span class="hl-2">references</span><span class="hl-4">/</span><br/><span class="hl-4">    </span><span class="hl-2">functions</span><span class="hl-4">.</span><span class="hl-2">md</span><span class="hl-4">               # </span><span class="hl-2">Grouped</span><span class="hl-4"> </span><span class="hl-2">by</span><span class="hl-4"> @</span><span class="hl-2">category</span><span class="hl-4"> </span><span class="hl-2">or</span><span class="hl-4"> </span><span class="hl-2">source</span><span class="hl-4"> </span><span class="hl-6">module</span><br/><span class="hl-4">    </span><span class="hl-2">types</span><span class="hl-4">.</span><span class="hl-2">md</span><span class="hl-4">                   # </span><span class="hl-2">Interfaces</span><span class="hl-4"> </span><span class="hl-3">with</span><span class="hl-4"> </span><span class="hl-2">properties</span><span class="hl-4">, </span><span class="hl-1">type</span><span class="hl-4"> </span><span class="hl-6">aliases</span><br/><span class="hl-4">    classes.md                 # With inheritance, methods, properties</span><br/><span class="hl-4">    config.md                  # @config interfaces as option tables</span><br/><span class="hl-4">    commands.md                # CLI commands with flags (from @to-skills/cli)</span><br/><span class="hl-4">    variables.md               # Exported constants</span><br/><span class="hl-4">    examples.md                # From @example tags</span><br/><span class="hl-4">    architecture.md            # From root ARCHITECTURE.md</span><br/><span class="hl-4">    getting-started.md         # From docs/ pages</span><br/><span class="hl-4">    ...                        # One file per doc page</span>
+<pre><code><span class="hl-2">skills</span><span class="hl-4">/&lt;</span><span class="hl-3">package</span><span class="hl-4">-</span><span class="hl-2">name</span><span class="hl-4">&gt;/</span><br/><span class="hl-4">  </span><span class="hl-9">SKILL</span><span class="hl-4">.</span><span class="hl-2">md</span><span class="hl-4">                     # </span><span class="hl-2">Discovery</span><span class="hl-4"> </span><span class="hl-5">file</span><span class="hl-4"> (~</span><span class="hl-10">200</span><span class="hl-4"> </span><span class="hl-2">tokens</span><span class="hl-4">)</span><br/><span class="hl-4">  </span><span class="hl-2">references</span><span class="hl-4">/</span><br/><span class="hl-4">    </span><span class="hl-2">functions</span><span class="hl-4">.</span><span class="hl-2">md</span><span class="hl-4">               # </span><span class="hl-2">Grouped</span><span class="hl-4"> </span><span class="hl-2">by</span><span class="hl-4"> @</span><span class="hl-2">category</span><span class="hl-4"> </span><span class="hl-2">or</span><span class="hl-4"> </span><span class="hl-2">source</span><span class="hl-4"> </span><span class="hl-6">module</span><br/><span class="hl-4">    </span><span class="hl-2">types</span><span class="hl-4">.</span><span class="hl-2">md</span><span class="hl-4">                   # </span><span class="hl-2">Interfaces</span><span class="hl-4"> </span><span class="hl-3">with</span><span class="hl-4"> </span><span class="hl-2">properties</span><span class="hl-4">, </span><span class="hl-1">type</span><span class="hl-4"> </span><span class="hl-6">aliases</span><br/><span class="hl-4">    classes.md                 # With inheritance, methods, properties</span><br/><span class="hl-4">    config.md                  # @config interfaces as option tables</span><br/><span class="hl-4">    commands.md                # CLI commands with flags (from @skillit/cli)</span><br/><span class="hl-4">    variables.md               # Exported constants</span><br/><span class="hl-4">    examples.md                # From @example tags</span><br/><span class="hl-4">    architecture.md            # From root ARCHITECTURE.md</span><br/><span class="hl-4">    getting-started.md         # From docs/ pages</span><br/><span class="hl-4">    ...                        # One file per doc page</span>
 </code><button>Copy</button></pre>
 
 <p>Each reference file is token-budgeted independently (default 4000 tokens).</p>
@@ -166,23 +166,23 @@
 <td>Auto-discovery wrapper — just install, no config</td>
 </tr>
 <tr>
-<td><a href="modules/_to-skills_core.html"><code>@to-skills/core</code></a></td>
+<td><a href="modules/_to-skills_core.html"><code>@skillit/core</code></a></td>
 <td>Types, renderer, audit engine, token budgeting, docs/examples scanning</td>
 </tr>
 <tr>
-<td><a href="modules/_to-skills_typedoc.html"><code>@to-skills/typedoc</code></a></td>
+<td><a href="modules/_to-skills_typedoc.html"><code>@skillit/typedoc</code></a></td>
 <td>TypeDoc plugin — API + config extraction from the reflection tree</td>
 </tr>
 <tr>
-<td><a href="modules/_to-skills_cli.html"><code>@to-skills/cli</code></a></td>
+<td><a href="modules/_to-skills_cli.html"><code>@skillit/cli</code></a></td>
 <td>Commander/yargs introspection + <code>--help</code> fallback + flag correlation</td>
 </tr>
 <tr>
-<td><a href="media/vitepress"><code>@to-skills/vitepress</code></a></td>
+<td><a href="media/vitepress"><code>@skillit/vitepress</code></a></td>
 <td>VitePress Vite plugin — sidebar-driven docs extraction</td>
 </tr>
 <tr>
-<td><a href="media/docusaurus"><code>@to-skills/docusaurus</code></a></td>
+<td><a href="media/docusaurus"><code>@skillit/docusaurus</code></a></td>
 <td>Docusaurus adapter — <code>_category_.json</code> + docs scanning</td>
 </tr>
 </tbody>

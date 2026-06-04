@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { auditSkill } from '@to-skills/core';
-import type { AuditContext, AuditIssue, AuditPass } from '@to-skills/core';
-import type { ExtractedSkill, ExtractedFunction, ExtractedParameter } from '@to-skills/core';
+import { auditSkill } from '@skillit/core';
+import type { AuditContext, AuditIssue, AuditPass } from '@skillit/core';
+import type { ExtractedSkill, ExtractedFunction, ExtractedParameter } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Factories

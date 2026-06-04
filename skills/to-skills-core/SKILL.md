@@ -4,7 +4,7 @@ description: 'Shared types, SKILL.md renderer, and token budgeting for to-skills
 license: MIT
 ---
 
-# @to-skills/core
+# @skillit/core
 
 Shared types, SKILL.md renderer, and token budgeting for to-skills plugins
 

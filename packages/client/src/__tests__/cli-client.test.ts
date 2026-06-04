@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CliModelClient } from '../model/cli/cli-client.js';
 import { claudeAdapter } from '../model/cli/adapters.js';
-import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@to-skills/core';
+import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@skillit/core';
 
 const skill = { name: 'demo' } as unknown as ExtractedSkill;
 const draftReq: DraftRequest = {

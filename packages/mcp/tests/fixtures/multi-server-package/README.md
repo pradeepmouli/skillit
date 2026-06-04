@@ -1,6 +1,6 @@
 # @fixture/multi-server
 
-Multi-bin MCP server fixture for `@to-skills/mcp` bundle integration tests.
+Multi-bin MCP server fixture for `@skillit/mcp` bundle integration tests.
 Two stdio servers (`server-a`, `server-b`) live in the same npm package,
 exposed via the `bin` object. Each emits a uniquely-named tool so tests can
 distinguish skill outputs.

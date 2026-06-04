@@ -1,4 +1,4 @@
-# @to-skills/cli
+# @skillit/cli
 
 > Extract CLI command structure from commander/yargs for AI agent skill generation.
 
@@ -14,13 +14,13 @@ Part of the [to-skills](https://github.com/pradeepmouli/to-skills) ecosystem.
 ## Install
 
 ```bash
-pnpm add -D @to-skills/cli
+pnpm add -D @skillit/cli
 ```
 
 ## Usage
 
 ```typescript
-import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
+import { extractCliSkill, writeCliSkill } from '@skillit/cli';
 
 const skill = await extractCliSkill({
   program, // commander Program object

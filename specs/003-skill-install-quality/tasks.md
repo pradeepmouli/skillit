@@ -89,7 +89,7 @@
 
 **Goal**: Publish bundled guidance skills for TypeDoc, CLI, and MCP pipelines and install them alongside generated skills with version-aware replacement rules.
 
-**Independent Test**: Verify `npm pack` for `typedoc-plugin-to-skills`, `@to-skills/cli`, and `@to-skills/mcp` includes each bundled skill; run TypeDoc, CLI extraction, and MCP generation with install targets and verify bundled guidance skills appear beside generated skills without overwriting custom copies.
+**Independent Test**: Verify `npm pack` for `typedoc-plugin-to-skills`, `@skillit/cli`, and `@skillit/mcp` includes each bundled skill; run TypeDoc, CLI extraction, and MCP generation with install targets and verify bundled guidance skills appear beside generated skills without overwriting custom copies.
 
 ### Tests for User Story 3
 

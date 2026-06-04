@@ -31,7 +31,7 @@
  * @module audit/rule-m3
  */
 
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import type { AuditIssue } from '../types.js';
 
 /** Maximum number of per-tool M3 issues to emit before collapsing into a summary. */

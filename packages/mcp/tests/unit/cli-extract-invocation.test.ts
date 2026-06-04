@@ -13,7 +13,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Command } from 'commander';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const extractCalls: Array<{ skillName?: string; installTargets?: readonly string[] }> = [];

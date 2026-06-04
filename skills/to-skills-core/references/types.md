@@ -335,5 +335,5 @@ A fully parsed markdown document with structured metadata and sections.
 - `title: string` — Title derived from top-level JSDoc
 - `description: string` (optional) — Description from top-level JSDoc or first comment
 - `importedSymbols: string[]` — Imported symbol names (e.g. ["renderSkill", "writeSkills"])
-- `importedFrom: string[]` — Package names imported from (e.g. ["@to-skills/core"])
+- `importedFrom: string[]` — Package names imported from (e.g. ["@skillit/core"])
 - `content: string` — Full file content

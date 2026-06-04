@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseReadme } from '@to-skills/core';
+import { parseReadme } from '@skillit/core';
 
 // ─── Blockquote extraction ────────────────────────────────────────────────────
 

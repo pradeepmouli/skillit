@@ -1,5 +1,5 @@
 /**
- * Commander-based CLI wiring for `@to-skills/mcp`.
+ * Commander-based CLI wiring for `@skillit/mcp`.
  *
  * Exposes `buildProgram()`, which constructs a `Command` tree with:
  * - `extract` — connects to a running MCP server (stdio via `--command`,
@@ -26,7 +26,7 @@
 import { existsSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { Command, InvalidArgumentError } from 'commander';
-import { readInstalledSkillMetadata, renderSkill, writeSkills } from '@to-skills/core';
+import { readInstalledSkillMetadata, renderSkill, writeSkills } from '@skillit/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import type { InvocationAdapter } from './adapter/types.js';
 import { bundleMcpSkill } from './bundle.js';
@@ -788,7 +788,7 @@ async function formatInstalledAdaptersHint(): Promise<string> {
       : '';
   return (
     `${installedLine}${corruptedLine}\n` +
-    `To install a missing adapter: npm install @to-skills/target-<name>`
+    `To install a missing adapter: npm install @skillit/target-<name>`
   );
 }
 

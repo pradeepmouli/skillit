@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mergeOverlay } from '../runtime/merge-overlay.js';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 function skill(fns: Array<{ name: string }>): ExtractedSkill {
   return {

@@ -18,7 +18,7 @@
  *  11. runMcpAudit — clean skill returns []
  */
 
-import type { AdapterFingerprint, ExtractedFunction, ExtractedSkill } from '@to-skills/core';
+import type { AdapterFingerprint, ExtractedFunction, ExtractedSkill } from '@skillit/core';
 import { describe, expect, it } from 'vitest';
 import type { InvocationAdapter } from '../../src/adapter/types.js';
 import { runM1 } from '../../src/audit/rule-m1.js';
@@ -65,7 +65,7 @@ function skill(overrides: Partial<ExtractedSkill> = {}): ExtractedSkill {
 function makeAdapter(version: string): InvocationAdapter {
   return {
     target: 'cli:mcpc',
-    fingerprint: { adapter: '@to-skills/target-mcpc', version, targetCliRange: 'mcpc@^2.1' },
+    fingerprint: { adapter: '@skillit/target-mcpc', version, targetCliRange: 'mcpc@^2.1' },
     render: async () => {
       throw new Error('not used in audit tests');
     }
@@ -73,7 +73,7 @@ function makeAdapter(version: string): InvocationAdapter {
 }
 
 function makeFingerprint(version: string): AdapterFingerprint {
-  return { adapter: '@to-skills/target-mcpc', version, targetCliRange: 'mcpc@^2.1' };
+  return { adapter: '@skillit/target-mcpc', version, targetCliRange: 'mcpc@^2.1' };
 }
 
 describe('audit rule M1 — missing tool description', () => {

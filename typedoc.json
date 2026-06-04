@@ -2,7 +2,7 @@
   "entryPointStrategy": "packages",
   "entryPoints": ["packages/core", "packages/typedoc", "packages/cli"],
   "out": "docs/api",
-  "plugin": ["typedoc-plugin-to-skills"],
+  "plugin": ["typedoc-plugin-skillit"],
   "skipErrorChecking": true,
   "includeVersion": true,
   "readme": "README.md",

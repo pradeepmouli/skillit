@@ -149,7 +149,7 @@ On `to-skills-mcp bundle`:
 - `skillName` missing on an entry → exit code 4 with the index of the offending entry.
 - `skillName` violates the kebab pattern → exit code 4.
 - `command` omitted AND `bin` absent → exit code 5 with code `MISSING_LAUNCH_COMMAND`.
-- `invocation` references an unknown target → exit code 2 with code `UNKNOWN_TARGET`; if the target looks resolvable (`cli:*`), suggests `npm install @to-skills/target-<name>`.
+- `invocation` references an unknown target → exit code 2 with code `UNKNOWN_TARGET`; if the target looks resolvable (`cli:*`), suggests `npm install @skillit/target-<name>`.
 - Two entries with the same `skillName` → exit code 4 with code `DUPLICATE_SKILL_NAME`.
 
 ---

@@ -28,7 +28,7 @@ Generate AI agent skills from TypeScript documentation
 
 - **CLI Extraction** — # CLI & Config Extraction
 
-> The `@to-skills/cli` package extracts CLI command structure and correlates flags with typed interfaces so your skill documents both the CLI and its configuration.
+> The `@skillit/cli` package extracts CLI command structure and correlates flags with typed interfaces so your skill documents both the CLI and its configuration.
 
 - **Markdown Docs** — # Markdown Docs Extraction
 

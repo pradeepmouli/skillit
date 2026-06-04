@@ -1,5 +1,5 @@
 {
-  "name": "@to-skills/typedoc",
+  "name": "@skillit/typedoc",
   "version": "1.0.9",
   "description": "TypeDoc plugin that generates AI agent skills (SKILL.md) from TypeScript API documentation",
   "keywords": [
@@ -49,7 +49,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "devDependencies": {
     "typedoc": "^0.28.19"

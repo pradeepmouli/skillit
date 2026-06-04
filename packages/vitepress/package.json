@@ -1,5 +1,5 @@
 {
-  "name": "@to-skills/vitepress",
+  "name": "@skillit/vitepress",
   "version": "0.2.26",
   "description": "VitePress plugin for AI agent skill generation — uses sidebar for document ordering",
   "keywords": [
@@ -42,7 +42,7 @@
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   },
   "peerDependencies": {
     "vitepress": ">=2.0.0-alpha.0"

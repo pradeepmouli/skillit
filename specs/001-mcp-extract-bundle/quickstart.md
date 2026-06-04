@@ -1,4 +1,4 @@
-# Quickstart — `@to-skills/mcp`
+# Quickstart — `@skillit/mcp`
 
 Three short walkthroughs covering the three primary user stories. Each takes under five minutes. All commands assume Node ≥20 and a working `npx`.
 
@@ -9,7 +9,7 @@ Three short walkthroughs covering the three primary user stories. Each takes und
 **Goal**: generate a SKILL.md for the reference `@modelcontextprotocol/server-filesystem` so your agents can reference it without connecting.
 
 ```bash
-npx @to-skills/mcp extract \
+npx @skillit/mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --out ./skills
 ```
@@ -71,7 +71,7 @@ Edit `package.json`:
     "mcp": { "skillName": "my-server" }
   },
   "devDependencies": {
-    "@to-skills/mcp": "^1.0.0"
+    "@skillit/mcp": "^1.0.0"
   }
 }
 ```
@@ -130,7 +130,7 @@ npm install -g mcpc
 Extract with the CLI target:
 
 ```bash
-npx @to-skills/mcp extract \
+npx @skillit/mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --invocation cli:mcpc \
   --out ./skills
@@ -144,7 +144,7 @@ name: filesystem
 description: '...'
 license: MIT
 generated-by:
-  adapter: '@to-skills/target-mcpc'
+  adapter: '@skillit/target-mcpc'
   version: '1.0.0'
   target-cli-range: 'mcpc@^2.1'
 ---
@@ -175,7 +175,7 @@ No `mcp:` frontmatter — the agent doesn't need MCP support. It reads SKILL.md,
 Emit BOTH targets in one run:
 
 ```bash
-npx @to-skills/mcp extract \
+npx @skillit/mcp extract \
   --command "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --invocation mcp-protocol \
   --invocation cli:mcpc \
@@ -196,12 +196,12 @@ One extraction, two consumption paths.
 
 ## Programmatic usage (US6)
 
-For CI pipelines that want to compose with `@to-skills/typedoc` or other extractors:
+For CI pipelines that want to compose with `@skillit/typedoc` or other extractors:
 
 ```typescript
-import { extractMcpSkill, loadAdapter } from '@to-skills/mcp';
-import { renderSkill } from '@to-skills/core';
-import { writeSkill } from '@to-skills/core/writer';
+import { extractMcpSkill, loadAdapter } from '@skillit/mcp';
+import { renderSkill } from '@skillit/core';
+import { writeSkill } from '@skillit/core/writer';
 
 const skill = await extractMcpSkill({
   transport: { type: 'stdio', command: 'node', args: ['./server.js'] }
@@ -230,14 +230,14 @@ Key property (SC-011): `extractMcpSkill` runs once; rendering is target-agnostic
 
 ## Troubleshooting
 
-| Symptom                            | Cause                                               | Fix                                                                                                                        |
-| ---------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `ADAPTER_NOT_FOUND: cli:foo`       | Adapter package not installed                       | `npm install @to-skills/target-foo`                                                                                        |
-| `MISSING_LAUNCH_COMMAND`           | Bundle mode, no `bin`, no `command` override        | Add `bin` to package.json or `command`/`args` to `to-skills.mcp`                                                           |
-| `SCHEMA_REF_CYCLE: tool 'X'`       | Tool's `inputSchema` uses recursive `$ref`          | Server-side bug; the tool is still documented, just without parameter table                                                |
-| `DUPLICATE_SKILL_NAME: filesystem` | Re-running without `--force` overwrite              | Add `--force` flag                                                                                                         |
-| `PROTOCOL_VERSION_UNSUPPORTED`     | Server uses newer spec than SDK                     | Update `@to-skills/mcp` to pull in a newer `@modelcontextprotocol/sdk`                                                     |
-| Generated CLI commands don't parse | Target CLI upgraded past the adapter's pinned range | Regenerate: `npm update @to-skills/target-<n> && to-skills-mcp extract ...` (freshness warning in next audit will confirm) |
+| Symptom                            | Cause                                               | Fix                                                                                                                      |
+| ---------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `ADAPTER_NOT_FOUND: cli:foo`       | Adapter package not installed                       | `npm install @skillit/target-foo`                                                                                        |
+| `MISSING_LAUNCH_COMMAND`           | Bundle mode, no `bin`, no `command` override        | Add `bin` to package.json or `command`/`args` to `to-skills.mcp`                                                         |
+| `SCHEMA_REF_CYCLE: tool 'X'`       | Tool's `inputSchema` uses recursive `$ref`          | Server-side bug; the tool is still documented, just without parameter table                                              |
+| `DUPLICATE_SKILL_NAME: filesystem` | Re-running without `--force` overwrite              | Add `--force` flag                                                                                                       |
+| `PROTOCOL_VERSION_UNSUPPORTED`     | Server uses newer spec than SDK                     | Update `@skillit/mcp` to pull in a newer `@modelcontextprotocol/sdk`                                                     |
+| Generated CLI commands don't parse | Target CLI upgraded past the adapter's pinned range | Regenerate: `npm update @skillit/target-<n> && to-skills-mcp extract ...` (freshness warning in next audit will confirm) |
 
 ---
 
@@ -246,4 +246,4 @@ Key property (SC-011): `extractMcpSkill` runs once; rendering is target-agnostic
 - Audit configuration (see `contracts/cli.md` `--skip-audit` flag).
 - Writing a third-party adapter (see `contracts/adapter.md`).
 - Token budgeting tuning (`--max-tokens` flag; defaults are good for most servers).
-- `llms.txt` output (`--llms-txt` flag, toggles the same emitter `@to-skills/typedoc` uses).
+- `llms.txt` output (`--llms-txt` flag, toggles the same emitter `@skillit/typedoc` uses).

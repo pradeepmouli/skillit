@@ -106,7 +106,7 @@ describe.skipIf(!RUN)('bundle integration: multi-target {mcp-protocol, cli:mcpc}
       'generated-by'?: { adapter?: string; version?: string };
     };
     expect(cliFm['generated-by']).toBeTruthy();
-    expect(cliFm['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(cliFm['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(typeof cliFm['generated-by']!.version).toBe('string');
     expect(cliFm.mcp).toBeUndefined();
 

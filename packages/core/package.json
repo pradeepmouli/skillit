@@ -1,5 +1,5 @@
 {
-  "name": "@to-skills/core",
+  "name": "@skillit/core",
   "version": "1.4.0",
   "description": "Shared types, SKILL.md renderer, and token budgeting for to-skills plugins",
   "keywords": [

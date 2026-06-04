@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { renderLlmsTxt } from '@to-skills/core';
-import type { ExtractedSkill, LlmsTxtOptions } from '@to-skills/core';
+import { renderLlmsTxt } from '@skillit/core';
+import type { ExtractedSkill, LlmsTxtOptions } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Fixtures

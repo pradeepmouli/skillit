@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMarkdownDoc } from '@to-skills/core';
+import { parseMarkdownDoc } from '@skillit/core';
 
 // ─── Frontmatter extraction ───────────────────────────────────────────────────
 

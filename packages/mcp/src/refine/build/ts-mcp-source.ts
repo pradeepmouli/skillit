@@ -1,6 +1,6 @@
 import { glob } from 'node:fs/promises';
 import { readFile, writeFile } from 'node:fs/promises';
-import type { AuditContext, DraftedFix, ExtractedSkill, RefineSource } from '@to-skills/core';
+import type { AuditContext, DraftedFix, ExtractedSkill, RefineSource } from '@skillit/core';
 import { extractMcpSkill } from '../../extract.js';
 import type { McpExtractOptions } from '../../types.js';
 import { applyMetaEdit } from './meta-edit.js';

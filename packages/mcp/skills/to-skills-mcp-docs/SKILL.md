@@ -8,7 +8,7 @@ toSkills:
 
 # MCP Documentation Conventions
 
-Use this skill when documenting MCP servers for `@to-skills/mcp`.
+Use this skill when documenting MCP servers for `@skillit/mcp`.
 
 ## Focus Areas
 

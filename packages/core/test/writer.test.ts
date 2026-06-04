@@ -2,8 +2,8 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { renderSkill, renderSkills, writeSkills } from '@to-skills/core';
-import type { ExtractedSkill, RenderedSkill } from '@to-skills/core';
+import { renderSkill, renderSkills, writeSkills } from '@skillit/core';
+import type { ExtractedSkill, RenderedSkill } from '@skillit/core';
 
 const minimalSkill: ExtractedSkill = {
   name: 'writer-lib',

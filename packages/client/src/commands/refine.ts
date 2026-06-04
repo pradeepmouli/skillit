@@ -5,9 +5,9 @@ import {
   TypeScriptMcpRefineSource,
   extractMcpSkill,
   readMcpConfigFile
-} from '@to-skills/mcp';
-import { CliRefineSource, loadProgram } from '@to-skills/cli';
-import { refineSkill, type ModelClient, type RefineSource } from '@to-skills/core';
+} from '@skillit/mcp';
+import { CliRefineSource, loadProgram } from '@skillit/cli';
+import { refineSkill, type ModelClient, type RefineSource } from '@skillit/core';
 import { createModelClient } from '../model/model-client-factory.js';
 import { detectRefineMode } from '../detect-mode.js';
 import {
@@ -119,7 +119,10 @@ export async function runRefineCommand(opts: RefineCommandOpts): Promise<void> {
       : undefined;
   let model: ModelClient;
   try {
-    model = createModelClient(resolveModelClientKind(opts.modelClient), (timeoutMs !== undefined ? { timeoutMs } : {}));
+    model = createModelClient(
+      resolveModelClientKind(opts.modelClient),
+      timeoutMs !== undefined ? { timeoutMs } : {}
+    );
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

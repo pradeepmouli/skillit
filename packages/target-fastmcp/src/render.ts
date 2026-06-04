@@ -33,11 +33,11 @@ import type {
   ExtractedSkill,
   RenderedFile,
   RenderedSkill
-} from '@to-skills/core';
-import { estimateTokens, renderSkill, truncateToTokenBudget } from '@to-skills/core';
-import type { InvocationAdapter, ParameterPlan } from '@to-skills/mcp';
-import { generatedByFrontmatter, splitToolsByNamespace } from '@to-skills/mcp';
-import { renderToolsBody, resolveLaunchCommand } from '@to-skills/mcp/adapter-utils';
+} from '@skillit/core';
+import { estimateTokens, renderSkill, truncateToTokenBudget } from '@skillit/core';
+import type { InvocationAdapter, ParameterPlan } from '@skillit/mcp';
+import { generatedByFrontmatter, splitToolsByNamespace } from '@skillit/mcp';
+import { renderToolsBody, resolveLaunchCommand } from '@skillit/mcp/adapter-utils';
 import { encodeFastMcpArgs } from './args.js';
 import { renderFastMcpSetup } from './setup.js';
 import { PACKAGE_VERSION } from './version.js';
@@ -54,7 +54,7 @@ export class FastMcpAdapter implements InvocationAdapter {
 
   constructor() {
     this.fingerprint = {
-      adapter: '@to-skills/target-fastmcp',
+      adapter: '@skillit/target-fastmcp',
       version: PACKAGE_VERSION,
       targetCliRange: 'fastmcp@^2'
     };

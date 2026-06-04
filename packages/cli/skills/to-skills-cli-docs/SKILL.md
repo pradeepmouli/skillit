@@ -8,7 +8,7 @@ toSkills:
 
 # CLI Documentation Conventions
 
-Use this skill when documenting command-line programs for `@to-skills/cli`.
+Use this skill when documenting command-line programs for `@skillit/cli`.
 
 ## Focus Areas
 

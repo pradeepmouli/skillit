@@ -1,6 +1,6 @@
 # Contract — `extractMcpSkill` Options & Return Shape Changes
 
-**Owner**: `@to-skills/mcp`
+**Owner**: `@skillit/mcp`
 **Stability**: stable (additive — backward-compatible)
 
 ---

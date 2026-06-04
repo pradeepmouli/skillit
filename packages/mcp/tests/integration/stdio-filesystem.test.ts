@@ -9,7 +9,7 @@
  *
  * The test invokes `node <pkg>/dist/bin.js`, so the package must be built
  * before these tests run. The `pretest:integration` npm script handles that;
- * run via `pnpm --filter @to-skills/mcp run test:integration`.
+ * run via `pnpm --filter @skillit/mcp run test:integration`.
  */
 import { execFile } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';

@@ -1,5 +1,5 @@
 {
-  "name": "@to-skills/docusaurus",
+  "name": "@skillit/docusaurus",
   "version": "0.2.26",
   "description": "Extract Docusaurus documentation structure for AI agent skill generation",
   "keywords": [
@@ -41,6 +41,6 @@
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   }
 }

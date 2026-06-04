@@ -33,7 +33,7 @@ The integration test `tests/integration/bundle-idempotent.test.ts` (T067a) verif
 
 **Delta**: Quick Reference linking to per-namespace split files is not implemented in B22.
 
-**Rationale**: The Quick Reference section of SKILL.md is rendered by `@to-skills/core`'s default render path, which lists references **per export-kind** (functions, classes, types, etc.) rather than per file. The CLI adapters (`target-mcpc`, `target-fastmcp`) emit their own per-namespace `references/tools-<ns>.md` files post-`renderSkill`, so threading per-file links into core's Quick Reference would require core changes that go beyond Phase 10's scope.
+**Rationale**: The Quick Reference section of SKILL.md is rendered by `@skillit/core`'s default render path, which lists references **per export-kind** (functions, classes, types, etc.) rather than per file. The CLI adapters (`target-mcpc`, `target-fastmcp`) emit their own per-namespace `references/tools-<ns>.md` files post-`renderSkill`, so threading per-file links into core's Quick Reference would require core changes that go beyond Phase 10's scope.
 
 The split files DO appear on disk and are token-budget-respecting (FR-022 emit). They just aren't enumerated in the SKILL.md "available references" hint. Agents that read the references directory directly (as most MCP harnesses do) discover the split files normally.
 
@@ -89,7 +89,7 @@ When a bundle entry omits `args`, the MCP frontmatter formerly emitted `args: []
 
 1. `AdapterRenderContext` discriminated union over `mode: 'bundle' | 'http' | 'stdio'` — **RESOLVED-IN-002**: US1 (commit `2b87d72`).
 2. `ParameterPlan` discriminated union over `type: 'scalar' | 'enum' | 'string-array' | 'json'`; dead `'object'` arm dropped — **RESOLVED-IN-002**: US7 (commit `b21be5d`).
-3. CLI invocation-adapter helper consolidation into `@to-skills/mcp/adapter-utils` (~250 LOC removed across `target-mcpc` + `target-fastmcp`) — **RESOLVED-IN-002**: US2 (commit `a96e1db`).
+3. CLI invocation-adapter helper consolidation into `@skillit/mcp/adapter-utils` (~250 LOC removed across `target-mcpc` + `target-fastmcp`) — **RESOLVED-IN-002**: US2 (commit `a96e1db`).
 4. `extractMcpSkill` now exposes `auditIssues?: readonly McpAuditIssue[]` for programmatic CI gates — **RESOLVED-IN-002**: US3 (commit `8c050d3`).
 5. stdio extract: 64 KiB stderr ring-buffer + default 30 s `initializeTimeoutMs` — **RESOLVED-IN-002**: US4 (commit `7e14b3f`).
 6. stdio extract: `data` listener cleanup via named-listener `removeListener` in `finally` — **RESOLVED-IN-002**: US5 (commit `2af9963`).

@@ -4,7 +4,7 @@ description: 'TypeDoc plugin that generates AI agent skills (SKILL.md) from Type
 license: MIT
 ---
 
-# @to-skills/typedoc
+# @skillit/typedoc
 
 TypeDoc plugin that generates AI agent skills (SKILL.md) from TypeScript API documentation
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
-import type { AdapterRenderContext, ExtractedSkill } from '@to-skills/core';
+import type { AdapterRenderContext, ExtractedSkill } from '@skillit/core';
 import { McpcAdapter } from '../src/render.js';
 
 const baseSkill: ExtractedSkill = {
@@ -28,7 +28,7 @@ const baseSkill: ExtractedSkill = {
  * Inputs to {@link makeCtx} mirror the old flat-context API for test
  * brevity; the helper picks the matching DU arm at construction. Exactly
  * one of `packageName`/`httpEndpoint`/`launchCommand` is required — the
- * renderer in `@to-skills/core` enforces this invariant at dispatch time.
+ * renderer in `@skillit/core` enforces this invariant at dispatch time.
  */
 type CtxInput = {
   skillName?: string;
@@ -92,7 +92,7 @@ describe('McpcAdapter', () => {
 
   it('exposes target and fingerprint with target-cli-range', () => {
     expect(adapter.target).toBe('cli:mcpc');
-    expect(adapter.fingerprint.adapter).toBe('@to-skills/target-mcpc');
+    expect(adapter.fingerprint.adapter).toBe('@skillit/target-mcpc');
     expect(adapter.fingerprint.version).toMatch(/^\d+\.\d+\.\d+/);
     expect(adapter.fingerprint.targetCliRange).toBe('mcpc@^2.1');
   });
@@ -115,7 +115,7 @@ describe('McpcAdapter', () => {
       'generated-by'?: { adapter?: string; version?: string; 'target-cli-range'?: string };
     };
     expect(fm['generated-by']).toBeDefined();
-    expect(fm['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(fm['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(fm['generated-by']!.version).toMatch(/^\d+\.\d+\.\d+/);
     expect(fm['generated-by']!['target-cli-range']).toBe('mcpc@^2.1');
   });
@@ -214,7 +214,7 @@ describe('McpcAdapter', () => {
 
   // NOTE: pre-DU "throws MISSING_LAUNCH_COMMAND when no launch info" test
   // removed — the no-arm state is unrepresentable in AdapterRenderContext;
-  // the renderer in `@to-skills/core` enforces exactly-one-arm at dispatch
+  // the renderer in `@skillit/core` enforces exactly-one-arm at dispatch
   // time (see `core/test/renderer.invocation.test.ts`).
 
   it('falls back to npx-by-name when only packageName is set', async () => {

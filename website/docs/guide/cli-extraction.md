@@ -5,13 +5,13 @@ description: Extract CLI commands and configuration surfaces into generated skil
 
 # CLI & Config Extraction
 
-> The `@to-skills/cli` package extracts CLI command structure and correlates flags with typed interfaces so your skill documents both the CLI and its configuration.
+> The `@skillit/cli` package extracts CLI command structure and correlates flags with typed interfaces so your skill documents both the CLI and its configuration.
 
 Many libraries have a CLI that users interact with more than the programmatic API. A user running `npx my-tool generate --config config.ts` needs to know command flags, config file structure, and option trade-offs --- not function signatures.
 
 ## How It Works
 
-The `@to-skills/cli` package extracts CLI command structure via runtime introspection or `--help` parsing, then correlates CLI flags with your typed TypeScript interfaces. The result: each flag gets both its commander metadata (flag syntax, defaults, required) and your JSDoc expert knowledge (`@useWhen`, `@pitfalls`, `@remarks`).
+The `@skillit/cli` package extracts CLI command structure via runtime introspection or `--help` parsing, then correlates CLI flags with your typed TypeScript interfaces. The result: each flag gets both its commander metadata (flag syntax, defaults, required) and your JSDoc expert knowledge (`@useWhen`, `@pitfalls`, `@remarks`).
 
 ```
 CLI entry point ─── introspect commander/yargs ───┐
@@ -24,7 +24,7 @@ TypeDoc interfaces ─── detect @config / *Options ──┘
 If your CLI uses [commander](https://github.com/tj/commander.js), the extractor imports your program and walks its command tree:
 
 ```typescript
-import { extractCliSkill } from '@to-skills/cli';
+import { extractCliSkill } from '@skillit/cli';
 
 const skill = await extractCliSkill({
   entryPoint: './dist/cli.js',
@@ -177,13 +177,13 @@ Detailed per-option documentation goes in `references/commands.md` with full `@u
 
 ## Integration with TypeDoc Plugin
 
-The TypeDoc plugin can automatically invoke `@to-skills/cli` when a `bin` field exists in `package.json`:
+The TypeDoc plugin can automatically invoke `@skillit/cli` when a `bin` field exists in `package.json`:
 
 ```typescript
-// Happens automatically if @to-skills/cli is installed
+// Happens automatically if @skillit/cli is installed
 // The plugin checks:
 //   1. Does package.json have a bin field?
-//   2. Is @to-skills/cli available?
+//   2. Is @skillit/cli available?
 //   3. Are there *Options/*Config interfaces to correlate?
 // If yes, a separate CLI skill is generated alongside the API skill.
 ```
@@ -191,7 +191,7 @@ The TypeDoc plugin can automatically invoke `@to-skills/cli` when a `bin` field 
 Install the package to enable this:
 
 ```bash
-pnpm add -D @to-skills/cli
+pnpm add -D @skillit/cli
 ```
 
 No additional configuration needed --- the plugin detects it and uses it.

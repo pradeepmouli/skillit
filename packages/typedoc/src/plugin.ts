@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Application, Converter, type Context, ParameterType } from 'typedoc';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import {
   renderSkills,
   writeSkills,
@@ -15,12 +15,12 @@ import {
   docsToExtractedDocuments,
   estimateSkillJudgeScore,
   formatScoreEstimate
-} from '@to-skills/core';
-import type { AuditContext } from '@to-skills/core';
+} from '@skillit/core';
+import type { AuditContext } from '@skillit/core';
 import { extractSkills } from './extractor.js';
 
 /**
- * Configuration options for typedoc-plugin-to-skills.
+ * Configuration options for typedoc-plugin-skillit.
  *
  * @config
  *
@@ -28,7 +28,7 @@ import { extractSkills } from './extractor.js';
  * ```json
  * // typedoc.json
  * {
- *   "plugin": ["typedoc-plugin-to-skills"],
+ *   "plugin": ["typedoc-plugin-skillit"],
  *   "skillsOutDir": "skills",
  *   "skillsPerPackage": true,
  *   "skillsAudit": true,

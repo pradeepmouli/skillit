@@ -1,7 +1,7 @@
 // packages/typedoc/src/refine/typedoc-source.ts
 import { readFile, writeFile } from 'node:fs/promises';
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
-import { insertJsDocTag } from '@to-skills/core';
+import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
+import { insertJsDocTag } from '@skillit/core';
 
 interface TypeDocRefineSourceOptions {
   extract: () => Promise<ExtractedSkill>;

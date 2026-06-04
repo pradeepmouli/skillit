@@ -4,7 +4,7 @@ description: 'Extract CLI command structure from commander/yargs for AI agent sk
 license: MIT
 ---
 
-# @to-skills/cli
+# @skillit/cli
 
 Extract CLI command structure from commander/yargs for AI agent skill generation
 

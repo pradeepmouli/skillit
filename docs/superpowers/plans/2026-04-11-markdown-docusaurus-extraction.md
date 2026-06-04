@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a generalized markdown doc parser and directory scanner to `@to-skills/core`, a `@to-skills/docusaurus` adapter package for Docusaurus conventions, and wire docs extraction into the TypeDoc plugin as opt-in.
+**Goal:** Add a generalized markdown doc parser and directory scanner to `@skillit/core`, a `@skillit/docusaurus` adapter package for Docusaurus conventions, and wire docs extraction into the TypeDoc plugin as opt-in.
 
 **Architecture:** Core gets two new files: `markdown-parser.ts` (pure function, parses one markdown doc into structured sections) and `docs-scanner.ts` (reads a directory, parses all .md files, orders them). The docusaurus package is a thin adapter that adds `_category_.json` reading and default `docs/` directory. Parsed docs feed into the existing `ExtractedSkill.documents` field and render via the existing document renderer.
 
@@ -751,7 +751,7 @@ git commit -m "feat(core): render Documentation section in SKILL.md for doc page
 
 ---
 
-### Task 5: Scaffold `@to-skills/docusaurus` package
+### Task 5: Scaffold `@skillit/docusaurus` package
 
 **Files:**
 
@@ -764,7 +764,7 @@ git commit -m "feat(core): render Documentation section in SKILL.md for doc page
 
 ```json
 {
-  "name": "@to-skills/docusaurus",
+  "name": "@skillit/docusaurus",
   "version": "0.1.0",
   "description": "Docusaurus docs adapter for AI agent skill generation",
   "type": "module",
@@ -785,7 +785,7 @@ git commit -m "feat(core): render Documentation section in SKILL.md for doc page
   "repository": "https://github.com/pradeepmouli/to-skills",
   "author": "Pradeep Mouli",
   "dependencies": {
-    "@to-skills/core": "workspace:*"
+    "@skillit/core": "workspace:*"
   }
 }
 ```
@@ -808,7 +808,7 @@ export {};
 pnpm install
 pnpm build
 git add packages/docusaurus/
-git commit -m "chore: scaffold @to-skills/docusaurus package"
+git commit -m "chore: scaffold @skillit/docusaurus package"
 ```
 
 ---
@@ -987,8 +987,8 @@ describe('extractDocusaurusDocs', () => {
 
 ```typescript
 import { join } from 'node:path';
-import { scanDocs, docsToExtractedDocuments } from '@to-skills/core';
-import type { ExtractedDocument } from '@to-skills/core';
+import { scanDocs, docsToExtractedDocuments } from '@skillit/core';
+import type { ExtractedDocument } from '@skillit/core';
 import { readCategoryLabels } from './category-reader.js';
 
 export { readCategoryLabels } from './category-reader.js';
@@ -1100,7 +1100,7 @@ if (includeDocs) {
 Add imports:
 
 ```typescript
-import { scanDocs, docsToExtractedDocuments } from '@to-skills/core';
+import { scanDocs, docsToExtractedDocuments } from '@skillit/core';
 ```
 
 - [ ] **Step 3: Build and test manually**
@@ -1153,9 +1153,9 @@ Run `pnpm docs:md` and verify:
 ```bash
 cat > .changeset/markdown-docusaurus.md << 'EOF'
 ---
-'@to-skills/core': minor
-'@to-skills/typedoc': minor
-'@to-skills/docusaurus': minor
+'@skillit/core': minor
+'@skillit/typedoc': minor
+'@skillit/docusaurus': minor
 ---
 
 Markdown & Docusaurus docs extraction
@@ -1163,7 +1163,7 @@ Markdown & Docusaurus docs extraction
 - Generalized markdown doc parser (parseMarkdownDoc) with frontmatter, sections, code blocks
 - Docs directory scanner (scanDocs) with sidebar_position/filename-prefix ordering
 - Documentation section in SKILL.md listing available doc pages
-- @to-skills/docusaurus package: Docusaurus adapter with _category_.json support
+- @skillit/docusaurus package: Docusaurus adapter with _category_.json support
 - TypeDoc plugin: skillsIncludeDocs + skillsDocsDir options for opt-in docs scanning
 EOF
 
@@ -1183,7 +1183,7 @@ git push
 | 2    | Markdown parser (pure)         | `markdown-parser.ts`, tests     |
 | 3    | Docs directory scanner (I/O)   | `docs-scanner.ts`, tests        |
 | 4    | SKILL.md Documentation section | `renderer.ts`, tests            |
-| 5    | Scaffold @to-skills/docusaurus | package boilerplate             |
+| 5    | Scaffold @skillit/docusaurus   | package boilerplate             |
 | 6    | Category reader                | `category-reader.ts`, tests     |
 | 7    | Docusaurus entry point         | `index.ts`, tests               |
 | 8    | Wire into TypeDoc plugin       | `plugin.ts`                     |

@@ -10,25 +10,25 @@ TypeDoc extracts from TypeScript types and JSDoc. CLI commands (commander/yargs 
 
 Three additions:
 
-1. **`ExtractedConfigSurface` in `@to-skills/core`** — a new data type representing any configuration surface (CLI flags, config file keys, env vars). Typed interfaces with JSDoc become config surfaces. Core gains a config renderer that produces structured option documentation.
+1. **`ExtractedConfigSurface` in `@skillit/core`** — a new data type representing any configuration surface (CLI flags, config file keys, env vars). Typed interfaces with JSDoc become config surfaces. Core gains a config renderer that produces structured option documentation.
 
-2. **Config interface detection in `@to-skills/typedoc`** — recognizes interfaces tagged with `@config` (or matching `*Options`/`*Config` suffix) and extracts them as `ExtractedConfigSurface` instead of regular types. Per-property JSDoc (`@useWhen`, `@avoidWhen`, `@pitfalls`, `@remarks`) flows through to each config option.
+2. **Config interface detection in `@skillit/typedoc`** — recognizes interfaces tagged with `@config` (or matching `*Options`/`*Config` suffix) and extracts them as `ExtractedConfigSurface` instead of regular types. Per-property JSDoc (`@useWhen`, `@avoidWhen`, `@pitfalls`, `@remarks`) flows through to each config option.
 
-3. **`@to-skills/cli` (new package)** — extracts CLI command structure via runtime introspection (commander/yargs) or `--help` fallback. Correlates CLI flags to typed interface properties by camelCase name matching, merging commander metadata (flags, defaults, required) with TypeDoc JSDoc (expert knowledge tags).
+3. **`@skillit/cli` (new package)** — extracts CLI command structure via runtime introspection (commander/yargs) or `--help` fallback. Correlates CLI flags to typed interface properties by camelCase name matching, merging commander metadata (flags, defaults, required) with TypeDoc JSDoc (expert knowledge tags).
 
 ## Architecture
 
 ```
-@to-skills/core
+@skillit/core
   ├── ExtractedSkill, renderer, audit, writer (existing)
   ├── ExtractedConfigSurface type (NEW)
   └── Config surface renderer (NEW)
 
-@to-skills/typedoc
+@skillit/typedoc
   ├── API extraction (existing)
   └── Config interface detection → ExtractedConfigSurface (NEW)
 
-@to-skills/cli (NEW package)
+@skillit/cli (NEW package)
   ├── Commander runtime introspection
   ├── Yargs runtime introspection
   ├── --help fallback parser
@@ -38,7 +38,7 @@ Three additions:
 A project like zod-to-form produces:
 
 - `zod-to-form-core` skill — API reference from TypeDoc (existing)
-- `zod-to-form-cli` skill — CLI command reference + config reference from `@to-skills/cli` (new)
+- `zod-to-form-cli` skill — CLI command reference + config reference from `@skillit/cli` (new)
 
 ---
 
@@ -228,7 +228,7 @@ Extracted as:
 
 ---
 
-## CLI Extraction (`@to-skills/cli`)
+## CLI Extraction (`@skillit/cli`)
 
 ### Package Structure
 
@@ -243,7 +243,7 @@ packages/cli/
     introspect.test.ts
     help-parser.test.ts
     correlator.test.ts
-  package.json            # pnpm package: @to-skills/cli
+  package.json            # pnpm package: @skillit/cli
 ```
 
 ### Extraction Pipeline
@@ -504,10 +504,10 @@ Preview without writing files
 
 ## User-Facing API
 
-### @to-skills/cli
+### @skillit/cli
 
 ```typescript
-import { extractCliSkill } from '@to-skills/cli';
+import { extractCliSkill } from '@skillit/cli';
 
 const skill = await extractCliSkill({
   // CLI entry point (bin field from package.json)
@@ -527,12 +527,12 @@ const rendered = renderSkill(skill);
 
 ### Integration with TypeDoc Plugin
 
-The TypeDoc plugin can optionally invoke `@to-skills/cli` if installed:
+The TypeDoc plugin can optionally invoke `@skillit/cli` if installed:
 
 ```typescript
 // In plugin.ts, after API skill extraction:
 try {
-  const { extractCliSkill } = await import('@to-skills/cli');
+  const { extractCliSkill } = await import('@skillit/cli');
   const binEntries = pkg.bin;
   if (binEntries) {
     const cliSkill = await extractCliSkill({
@@ -546,7 +546,7 @@ try {
     writeSkills([rendered], { outDir });
   }
 } catch {
-  // @to-skills/cli not installed — skip CLI extraction
+  // @skillit/cli not installed — skip CLI extraction
 }
 ```
 
@@ -572,4 +572,4 @@ Projects using the CLI extractor add to `typedoc.json`:
 - **Interactive prompts** — CLIs that use `inquirer`/`prompts` for interactive input aren't captured
 - **Dynamic command generation** — commands built at runtime from plugins/config can't be statically introspected
 - **Config file validation** — the extractor documents the structure, not runtime validation behavior
-- **`@to-skills/markdown` extractor** — the fallback for prose docs, tutorials, and anything that isn't typed. Separate spec.
+- **`@skillit/markdown` extractor** — the fallback for prose docs, tutorials, and anything that isn't typed. Separate spec.

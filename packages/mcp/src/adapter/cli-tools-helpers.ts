@@ -1,6 +1,6 @@
 /**
  * Shared helpers for CLI-as-proxy invocation adapters
- * (`@to-skills/target-mcpc`, `@to-skills/target-fastmcp`, and any third-party
+ * (`@skillit/target-mcpc`, `@skillit/target-fastmcp`, and any third-party
  * adapter following the same pattern).
  *
  * @remarks
@@ -9,14 +9,14 @@
  * module is the single source of truth so adapters import here instead of
  * copying.
  *
- * Exposed via the subpath export `@to-skills/mcp/adapter-utils` (NOT from the
- * main `@to-skills/mcp` entrypoint — these are adapter-author concerns, not
+ * Exposed via the subpath export `@skillit/mcp/adapter-utils` (NOT from the
+ * main `@skillit/mcp` entrypoint — these are adapter-author concerns, not
  * host concerns).
  *
  * @module adapter/cli-tools-helpers
  */
 
-import type { AdapterRenderContext, ExtractedFunction, ExtractedParameter } from '@to-skills/core';
+import type { AdapterRenderContext, ExtractedFunction, ExtractedParameter } from '@skillit/core';
 import type { JSONSchema7 } from 'json-schema';
 import { McpError } from '../errors.js';
 import { classifyParameters, type ParameterPlan } from './classify.js';

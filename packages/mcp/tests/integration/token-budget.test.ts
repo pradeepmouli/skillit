@@ -15,10 +15,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { ExtractedFunction, ExtractedSkill } from '@to-skills/core';
-import { estimateTokens } from '@to-skills/core';
-import { McpcAdapter } from '@to-skills/target-mcpc';
-import { McpProtocolAdapter } from '@to-skills/target-mcp-protocol';
+import type { ExtractedFunction, ExtractedSkill } from '@skillit/core';
+import { estimateTokens } from '@skillit/core';
+import { McpcAdapter } from '@skillit/target-mcpc';
+import { McpProtocolAdapter } from '@skillit/target-mcp-protocol';
 
 const RUN = process.env.RUN_INTEGRATION_TESTS === 'true';
 

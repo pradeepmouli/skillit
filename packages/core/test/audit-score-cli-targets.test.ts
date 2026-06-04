@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { estimateSkillJudgeScore } from '@to-skills/core';
-import type { AuditResult } from '@to-skills/core';
-import type { ExtractedSkill } from '@to-skills/core';
+import { estimateSkillJudgeScore } from '@skillit/core';
+import type { AuditResult } from '@skillit/core';
+import type { ExtractedSkill } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Helpers

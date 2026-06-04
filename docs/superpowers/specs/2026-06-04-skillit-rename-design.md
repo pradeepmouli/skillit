@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-04
 **Status:** Approved (design)
-**Scope:** Whole-repo rebrand of the published package scope, the CLI, bundled skill names, and the repo. No backward compatibility required — the `@to-skills/*` packages are published but have no real consumers (only the author's own dogfooding), so this is a clean break.
+**Scope:** Whole-repo rebrand of the published package scope, the CLI, bundled skill names, and the repo. No backward compatibility required — the `@skillit/*` packages are published but have no real consumers (only the author's own dogfooding), so this is a clean break.
 
 ## Goal
 
@@ -10,21 +10,21 @@ Rebrand the project from `@to-skills` to the newly-registered npm org `@skillit`
 
 ## Decisions (settled during brainstorming)
 
-1. **Package scope:** every `@to-skills/*` → `@skillit/*` (core, cli, mcp, client, docusaurus, vitepress, target-mcpc, target-mcp-protocol, target-fastmcp, typedoc).
-2. **TypeDoc packages:** `@to-skills/typedoc` → `@skillit/typedoc`; unscoped `typedoc-plugin-to-skills` → `typedoc-plugin-skillit` (kept as a convention-named alias — TypeDoc ≥0.22 loads plugins explicitly via `--plugin`, so the name prefix is a findability convenience, not a hard requirement).
+1. **Package scope:** every `@skillit/*` → `@skillit/*` (core, cli, mcp, client, docusaurus, vitepress, target-mcpc, target-mcp-protocol, target-fastmcp, typedoc).
+2. **TypeDoc packages:** `@skillit/typedoc` → `@skillit/typedoc`; unscoped `typedoc-plugin-to-skills` → `typedoc-plugin-skillit` (kept as a convention-named alias — TypeDoc ≥0.22 loads plugins explicitly via `--plugin`, so the name prefix is a findability convenience, not a hard requirement).
 3. **CLI:** collapse the two bins (`to-skills` from client, `to-skills-mcp` from mcp) into a **single `skillit` binary**, with the MCP commands mounted as a `skillit mcp …` subcommand group. `@skillit/mcp` no longer ships a standalone bin.
 4. **Bundled skill dirs:** `to-skills-cli-docs` → `skillit-cli-docs`, `to-skills-docs` → `skillit-docs`, `to-skills-mcp-docs` → `skillit-mcp-docs`.
 5. **Program name:** `new Command('to-skills')` → `new Command('skillit')`.
 6. **Versions:** carried over per-package (core 1.4.0, cli 0.3.14, mcp 0.2.0, client 0.1.0, typedoc 1.0.9, plugin 1.3.1) — preserves changelog continuity.
 7. **Repo:** rename `pradeepmouli/to-skills` → `pradeepmouli/skillit` (GitHub 301-redirects the old URL); update all in-repo `repository` URLs, README badges, CLAUDE.md, docs-site links.
-8. **Old npm packages:** `npm deprecate` each `@to-skills/*` + `typedoc-plugin-to-skills` with a "renamed to @skillit/\*" message. No forwarder/shim releases.
+8. **Old npm packages:** `npm deprecate` each `@skillit/*` + `typedoc-plugin-to-skills` with a "renamed to @skillit/\*" message. No forwarder/shim releases.
 9. **Pending version PR:** close `changeset-release/master` (#42) — it would publish the old scope.
 10. **Consumer config key:** the `package.json` config key `"to-skills"` (read by the MCP bundle as `pkg["to-skills"].mcp.skillName`) → `"skillit"`. Footprint: 4 literals in `packages/mcp/src/bundle/config.ts` (the key read + two `McpError` messages + a doc comment) and the contract doc `specs/001-mcp-extract-bundle/contracts/package-json-config.md`. Internal locals named `toSkills`/`toSkillsIndent` (e.g. in `core/src/writer.ts`) are cosmetic and out of scope — leave them unless trivially in the path of a rename-symbol pass.
 
 ## Migration mechanics
 
 - **Manifests:** `packages/*/package.json` `name`, `workspace:*` deps, `bin`, `repository` URLs.
-- **Module specifiers:** `from '@to-skills/...'` → `from '@skillit/...'` via **ast-grep** (string-literal-precise; ignores comments/unrelated text). Never plain global sed.
+- **Module specifiers:** `from '@skillit/...'` → `from '@skillit/...'` via **ast-grep** (string-literal-precise; ignores comments/unrelated text). Never plain global sed.
 - **Branded code identifiers:** any exported/internal symbol carrying `ToSkills`/`toSkills` renamed via **lspeasy rename-symbol** (semantic, updates all references). NOT applicable to module specifiers/package names (those are strings, handled above).
 - **Directory renames:** bundled skill dirs via `git mv`; update the loader URLs (`new URL('../skills/skillit-*/SKILL.md', import.meta.url)`).
 - **Strings/docs:** program name, skill metadata (`name`/`keywords`/`description`), README, `website/`, CLAUDE.md; regenerate any committed `skills/` artifacts.
@@ -32,7 +32,7 @@ Rebrand the project from `@to-skills` to the newly-registered npm org `@skillit`
 
 ## The one real code change — `skillit mcp` fold
 
-Today `@to-skills/mcp` builds its CLI inline in its `bin.ts` and ships the `to-skills-mcp` bin. To expose it as `skillit mcp …`:
+Today `@skillit/mcp` builds its CLI inline in its `bin.ts` and ships the `to-skills-mcp` bin. To expose it as `skillit mcp …`:
 
 - `@skillit/mcp` exports a command builder (e.g. `buildMcpCommand(): Command`) that returns a `mcp` command with the existing subcommands (refine, extract/bundle, etc.) attached.
 - `@skillit/client`'s `skillit` program does `program.addCommand(buildMcpCommand())`.
@@ -49,7 +49,7 @@ Today `@to-skills/mcp` builds its CLI inline in its `bin.ts` and ships the `to-s
 | `packages/mcp/package.json`                                     | remove `bin`; keep library exports                                                |
 | `packages/client/src/bin.ts`                                    | `new Command('skillit')`; `addCommand(buildMcpCommand())`                         |
 | `packages/mcp/src/bin.ts` + new `commands/`                     | extract `buildMcpCommand()`; bin.ts (if kept for internal use) calls it           |
-| all `**/*.ts` imports                                           | `@to-skills/*` → `@skillit/*` (ast-grep)                                          |
+| all `**/*.ts` imports                                           | `@skillit/*` → `@skillit/*` (ast-grep)                                            |
 | `packages/{cli,mcp,typedoc-plugin,typedoc}/skills/`             | `git mv` skill dirs to `skillit-*`; update loader URLs                            |
 | skill metadata / renderers                                      | rebrand `name`/`keywords`/`description` strings                                   |
 | `packages/mcp/src/bundle/config.ts`                             | config key `pkg['to-skills']` → `pkg['skillit']` + 2 error messages + doc comment |

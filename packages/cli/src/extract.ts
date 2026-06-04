@@ -8,7 +8,7 @@ import {
   type RenderedSkill,
   type SkillRenderOptions,
   type SkillWriteOptions
-} from '@to-skills/core';
+} from '@skillit/core';
 import { introspectCommander } from './introspect-commander.js';
 import { parseHelpOutput } from './help-parser.js';
 import { correlateFlags } from './correlator.js';

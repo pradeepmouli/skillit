@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ExtractedConfigSurface, ExtractedSkill } from '@to-skills/core';
+import type { ExtractedConfigSurface, ExtractedSkill } from '@skillit/core';
 import { runCliAudit } from '../src/audit.js';
 
 function makeCliSurface(overrides: Partial<ExtractedConfigSurface> = {}): ExtractedConfigSurface {

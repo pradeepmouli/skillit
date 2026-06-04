@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { parseMarkdownDoc, renderSkill, writeSkills } from '@to-skills/core';
-import type { ExtractedDocument, ExtractedSkill } from '@to-skills/core';
+import { parseMarkdownDoc, renderSkill, writeSkills } from '@skillit/core';
+import type { ExtractedDocument, ExtractedSkill } from '@skillit/core';
 import { walkSidebar } from './sidebar-walker.js';
 
 // Minimal Vite Plugin interface — avoids a hard dep on the `vite` package.

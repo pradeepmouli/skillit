@@ -1,8 +1,8 @@
 ---
-description: 'Task list for `@to-skills/mcp` Hardening — discriminated unions, helper consolidation, robustness polish'
+description: 'Task list for `@skillit/mcp` Hardening — discriminated unions, helper consolidation, robustness polish'
 ---
 
-# Tasks: `@to-skills/mcp` Hardening
+# Tasks: `@skillit/mcp` Hardening
 
 **Input**: Design documents from `/specs/002-mcp-hardening/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
@@ -24,7 +24,7 @@ description: 'Task list for `@to-skills/mcp` Hardening — discriminated unions,
 **Purpose**: Verify the workspace is in a clean post-PR-20 state ready for hardening work.
 
 - [x] T001 Verify branch `002-mcp-hardening` is checked out and up-to-date with `master` post-PR-20 merge: `git status` clean, `git rev-parse HEAD` matches a recent master commit, `pnpm install` is current.
-- [x] T002 Run baseline `pnpm test` and capture pre-change pass count (must equal 1090+). Record in PR description draft for delta proof. **Result**: pre-change `@to-skills/mcp` pass count was 228; post-change is 254 (+26 from new test files for US3, US4, US5, US6, US9). Workspace root unit-test count (787) is unchanged. Pre-existing 502 typecheck-mode errors in `packages/typedoc/test/extractor.test.ts` are unrelated to this feature (verified across multiple reviewer dispatches).
+- [x] T002 Run baseline `pnpm test` and capture pre-change pass count (must equal 1090+). Record in PR description draft for delta proof. **Result**: pre-change `@skillit/mcp` pass count was 228; post-change is 254 (+26 from new test files for US3, US4, US5, US6, US9). Workspace root unit-test count (787) is unchanged. Pre-existing 502 typecheck-mode errors in `packages/typedoc/test/extractor.test.ts` are unrelated to this feature (verified across multiple reviewer dispatches).
 - [x] T003 [P] Enable Vitest typecheck mode for `*.test-d.ts` files in `vitest.config.ts` (root). Add `typecheck: { enabled: true, include: ['**/*.test-d.ts'] }` to the config — required for SC-H002.
 
 **Checkpoint**: Workspace is on the right branch, tests baseline is captured, typecheck mode is wired. Hardening work can begin.
@@ -91,7 +91,7 @@ description: 'Task list for `@to-skills/mcp` Hardening — discriminated unions,
 
 ---
 
-## Phase 5: User Story 2 — Helper consolidation into `@to-skills/mcp/adapter-utils` (Priority: P1)
+## Phase 5: User Story 2 — Helper consolidation into `@skillit/mcp/adapter-utils` (Priority: P1)
 
 **Goal**: Extract 7 byte-identical helpers from target-mcpc and target-fastmcp into a shared subpath module. Net source LOC decreases by ≥80 (SC-H003).
 
@@ -99,18 +99,18 @@ description: 'Task list for `@to-skills/mcp` Hardening — discriminated unions,
 
 ### Tests for User Story 2 (FR-H016)
 
-- [x] T020 [P] [US2] No new test file required — existing inline-snapshot tests in target-mcpc and target-fastmcp continue to gate behavior. Add a single `packages/mcp/tests/adapter-utils-public-surface.test.ts` that imports each of the 7 exports from `@to-skills/mcp/adapter-utils` and asserts each is a function (smoke test).
+- [x] T020 [P] [US2] No new test file required — existing inline-snapshot tests in target-mcpc and target-fastmcp continue to gate behavior. Add a single `packages/mcp/tests/adapter-utils-public-surface.test.ts` that imports each of the 7 exports from `@skillit/mcp/adapter-utils` and asserts each is a function (smoke test).
 
 ### Implementation for User Story 2
 
 - [x] T021 [US2] Create `packages/mcp/src/adapter/cli-tools-helpers.ts` with the 7 exports from `contracts/adapter-utils.md`: `resolveLaunchCommand`, `formatCliMarker`, `shellQuote`, `collapseTrailingNewlines`, `renderToolsBody`, `planForTool`, `parameterToSchema`. Implement bodies as moved-from `target-mcpc/src/render.ts` (the source-of-truth copy). `renderToolsBody` accepts `(functions, skillName, encodeOne, cliVerb)` per the contract.
 - [x] T022 [US2] Update `packages/mcp/package.json` to add the `./adapter-utils` subpath under `exports`, pointing to `./dist/adapter/cli-tools-helpers.{js,d.ts}` per `research.md` R6.
 - [x] T023 [US2] Update `packages/mcp/src/index.ts` to NOT re-export the helpers from the main entrypoint — they are subpath-only.
-- [x] T024 [P] [US2] Refactor `packages/target-mcpc/src/render.ts`: delete the local copies of the 7 helpers; import from `@to-skills/mcp/adapter-utils`. Pass adapter-specific `encodeOne` (mcpc `:=` typed marker) and `cliVerb: 'mcpc <skillName> tools-call'` to `renderToolsBody`. Verify all 23 tests pass.
+- [x] T024 [P] [US2] Refactor `packages/target-mcpc/src/render.ts`: delete the local copies of the 7 helpers; import from `@skillit/mcp/adapter-utils`. Pass adapter-specific `encodeOne` (mcpc `:=` typed marker) and `cliVerb: 'mcpc <skillName> tools-call'` to `renderToolsBody`. Verify all 23 tests pass.
 - [x] T025 [P] [US2] Refactor `packages/target-fastmcp/src/render.ts`: same as T024 with fastmcp `=` always-string encoder and `cliVerb: 'pyfastmcp call'`. Verify all 23 tests pass.
-- [x] T026 [US2] Add `@to-skills/mcp` workspace dependency to `packages/target-mcpc/package.json` and `packages/target-fastmcp/package.json` (`"@to-skills/mcp": "workspace:*"` if not already present). Update `tsconfig.build.json` references where needed.
+- [x] T026 [US2] Add `@skillit/mcp` workspace dependency to `packages/target-mcpc/package.json` and `packages/target-fastmcp/package.json` (`"@skillit/mcp": "workspace:*"` if not already present). Update `tsconfig.build.json` references where needed.
 - [x] T027 [US2] Run `pnpm -r --workspace-concurrency=1 run build` then `pnpm test`. Confirm `wc -l packages/target-{mcpc,fastmcp}/src/render.ts` shows ≥80 lines reduction combined (SC-H003). Record numbers in commit message.
-- [x] T028 [US2] Commit: `refactor(mcp): extract CLI adapter helpers to @to-skills/mcp/adapter-utils (US2)`.
+- [x] T028 [US2] Commit: `refactor(mcp): extract CLI adapter helpers to @skillit/mcp/adapter-utils (US2)`.
 
 **Checkpoint**: Three CLI adapters share helpers. Existing snapshot tests unchanged. Net LOC down ≥80.
 
@@ -283,7 +283,7 @@ description: 'Task list for `@to-skills/mcp` Hardening — discriminated unions,
   - **Fix**: stdio extract no longer leaks `data` listeners (US5).
   - **Feature**: `extractMcpSkill` return value now carries `auditIssues` (US3) — gate CI on it.
   - **Feature**: malformed `_meta.toSkills` annotations surface as M3 warnings (US6).
-  - **Refactor**: shared CLI helpers live in `@to-skills/mcp/adapter-utils` (US2) — third-party adapter authors can drop ~80 LOC.
+  - **Refactor**: shared CLI helpers live in `@skillit/mcp/adapter-utils` (US2) — third-party adapter authors can drop ~80 LOC.
 - [x] T073 [P] Update `specs/001-mcp-extract-bundle/spec-deltas.md` (FR-H020): for each item resolved by this feature, append `**RESOLVED-IN-002**: <commit-sha-or-task-ref>`. Ensure all 5 deltas referenced in the original PR 20 deferral block are accounted for.
 - [x] T074 [P] Run the full verification matrix per `quickstart.md` §6:
   - `pnpm install` clean

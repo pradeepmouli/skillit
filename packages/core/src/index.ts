@@ -7,7 +7,7 @@
  * token budgeting, README parsing, and docs scanning.
  *
  * @remarks
- * All extractors (@to-skills/typedoc, @to-skills/cli, @to-skills/docusaurus) produce
+ * All extractors (@skillit/typedoc, @skillit/cli, @skillit/docusaurus) produce
  * ExtractedSkill objects. Core renders them into SKILL.md + references/ files.
  * The rendering is framework-agnostic — it doesn't know where the data came from.
  *

@@ -15,7 +15,7 @@
 ## Conventions & tooling reality (read first)
 
 - **Gates run from the repo root:** `pnpm exec vitest run --reporter=dot`, `pnpm -r type-check`, `pnpm run lint`. The lint-staged commit hook runs oxfmt/oxlint and may reformat — expected.
-- **The scope token `@to-skills/` is unambiguous** (it's an npm scope; it never appears as that exact string anywhere except as the package scope). So the scope rewrite is a **guarded text replace of `@to-skills/`**, not ast-grep — ast-grep cannot sub-match inside a module-specifier string literal, and lspeasy rename-symbol only renames code identifiers, not package names. Use the precise `rg --files-with-matches` → `sed -i` recipe given below with explicit path exclusions.
+- **The scope token `@skillit/` is unambiguous** (it's an npm scope; it never appears as that exact string anywhere except as the package scope). So the scope rewrite is a **guarded text replace of `@skillit/`**, not ast-grep — ast-grep cannot sub-match inside a module-specifier string literal, and lspeasy rename-symbol only renames code identifiers, not package names. Use the precise `rg --files-with-matches` → `sed -i` recipe given below with explicit path exclusions.
 - **lspeasy `rename symbol`** is available for branded _identifiers_, but in this repo the only `toSkills*` names are cosmetic file-local vars (`core/src/writer.ts`); renaming them is optional and NOT required. Do not force it.
 - **Verification gate** after each chunk: `rg -n 'to-skills|@to-skills' --glob '!**/dist/**' --glob '!**/node_modules/**' --glob '!**/CHANGELOG.md' --glob '!docs/superpowers/**' --glob '!specs/**/CHANGELOG*'` must return only intentional historical mentions; the chunk that owns a given area must drive its hits to zero.
 - **The commit hook rejects the literal `re`+`.exec(`** — irrelevant to renaming but don't introduce it.
@@ -44,13 +44,13 @@
 Run: `pnpm exec vitest run --reporter=dot 2>&1 | tail -3`
 Expected: a passing count (e.g. `Tests  1016 passed`). Note the number.
 
-- [ ] **Step 2: Replace the `@to-skills/` scope token everywhere it is the scope.** This covers package `name` fields, `workspace:*` dep keys, and every `from '@to-skills/...'` / `import('@to-skills/...')` specifier in one pass. `typedoc-plugin-to-skills` is unscoped (no `@`), so it is NOT touched here — it is handled in Step 3.
+- [ ] **Step 2: Replace the `@skillit/` scope token everywhere it is the scope.** This covers package `name` fields, `workspace:*` dep keys, and every `from '@skillit/...'` / `import('@skillit/...')` specifier in one pass. `typedoc-plugin-to-skills` is unscoped (no `@`), so it is NOT touched here — it is handled in Step 3.
 
 Run:
 
 ```bash
-rg -l '@to-skills/' --glob '!**/dist/**' --glob '!**/node_modules/**' --glob '!**/CHANGELOG.md' \
-  | xargs sed -i '' 's#@to-skills/#@skillit/#g'
+rg -l '@skillit/' --glob '!**/dist/**' --glob '!**/node_modules/**' --glob '!**/CHANGELOG.md' \
+  | xargs sed -i '' 's#@skillit/#@skillit/#g'
 ```
 
 (Note: macOS `sed` needs the empty `''` after `-i`. On Linux use `sed -i 's#...#...#g'`.)
@@ -71,7 +71,7 @@ rg -l 'typedoc-plugin-to-skills' --glob '!**/dist/**' --glob '!**/node_modules/*
 - [ ] **Step 4: Reinstall so pnpm relinks the renamed workspace packages.**
 
 Run: `pnpm install`
-Expected: completes; `pnpm-lock.yaml` updated to the `@skillit/*` names. (If install errors on an unresolved `@to-skills/*`, a specifier was missed — re-run Step 2's `rg` to find it.)
+Expected: completes; `pnpm-lock.yaml` updated to the `@skillit/*` names. (If install errors on an unresolved `@skillit/*`, a specifier was missed — re-run Step 2's `rg` to find it.)
 
 - [ ] **Step 5: Build + gates.**
 
@@ -80,14 +80,14 @@ Expected: build clean; **same test count as Step 1, all passing**; type-check ex
 
 - [ ] **Step 6: Scope-rewrite verification gate.**
 
-Run: `rg -n '@to-skills/' --glob '!**/dist/**' --glob '!**/node_modules/**' --glob '!**/CHANGELOG.md' --glob '!docs/superpowers/**'`
-Expected: **no matches** (every `@to-skills/` is gone outside dist/changelog/the rename docs).
+Run: `rg -n '@skillit/' --glob '!**/dist/**' --glob '!**/node_modules/**' --glob '!**/CHANGELOG.md' --glob '!docs/superpowers/**'`
+Expected: **no matches** (every `@skillit/` is gone outside dist/changelog/the rename docs).
 
 - [ ] **Step 7: Commit.**
 
 ```bash
 git add -A
-git commit -m "refactor: rename package scope @to-skills/* → @skillit/*"
+git commit -m "refactor: rename package scope @skillit/* → @skillit/*"
 ```
 
 ---
@@ -383,20 +383,20 @@ sed -i '' -e 's#"to-skills"#"skillit"#g' -e 's#to-skills\.mcp#skillit.mcp#g' -e 
   specs/001-mcp-extract-bundle/contracts/package-json-config.md
 ```
 
-- [ ] **Step 2: Rebrand README + website + CLAUDE.md.** Replace remaining brand + repo URL hits (`pradeepmouli/to-skills` → `pradeepmouli/skillit`, `@to-skills/*` already done in Chunk 1 but docs may carry them in prose/code fences, `to-skills`/`to-skills-mcp` command examples → `skillit`/`skillit mcp`, bin/skill names):
+- [ ] **Step 2: Rebrand README + website + CLAUDE.md.** Replace remaining brand + repo URL hits (`pradeepmouli/to-skills` → `pradeepmouli/skillit`, `@skillit/*` already done in Chunk 1 but docs may carry them in prose/code fences, `to-skills`/`to-skills-mcp` command examples → `skillit`/`skillit mcp`, bin/skill names):
 
 ```bash
 rg -l 'to-skills' README.md website CLAUDE.md \
   | xargs sed -i '' -e 's#pradeepmouli/to-skills#pradeepmouli/skillit#g' \
                     -e 's#to-skills-mcp #skillit mcp #g' \
                     -e 's#`to-skills`#`skillit`#g' \
-                    -e 's#@to-skills/#@skillit/#g' \
+                    -e 's#@skillit/#@skillit/#g' \
                     -e 's#to-skills#skillit#g'
 ```
 
 Then **manually review** the README/website diffs — prose rewrites (e.g. "the to-skills CLI") need to read naturally as "the skillit CLI", and `skillit mcp` command examples must be correct (`skillit mcp refine …`, not `skillit-mcp refine`). Fix any awkward replacements by hand.
 
-- [ ] **Step 3: Update `repository` URLs in package.json files** (if Chunk 1 didn't catch the `to-skills` in the URL — the scope replace only touched `@to-skills/`):
+- [ ] **Step 3: Update `repository` URLs in package.json files** (if Chunk 1 didn't catch the `to-skills` in the URL — the scope replace only touched `@skillit/`):
 
 ```bash
 rg -l 'pradeepmouli/to-skills' packages/*/package.json package.json \
@@ -467,7 +467,7 @@ These are outward-facing; perform them only with explicit consent, after the ren
 
 ```bash
 for p in core cli mcp client typedoc docusaurus vitepress target-mcpc target-mcp-protocol target-fastmcp; do
-  npm deprecate "@to-skills/$p" "Renamed to @skillit/$p"
+  npm deprecate "@skillit/$p" "Renamed to @skillit/$p"
 done
 npm deprecate typedoc-plugin-to-skills "Renamed to typedoc-plugin-skillit"
 ```
@@ -480,7 +480,7 @@ npm deprecate typedoc-plugin-to-skills "Renamed to typedoc-plugin-skillit"
 
 **Spec coverage:**
 
-- Scope rename (all `@to-skills/*`) → Task 1.1. ✓
+- Scope rename (all `@skillit/*`) → Task 1.1. ✓
 - typedoc-plugin → `typedoc-plugin-skillit` → Task 1.1 Step 3. ✓
 - Single `skillit` bin + `skillit mcp` fold + drop mcp bin → Chunk 2. ✓
 - Preserve mcp exit-code mapping → Task 2.1 (`error-exit.ts` + test). ✓

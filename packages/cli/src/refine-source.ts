@@ -9,7 +9,7 @@ import {
   type ExtractedSkill,
   type RefineSource,
   type RefineTag
-} from '@to-skills/core';
+} from '@skillit/core';
 import { Command } from 'commander';
 import { extractCliSkill } from './extract.js';
 import { introspectCommander } from './introspect-commander.js';
@@ -27,7 +27,7 @@ export interface CliRefineSourceOptions {
 }
 
 /**
- * {@link RefineSource} for `@to-skills/cli` consumers.
+ * {@link RefineSource} for `@skillit/cli` consumers.
  *
  * Extracts a skill from a commander program, returns the bundled CLI
  * documentation conventions as guidance, and writes routing tags as JSDoc

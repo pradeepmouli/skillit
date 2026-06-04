@@ -117,7 +117,7 @@ describe.skipIf(!RUN)('multi-target extract: server-filesystem × {mcp-protocol,
       'generated-by'?: { adapter?: string; version?: string };
     };
     expect(cliFm['generated-by']).toBeTruthy();
-    expect(cliFm['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(cliFm['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(cliFm.mcp).toBeUndefined();
 
     // 6. Same tool names in both reference files (target-agnostic IR).

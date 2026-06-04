@@ -1,23 +1,23 @@
-# Implementation Plan: `@to-skills/mcp` Hardening — Discriminated Unions, Helper Consolidation, Robustness Polish
+# Implementation Plan: `@skillit/mcp` Hardening — Discriminated Unions, Helper Consolidation, Robustness Polish
 
 **Branch**: `002-mcp-hardening` | **Date**: 2026-04-25 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/002-mcp-hardening/spec.md`
 
 ## Summary
 
-Address the deferred items from PR 20's comprehensive multi-agent review: convert four flat option records (`AdapterRenderContext`, `ParameterPlan`, `McpServerConfig`, `AuditResult`) into discriminated unions or readonly DTOs so invariants become compile-time, not runtime; consolidate ~100 LOC of byte-identical helpers between `@to-skills/target-mcpc` and `@to-skills/target-fastmcp` into a shared module under `@to-skills/mcp/adapter-utils`; harden `extract.ts` against unbounded stderr buffers (64 KiB ring), missing initialize timeouts (configurable, 30 s default), and stderr listener leaks; surface programmatic audit findings on the `extractMcpSkill` return value; warn on malformed `_meta.toSkills` annotations (extends M3); add two missing integration tests; strip `Phase X` / `T###` / `B# fix` tokens from source comments.
+Address the deferred items from PR 20's comprehensive multi-agent review: convert four flat option records (`AdapterRenderContext`, `ParameterPlan`, `McpServerConfig`, `AuditResult`) into discriminated unions or readonly DTOs so invariants become compile-time, not runtime; consolidate ~100 LOC of byte-identical helpers between `@skillit/target-mcpc` and `@skillit/target-fastmcp` into a shared module under `@skillit/mcp/adapter-utils`; harden `extract.ts` against unbounded stderr buffers (64 KiB ring), missing initialize timeouts (configurable, 30 s default), and stderr listener leaks; surface programmatic audit findings on the `extractMcpSkill` return value; warn on malformed `_meta.toSkills` annotations (extends M3); add two missing integration tests; strip `Phase X` / `T###` / `B# fix` tokens from source comments.
 
 **Approach**: 11 small commits on a single feature branch, ordered by dependency. Phase A (US1, US7, US11, US15) does the type-shape changes — these touch the most call sites so they ship first; Phase B (US2) extracts the shared CLI helpers — depends on US7 (shared `ParameterPlan` shape); Phase C (US3, US4, US5, US6) adds the runtime hardening; Phase D (US8) parses `mcp.json` at the boundary; Phase E (US9, US10, FR-H019, FR-H020) adds tests, removes phase tokens, updates CHANGELOG and `spec-deltas.md`. All 1090+ existing tests must pass at every commit; coverage thresholds (70/70/65/70 lines/functions/branches/statements) hold or improve.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@to-skills/cli`)
+**Language/Version**: TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@skillit/cli`)
 
 **Primary Dependencies** (no new runtime deps):
 
 - `@modelcontextprotocol/sdk@1.29.0` (pinned — no upgrade in this scope)
-- `@to-skills/core` (workspace:\*) — `ExtractedSkill` extension for `auditIssues`
-- `@to-skills/mcp` (workspace:\*) — adapter-utils module added here
+- `@skillit/core` (workspace:\*) — `ExtractedSkill` extension for `auditIssues`
+- `@skillit/mcp` (workspace:\*) — adapter-utils module added here
 - Existing test stack: vitest 2.x, oxlint, oxfmt
 
 **Storage**: none (same as parent feature — filesystem-only, no DB)
@@ -120,7 +120,7 @@ packages/
 ├── target-mcp-protocol/               # MIGRATED
 │   └── src/render.ts                  # switch (ctx.mode) narrowing (FR-H003)
 ├── target-mcpc/                       # MIGRATED + slimmed
-│   └── src/render.ts                  # imports from @to-skills/mcp/adapter-utils (FR-H005); only encodeOne + Setup template stay
+│   └── src/render.ts                  # imports from @skillit/mcp/adapter-utils (FR-H005); only encodeOne + Setup template stay
 ├── target-fastmcp/                    # MIGRATED + slimmed
 │   └── src/render.ts                  # same — encodeOne + Setup template only
 └── (workspace root)
@@ -147,7 +147,7 @@ Research lives in `research.md`. Topics:
 3. **`vi.useFakeTimers` interaction with `setTimeout`-driven race vs. `client.connect()` Promise**: Pattern for racing a timeout against an SDK call without leaking timers. Reference Vitest 2.x docs.
 4. **`EventEmitter.removeListener` correctness**: must use the same function reference passed to `addListener`. Common bug: anonymous arrow functions can't be removed. Pattern: named function captured in `finally`.
 5. **`@ts-expect-error` for compile-time test assertions**: idiomatic Vitest pattern for `*.test-d.ts` files; whether to use `tsd` or hand-rolled. Established pattern: `vitest typecheck` mode + `// @ts-expect-error` markers.
-6. **Helper extraction across workspace boundaries**: `@to-skills/mcp/adapter-utils` subpath export pattern in `package.json`; avoid public-API surface bloat; document which symbols are stable vs. internal.
+6. **Helper extraction across workspace boundaries**: `@skillit/mcp/adapter-utils` subpath export pattern in `package.json`; avoid public-API surface bloat; document which symbols are stable vs. internal.
 
 ## Phase 1 — Design & Contracts (Outline)
 
@@ -168,7 +168,7 @@ Five contract files capture the public-API surface:
 
 - `adapter-render-context.md` — DU shape, narrowing example, breaking-change call-out
 - `parameter-plan.md` — DU shape, narrowing per arm
-- `adapter-utils.md` — exported symbols from `@to-skills/mcp/adapter-utils` and stability guarantees
+- `adapter-utils.md` — exported symbols from `@skillit/mcp/adapter-utils` and stability guarantees
 - `extract-options.md` — `initializeTimeoutMs` addition, `auditIssues` return-shape semantics (undefined vs `[]`)
 - `audit-rules.md` — M3 sub-rule for malformed `_meta.toSkills` (severity warning)
 

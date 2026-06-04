@@ -17,7 +17,7 @@
  * @module render/split-by-namespace
  */
 
-import type { ExtractedFunction } from '@to-skills/core';
+import type { ExtractedFunction } from '@skillit/core';
 
 /**
  * One output group from `splitToolsByNamespace`. The `name` becomes the

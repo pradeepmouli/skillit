@@ -23,8 +23,8 @@ const extractSkillsMock = vi.fn(() => [
   }
 ]);
 
-vi.mock('@to-skills/core', async () => {
-  const actual = await vi.importActual<typeof import('@to-skills/core')>('@to-skills/core');
+vi.mock('@skillit/core', async () => {
+  const actual = await vi.importActual<typeof import('@skillit/core')>('@skillit/core');
   return {
     ...actual,
     renderSkills: renderSkillsMock,

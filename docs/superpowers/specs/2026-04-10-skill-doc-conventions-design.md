@@ -235,7 +235,7 @@ At least one key exported function must have an `@example` tag showing real usag
 /**
  * @example
  * ```typescript
- * import { renderSkills, writeSkills } from '@to-skills/core';
+ * import { renderSkills, writeSkills } from '@skillit/core';
  *
  * const rendered = renderSkills(extracted, { maxTokens: 4000 });
  * writeSkills(rendered, { outDir: 'skills' });

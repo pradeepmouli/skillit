@@ -4,7 +4,7 @@
 
 **Goal:** Make `to-skills refine` work for CLI-generated skills (in addition to MCP), add a `to-skills init` onboarding command, inject each source's bundled guidance skill into the eval loop, and replace the regex/string-surgery JSDoc editor with a shared `@ast-grep/napi` utility.
 
-**Architecture:** Six self-contained chunks. (1) AST-edit foundation in `@to-skills/core` with `insertJsDocTag` reimplemented on it. (2) Source-agnostic guidance injection through the loop and model client. (3) CLI command work-item targets in the audit scorer. (4) `CliRefineSource` in `@to-skills/cli` — extract (with interface-JSDoc → config-surface read so the loop converges), guidance, and JSDoc write-back. (5) `refine` source detection + `--source`. (6) `to-skills init`.
+**Architecture:** Six self-contained chunks. (1) AST-edit foundation in `@skillit/core` with `insertJsDocTag` reimplemented on it. (2) Source-agnostic guidance injection through the loop and model client. (3) CLI command work-item targets in the audit scorer. (4) `CliRefineSource` in `@skillit/cli` — extract (with interface-JSDoc → config-surface read so the loop converges), guidance, and JSDoc write-back. (5) `refine` source detection + `--source`. (6) `to-skills init`.
 
 **Tech Stack:** TypeScript 5 (strict, no `any`), Node ≥20, Vitest, `@ast-grep/napi`, `commander`, pnpm workspaces, oxlint/oxfmt. Spec: `docs/superpowers/specs/2026-06-03-refine-multi-source-init-design.md`.
 
@@ -39,7 +39,7 @@
 
 Replace the regex JSDoc editor with `@ast-grep/napi`, behavior-preserving for `insertJsDocTag`.
 
-### Task 1.1: Add `@ast-grep/napi` to `@to-skills/core`
+### Task 1.1: Add `@ast-grep/napi` to `@skillit/core`
 
 **Files:** Modify `packages/core/package.json`
 
@@ -101,7 +101,7 @@ describe('upsertJsDocTag', () => {
 });
 ```
 
-- [ ] **Step 2: Run, verify fail.** `pnpm --filter @to-skills/core test -- ast-edit` → FAIL (module missing).
+- [ ] **Step 2: Run, verify fail.** `pnpm --filter @skillit/core test -- ast-edit` → FAIL (module missing).
 - [ ] **Step 3: Implement `ast-edit.ts`.**
 
 ```typescript
@@ -183,7 +183,7 @@ export function upsertJsDocTag(
 
 Note: the manual splice for the "no existing block" case uses `decl.range().start.index` (byte offset from the parser) — robust, no regex. Adjust field/kind names to the tree-sitter-typescript grammar during implementation (use `node.kind()` logging if a test fails).
 
-- [ ] **Step 4: Run, verify pass.** `pnpm --filter @to-skills/core test -- ast-edit` → PASS.
+- [ ] **Step 4: Run, verify pass.** `pnpm --filter @skillit/core test -- ast-edit` → PASS.
 - [ ] **Step 5: Commit.** `git add packages/core/src/refine/ast-edit.ts packages/core/src/refine/__tests__/ast-edit.test.ts && git commit -m "feat(core): ast-grep-based upsertJsDocTag"`
 
 ### Task 1.3: Reimplement `insertJsDocTag` on `upsertJsDocTag`
@@ -209,8 +209,8 @@ export function insertJsDocTag(
 }
 ```
 
-- [ ] **Step 3: Run the full core suite.** `pnpm --filter @to-skills/core test` → all PASS. If a legacy test asserts an exact whitespace layout that differs, update the assertion to the AST-produced layout (semantics, not byte-identical formatting, is the contract) — note any such change in the commit body.
-- [ ] **Step 4: Type-check.** `pnpm --filter @to-skills/core type-check` → no errors.
+- [ ] **Step 3: Run the full core suite.** `pnpm --filter @skillit/core test` → all PASS. If a legacy test asserts an exact whitespace layout that differs, update the assertion to the AST-produced layout (semantics, not byte-identical formatting, is the contract) — note any such change in the commit body.
+- [ ] **Step 4: Type-check.** `pnpm --filter @skillit/core type-check` → no errors.
 - [ ] **Step 5: Commit.** `git add packages/core/src/refine/jsdoc-edit.ts packages/core/src/refine/__tests__ && git commit -m "refactor(core): insertJsDocTag delegates to ast-grep upsertJsDocTag"`
 
 ---
@@ -222,7 +222,7 @@ export function insertJsDocTag(
 **Files:** Modify `packages/core/src/refine/types.ts`
 
 - [ ] **Step 1:** Add `guidance?: string` to `DraftRequest` and `ReviewRequest`. Add `guidance?(): string | Promise<string>;` to `RefineSource`.
-- [ ] **Step 2: Type-check** `pnpm --filter @to-skills/core type-check` → PASS (optional members, no breakage).
+- [ ] **Step 2: Type-check** `pnpm --filter @skillit/core type-check` → PASS (optional members, no breakage).
 - [ ] **Step 3: Commit.** `git commit -am "feat(core): add guidance to RefineSource + draft/review requests"`
 
 ### Task 2.2: Thread guidance through the loop
@@ -232,7 +232,7 @@ export function insertJsDocTag(
 - [ ] **Step 1: Write failing test.** Use a stub `RefineSource` whose `guidance()` returns `'RUBRIC-XYZ'` and a stub `ModelClient` that records each `DraftRequest`/`ReviewRequest`. Drive one iteration via the `scoreSkill` seam (return a failing grade with one improvement, then a passing grade). Assert every recorded request has `guidance === 'RUBRIC-XYZ'`. Also assert a source with no `guidance` yields `undefined` (no throw).
 - [ ] **Step 2: Run, verify fail.**
 - [ ] **Step 3: Implement.** In `refineSkill`, after `let skill = await source.extract();` add `const guidance = await source.guidance?.();` and include `guidance` in each `model.draft({...})` / `model.review({...})` object (all three call sites).
-- [ ] **Step 4: Run, verify pass.** `pnpm --filter @to-skills/core test -- loop` → PASS.
+- [ ] **Step 4: Run, verify pass.** `pnpm --filter @skillit/core test -- loop` → PASS.
 - [ ] **Step 5: Commit.** `git commit -am "feat(core): refineSkill threads source guidance into draft/review"`
 
 ### Task 2.3: Model client uses guidance
@@ -270,12 +270,12 @@ return [...classTargets, ...fnTargets, ...cliTargets];
 `file: ''` is a placeholder — `CliRefineSource.applyFixes` resolves the real file. Confirm the `useWhen`/`avoidWhen` field name on the config surface by reading the `ExtractedConfigSurface` type; adjust the filter accordingly.
 
 - [ ] **Step 4: Run, verify pass.**
-- [ ] **Step 5: Full core suite + type-check.** `pnpm --filter @to-skills/core test && pnpm --filter @to-skills/core type-check` → PASS.
+- [ ] **Step 5: Full core suite + type-check.** `pnpm --filter @skillit/core test && pnpm --filter @skillit/core type-check` → PASS.
 - [ ] **Step 6: Commit.** `git commit -am "feat(core): surface CLI command annotation gaps as refine work items"`
 
 ---
 
-## Chunk 4: `CliRefineSource` (@to-skills/cli)
+## Chunk 4: `CliRefineSource` (@skillit/cli)
 
 **Precondition:** PR #51 merged + rebased.
 
@@ -297,7 +297,7 @@ This is what lets a written `@useWhen` be re-read on the next `extract()` so the
 
 - [ ] **Step 1: Write failing test.** Given a source string with `/**\n * @useWhen When generating\n */\nexport interface GenOptions {}`, `readOptionsTags('GenOptions', source)` returns `{ useWhen: 'When generating' }`. Missing interface → `{}`.
 - [ ] **Step 2: Run, verify fail.**
-- [ ] **Step 3: Implement** using `@to-skills/core`'s ast-grep wrapper (export a small `readJsDocTags(source, declName): Partial<Record<RefineTag,string>>` from `ast-edit.ts` and reuse it here). Parse the interface's leading JSDoc, extract `@useWhen`/`@avoidWhen`/`@pitfalls` lines.
+- [ ] **Step 3: Implement** using `@skillit/core`'s ast-grep wrapper (export a small `readJsDocTags(source, declName): Partial<Record<RefineTag,string>>` from `ast-edit.ts` and reuse it here). Parse the interface's leading JSDoc, extract `@useWhen`/`@avoidWhen`/`@pitfalls` lines.
 - [ ] **Step 4: Run, verify pass.**
 - [ ] **Step 5: Commit.** `git commit -m "feat(cli): read routing tags from *Options interface JSDoc"`
 
@@ -315,8 +315,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { glob } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
-import { upsertJsDocTag } from '@to-skills/core';
+import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
+import { upsertJsDocTag } from '@skillit/core';
 import { extractCliSkill } from './extract.js';
 import { introspectCommander } from './introspect-commander.js';
 import { readOptionsTags } from './options-jsdoc.js';
@@ -403,7 +403,7 @@ Implement the two private helpers and `readFileSyncSafe`. Reuse the glob-exclude
 
 **Files:** Create `packages/client/src/detect-source.ts`; Test `packages/client/tests/unit/detect-source.test.ts`
 
-- [ ] **Step 1: Write failing tests.** From a fixture `package.json`: `@to-skills/cli`→`'cli'`; `@to-skills/mcp`→`'mcp'`; `typedoc-plugin-to-skills`→`'typedoc'`; multiple→`'ambiguous'`; none→`'none'`.
+- [ ] **Step 1: Write failing tests.** From a fixture `package.json`: `@skillit/cli`→`'cli'`; `@skillit/mcp`→`'mcp'`; `typedoc-plugin-to-skills`→`'typedoc'`; multiple→`'ambiguous'`; none→`'none'`.
 - [ ] **Step 2: Run, verify fail.**
 - [ ] **Step 3: Implement** `detectRefineSource(cwd): Promise<'cli'|'mcp'|'typedoc'|'ambiguous'|'none'>` reading deps+devDeps.
 - [ ] **Step 4: Run, verify pass.**
@@ -436,7 +436,7 @@ Implement the two private helpers and `readFileSyncSafe`. Reuse the glob-exclude
 
 **Files:** Create `packages/client/src/commands/init.ts`; register in `packages/client/src/bin.ts`; Test `packages/client/tests/unit/init.test.ts`
 
-- [ ] **Step 1: Write failing tests** (injecting a stub installer/generator/refiner so no real install/network runs): given a `cli` fixture, `init` (a) chooses the `@to-skills/cli` package + correct pkg-manager add command, (b) calls generate with `outDir` = `<cwd>/skills`, (c) invokes refine for `cli`. Install failure → throws with the command in the message; generate/refine not called.
+- [ ] **Step 1: Write failing tests** (injecting a stub installer/generator/refiner so no real install/network runs): given a `cli` fixture, `init` (a) chooses the `@skillit/cli` package + correct pkg-manager add command, (b) calls generate with `outDir` = `<cwd>/skills`, (c) invokes refine for `cli`. Install failure → throws with the command in the message; generate/refine not called.
 - [ ] **Step 2: Run, verify fail.**
 - [ ] **Step 3: Implement.** `buildInitCommand()`: detect nature (`--source` overrides) → map to package → run pkg-manager add (via an injectable `runInstall` defaulting to `child_process` spawn) → generate skill into `skills/<name>/` (CLI path: `loadProgram` + `extractCliSkill` + `writeCliSkill`) → dispatch `refine` for the source. Errors surface the exact command and stop.
 - [ ] **Step 4:** Register in `bin.ts`: `program.addCommand(buildInitCommand())`.
@@ -455,7 +455,7 @@ Implement the two private helpers and `readFileSyncSafe`. Reuse the glob-exclude
 ## Final integration
 
 - [ ] **Step 1:** `pnpm test && pnpm run type-check && pnpm run lint` → all PASS, no lint errors.
-- [ ] **Step 2:** Add a changeset: `@to-skills/core` minor, `@to-skills/cli` minor, `@to-skills/client` minor — "multi-source refine (CLI), `to-skills init`, ast-grep JSDoc editing, guidance injection".
+- [ ] **Step 2:** Add a changeset: `@skillit/core` minor, `@skillit/cli` minor, `@skillit/client` minor — "multi-source refine (CLI), `to-skills init`, ast-grep JSDoc editing, guidance injection".
 - [ ] **Step 3:** End-to-end dogfood: re-run `pnpm gen-cli-skill` in `@sittir/cli`, then `to-skills refine --source cli --program ./src/cli.ts#buildProgram` (with `ANTHROPIC_API_KEY`); confirm `@useWhen` JSDoc appears on `*Options` interfaces and the re-extracted skill's grade improves.
 - [ ] **Step 4: Commit** any docs/changeset. Open PR.
 

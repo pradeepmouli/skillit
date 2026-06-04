@@ -47,7 +47,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -60,13 +60,13 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.100.0
         version: 0.100.0(zod@4.4.3)
-      '@to-skills/cli':
+      '@skillit/cli':
         specifier: workspace:*
         version: link:../cli
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
-      '@to-skills/mcp':
+      '@skillit/mcp':
         specifier: workspace:*
         version: link:../mcp
       commander:
@@ -84,7 +84,7 @@ importers:
 
   packages/docusaurus:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
 
@@ -96,10 +96,10 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@4.4.3)
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
-      '@to-skills/target-mcp-protocol':
+      '@skillit/target-mcp-protocol':
         specifier: workspace:*
         version: link:../target-mcp-protocol
       '@types/json-schema':
@@ -112,10 +112,10 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
     devDependencies:
-      '@to-skills/target-fastmcp':
+      '@skillit/target-fastmcp':
         specifier: workspace:*
         version: link:../target-fastmcp
-      '@to-skills/target-mcpc':
+      '@skillit/target-mcpc':
         specifier: workspace:*
         version: link:../target-mcpc
       '@types/node':
@@ -127,10 +127,10 @@ importers:
 
   packages/target-fastmcp:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
-      '@to-skills/mcp':
+      '@skillit/mcp':
         specifier: workspace:*
         version: link:../mcp
     devDependencies:
@@ -149,14 +149,14 @@ importers:
 
   packages/target-mcp-protocol:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
     devDependencies:
-      '@to-skills/mcp':
+      '@skillit/mcp':
         specifier: workspace:*
         version: link:../mcp
       '@types/node':
@@ -168,10 +168,10 @@ importers:
 
   packages/target-mcpc:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
-      '@to-skills/mcp':
+      '@skillit/mcp':
         specifier: workspace:*
         version: link:../mcp
     devDependencies:
@@ -190,7 +190,7 @@ importers:
 
   packages/typedoc:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -200,7 +200,7 @@ importers:
 
   packages/typedoc-plugin:
     dependencies:
-      '@to-skills/typedoc':
+      '@skillit/typedoc':
         specifier: workspace:*
         version: link:../typedoc
       typedoc:
@@ -209,7 +209,7 @@ importers:
 
   packages/vitepress:
     dependencies:
-      '@to-skills/core':
+      '@skillit/core':
         specifier: workspace:*
         version: link:../core
       vitepress:
@@ -218,7 +218,7 @@ importers:
 
   website:
     devDependencies:
-      '@to-skills/vitepress':
+      '@skillit/vitepress':
         specifier: workspace:*
         version: link:../packages/vitepress
       vitepress:

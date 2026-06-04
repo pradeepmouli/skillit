@@ -1,5 +1,5 @@
 /**
- * Single source of truth for the `@to-skills/mcp` package version.
+ * Single source of truth for the `@skillit/mcp` package version.
  *
  * MUST match `packages/mcp/package.json` `version`. The literal lives here
  * (not derived from `package.json` at runtime) so consumers don't have to

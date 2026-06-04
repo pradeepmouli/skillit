@@ -11,7 +11,7 @@
 // StdioClientTransport so we can drive `listTools` from per-test state and
 // avoid spawning a real child process.
 
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { McpPromptListEntry } from '../../src/introspect/client-types.js';
 

@@ -86,7 +86,7 @@ describe.skipIf(!RUN)('bundle integration: cli:mcpc target', () => {
       'generated-by'?: { adapter?: string; version?: string };
     };
     expect(frontmatter['generated-by']).toBeTruthy();
-    expect(frontmatter['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(frontmatter['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(typeof frontmatter['generated-by']!.version).toBe('string');
     expect(frontmatter.mcp).toBeUndefined();
 

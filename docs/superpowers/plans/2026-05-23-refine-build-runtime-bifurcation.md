@@ -15,6 +15,7 @@
 The `_meta` object on MCP tool definitions currently uses a nested `toSkills` key with arrays (`_meta.toSkills.useWhen: string[]`). The new format is flat strings directly on `_meta` (`_meta.useWhen: string`). This chunk updates every file that reads or writes that nested shape.
 
 **Files:**
+
 - Modify: `packages/mcp/src/introspect/tools.ts`
 - Modify: `packages/mcp/src/extract.ts`
 - Modify: `packages/mcp/src/audit/rule-m3.ts`
@@ -25,6 +26,7 @@ The `_meta` object on MCP tool definitions currently uses a nested `toSkills` ke
 ### Task 1: Update `readToolMetadata` to read flat `_meta`
 
 **Files:**
+
 - Modify: `packages/mcp/src/introspect/tools.ts`
 - Test: `packages/mcp/tests/unit/meta-extension.test.ts`
 
@@ -40,8 +42,8 @@ it('reads flat _meta strings into toSkills IR', () => {
     inputSchema: { type: 'object', properties: {} },
     _meta: {
       useWhen: 'When listing directory contents',
-      avoidWhen: 'When paths may loop',
-    },
+      avoidWhen: 'When paths may loop'
+    }
   };
   const result = readToolMetadata(tool);
   expect(result.mcpMetadata?.toSkills?.useWhen).toEqual(['When listing directory contents']);
@@ -52,7 +54,7 @@ it('reads flat _meta strings into toSkills IR', () => {
 - [ ] **Step 1.2: Run test to verify it fails**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- meta-extension
+pnpm --filter @skillit/mcp test --run -- meta-extension
 ```
 
 Expected: FAIL — test reads old nested shape.
@@ -81,7 +83,7 @@ return { tags, mcpMetadata: { toSkills } };
 - [ ] **Step 1.4: Run test to verify it passes**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- meta-extension
+pnpm --filter @skillit/mcp test --run -- meta-extension
 ```
 
 Expected: PASS
@@ -98,6 +100,7 @@ git commit -m "feat(mcp): read flat _meta strings into toSkills IR"
 ### Task 2: Update `extract.ts` and `rule-m3.ts`
 
 **Files:**
+
 - Modify: `packages/mcp/src/extract.ts`
 - Modify: `packages/mcp/src/audit/rule-m3.ts`
 - Test: `packages/mcp/tests/unit/meta-passthrough.test.ts`
@@ -106,12 +109,21 @@ git commit -m "feat(mcp): read flat _meta strings into toSkills IR"
 - [ ] **Step 2.1: Update test fixtures to flat format**
 
 In `packages/mcp/tests/unit/meta-passthrough.test.ts`, change every fixture from:
+
 ```typescript
-_meta: { toSkills: { useWhen: ['When listing'] } }
+_meta: {
+  toSkills: {
+    useWhen: ['When listing'];
+  }
+}
 ```
+
 to:
+
 ```typescript
-_meta: { useWhen: 'When listing' }
+_meta: {
+  useWhen: 'When listing';
+}
 ```
 
 In `packages/mcp/tests/unit/audit-malformed-meta.test.ts`, update similarly.
@@ -119,7 +131,7 @@ In `packages/mcp/tests/unit/audit-malformed-meta.test.ts`, update similarly.
 - [ ] **Step 2.2: Run tests to verify they fail**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- meta-passthrough audit-malformed
+pnpm --filter @skillit/mcp test --run -- meta-passthrough audit-malformed
 ```
 
 Expected: FAIL
@@ -161,14 +173,14 @@ Find every string in `packages/mcp/src/audit/rule-m3.ts` that mentions `_meta.to
 // Before
 `Add _meta.toSkills.useWhen to tool '${name}'`
 // After
-`Add _meta.useWhen to tool '${name}'`
+`Add _meta.useWhen to tool '${name}'`;
 ```
 
 - [ ] **Step 2.5: Run tests to verify they pass**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- meta-passthrough audit-malformed
-pnpm --filter @to-skills/mcp test --run
+pnpm --filter @skillit/mcp test --run -- meta-passthrough audit-malformed
+pnpm --filter @skillit/mcp test --run
 ```
 
 Expected: all PASS
@@ -186,9 +198,10 @@ git commit -m "feat(mcp): switch _meta wire format to flat strings"
 
 ## Chunk 2: Structural refactoring
 
-Move `jsdoc-edit.ts` to `@to-skills/core` and reorganize `packages/mcp/src/refine/` into `runtime/` and `build/` subdirectories.
+Move `jsdoc-edit.ts` to `@skillit/core` and reorganize `packages/mcp/src/refine/` into `runtime/` and `build/` subdirectories.
 
 **Files:**
+
 - Create: `packages/core/src/refine/jsdoc-edit.ts`
 - Modify: `packages/core/src/refine/index.ts`
 - Modify: `packages/typedoc/src/refine/typedoc-source.ts`
@@ -198,9 +211,10 @@ Move `jsdoc-edit.ts` to `@to-skills/core` and reorganize `packages/mcp/src/refin
 - Create: `packages/mcp/src/refine/runtime/merge-overlay.ts` (moved)
 - Modify: `packages/mcp/src/refine/index.ts`
 
-### Task 3: Move `jsdoc-edit.ts` to `@to-skills/core`
+### Task 3: Move `jsdoc-edit.ts` to `@skillit/core`
 
 **Files:**
+
 - Create: `packages/core/src/refine/jsdoc-edit.ts`
 - Modify: `packages/core/src/refine/index.ts`
 - Modify: `packages/typedoc/src/refine/typedoc-source.ts`
@@ -228,7 +242,7 @@ describe('insertJsDocTag', () => {
 - [ ] **Step 3.2: Run test to verify it fails**
 
 ```bash
-pnpm --filter @to-skills/core test --run -- jsdoc-edit
+pnpm --filter @skillit/core test --run -- jsdoc-edit
 ```
 
 Expected: FAIL — module not found.
@@ -240,19 +254,23 @@ Copy the contents of `packages/typedoc/src/refine/jsdoc-edit.ts` verbatim to `pa
 - [ ] **Step 3.4: Export from `packages/core/src/refine/index.ts`**
 
 Add to the existing exports:
+
 ```typescript
 export { insertJsDocTag } from './jsdoc-edit.js';
 ```
 
-- [ ] **Step 3.5: Update `@to-skills/typedoc` imports**
+- [ ] **Step 3.5: Update `@skillit/typedoc` imports**
 
 In `packages/typedoc/src/refine/typedoc-source.ts`, change:
+
 ```typescript
 import { insertJsDocTag } from './jsdoc-edit.js';
 ```
+
 to:
+
 ```typescript
-import { insertJsDocTag } from '@to-skills/core';
+import { insertJsDocTag } from '@skillit/core';
 ```
 
 In `packages/typedoc/src/refine/index.ts`, remove the `insertJsDocTag` re-export (it now lives in core).
@@ -266,8 +284,8 @@ rm packages/typedoc/src/refine/jsdoc-edit.ts
 - [ ] **Step 3.7: Run all tests**
 
 ```bash
-pnpm --filter @to-skills/core test --run -- jsdoc-edit
-pnpm --filter @to-skills/typedoc test --run
+pnpm --filter @skillit/core test --run -- jsdoc-edit
+pnpm --filter @skillit/typedoc test --run
 ```
 
 Expected: all PASS
@@ -280,7 +298,7 @@ git add packages/core/src/refine/jsdoc-edit.ts packages/core/src/refine/index.ts
         packages/typedoc/src/refine/typedoc-source.ts \
         packages/typedoc/src/refine/index.ts
 git rm packages/typedoc/src/refine/jsdoc-edit.ts
-git commit -m "refactor: move jsdoc-edit to @to-skills/core"
+git commit -m "refactor: move jsdoc-edit to @skillit/core"
 ```
 
 ---
@@ -288,6 +306,7 @@ git commit -m "refactor: move jsdoc-edit to @to-skills/core"
 ### Task 4: Reorganize `packages/mcp/src/refine/` into `runtime/`
 
 **Files:**
+
 - Create: `packages/mcp/src/refine/runtime/mcp-source.ts`
 - Create: `packages/mcp/src/refine/runtime/overlay.ts`
 - Create: `packages/mcp/src/refine/runtime/merge-overlay.ts`
@@ -320,6 +339,7 @@ export { McpRefineSource } from './runtime/mcp-source.js';
 - [ ] **Step 4.4: Update any imports of moved files elsewhere**
 
 Search for imports of the old paths:
+
 ```bash
 grep -r "from '.*refine/mcp-source\|from '.*refine/overlay\|from '.*refine/merge-overlay" packages/
 ```
@@ -329,7 +349,7 @@ Update each to point through `./runtime/` or via the barrel `index.ts`.
 - [ ] **Step 4.5: Run full test suite**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run
+pnpm --filter @skillit/mcp test --run
 ```
 
 Expected: all PASS
@@ -348,6 +368,7 @@ git commit -m "refactor(mcp): move runtime refine files to runtime/ subdir"
 Implement `tool-discovery.ts`, `meta-edit.ts`, and `TypeScriptMcpRefineSource` in `packages/mcp/src/refine/build/`.
 
 **Files:**
+
 - Create: `packages/mcp/src/refine/build/tool-discovery.ts`
 - Create: `packages/mcp/src/refine/build/meta-edit.ts`
 - Create: `packages/mcp/src/refine/build/ts-mcp-source.ts`
@@ -403,7 +424,7 @@ describe('discoverTools', () => {
   it('skips minimal two-argument form and emits a warning', () => {
     const result = discoverTools('test.ts', FIXTURE_MINIMAL);
     expect(result.tools.has('minimal_tool')).toBe(false);
-    expect(result.warnings.some(w => w.includes('minimal_tool'))).toBe(true);
+    expect(result.warnings.some((w) => w.includes('minimal_tool'))).toBe(true);
   });
 
   it('returns empty map for source with no tool calls', () => {
@@ -417,7 +438,7 @@ describe('discoverTools', () => {
 - [ ] **Step 5.2: Run tests to verify they fail**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- tool-discovery
+pnpm --filter @skillit/mcp test --run -- tool-discovery
 ```
 
 Expected: FAIL — module not found.
@@ -470,7 +491,7 @@ export function discoverTools(file: string, source: string): DiscoveryResult {
 - [ ] **Step 5.4: Run tests to verify they pass**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- tool-discovery
+pnpm --filter @skillit/mcp test --run -- tool-discovery
 ```
 
 Expected: all PASS
@@ -543,7 +564,7 @@ describe('applyMetaEdit', () => {
 - [ ] **Step 6.2: Run tests to verify they fail**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- meta-edit
+pnpm --filter @skillit/mcp test --run -- meta-edit
 ```
 
 Expected: FAIL — module not found.
@@ -553,7 +574,7 @@ Expected: FAIL — module not found.
 Create `packages/mcp/src/refine/build/meta-edit.ts`:
 
 ```typescript
-import type { RefineTag } from '@to-skills/core';
+import type { RefineTag } from '@skillit/core';
 
 // Finds the options object `{` after server.tool('name', and returns its start index.
 function findOptionsStart(source: string, toolName: string, hintLine: number): number {
@@ -579,12 +600,23 @@ function findOptionsEnd(source: string, start: number): number {
   let escaped = false;
   for (let i = start; i < source.length; i++) {
     const ch = source[i]!;
-    if (escaped) { escaped = false; continue; }
-    if (ch === '\\' && inString) { escaped = true; continue; }
-    if (ch === '"' || ch === "'") { inString = !inString; continue; }
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === '\\' && inString) {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      inString = !inString;
+      continue;
+    }
     if (inString) continue;
     if (ch === '{') depth++;
-    else if (ch === '}') { if (--depth === 0) return i; }
+    else if (ch === '}') {
+      if (--depth === 0) return i;
+    }
   }
   return -1;
 }
@@ -594,7 +626,7 @@ export function applyMetaEdit(
   toolName: string,
   hintLine: number,
   tag: RefineTag,
-  value: string,
+  value: string
 ): string {
   const optStart = findOptionsStart(source, toolName, hintLine);
   if (optStart === -1) return source;
@@ -626,28 +658,21 @@ export function applyMetaEdit(
     const insertAt = metaEnd;
     const indent = '      ';
     return (
-      source.slice(0, insertAt) +
-      `\n${indent}${tag}: '${value}',\n    ` +
-      source.slice(insertAt)
+      source.slice(0, insertAt) + `\n${indent}${tag}: '${value}',\n    ` + source.slice(insertAt)
     );
   }
 
   // No _meta block — insert one before the options closing `}`
   const indent = '    ';
   const metaBlock = `\n${indent}_meta: { ${tag}: '${value}' },`;
-  return (
-    source.slice(0, optEnd) +
-    metaBlock +
-    '\n  ' +
-    source.slice(optEnd)
-  );
+  return source.slice(0, optEnd) + metaBlock + '\n  ' + source.slice(optEnd);
 }
 ```
 
 - [ ] **Step 6.4: Run tests to verify they pass**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- meta-edit
+pnpm --filter @skillit/mcp test --run -- meta-edit
 ```
 
 Expected: all PASS
@@ -695,11 +720,11 @@ describe('TypeScriptMcpRefineSource', () => {
     const source = new TypeScriptMcpRefineSource({
       command: 'node',
       args: [join(tmpDir, 'server.js')],
-      sourceGlob: join(tmpDir, '*.ts'),
+      sourceGlob: join(tmpDir, '*.ts')
     });
 
     await source.applyFixes([
-      { toolName: 'list_dir', tag: 'useWhen', value: 'When listing directory contents' },
+      { toolName: 'list_dir', tag: 'useWhen', value: 'When listing directory contents' }
     ]);
 
     const updated = await readFile(join(tmpDir, 'server.ts'), 'utf8');
@@ -731,7 +756,7 @@ await server.connect(transport);
 - [ ] **Step 7.2: Run test to verify it fails**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run -- ts-mcp-source
+pnpm --filter @skillit/mcp test --run -- ts-mcp-source
 ```
 
 Expected: FAIL — module not found.
@@ -743,7 +768,7 @@ Create `packages/mcp/src/refine/build/ts-mcp-source.ts`:
 ```typescript
 import { glob } from 'node:fs/promises';
 import { readFile, writeFile } from 'node:fs/promises';
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@to-skills/core';
+import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
 import { discoverTools } from './tool-discovery.js';
 import { applyMetaEdit } from './meta-edit.js';
 import { McpRefineSource } from '../runtime/mcp-source.js';
@@ -790,7 +815,9 @@ export class TypeScriptMcpRefineSource implements RefineSource {
     for (const fix of fixes) {
       const loc = allTools.get(fix.toolName);
       if (!loc) {
-        process.stderr.write(`[to-skills] tool '${fix.toolName}' not found in source files; skipping.\n`);
+        process.stderr.write(
+          `[to-skills] tool '${fix.toolName}' not found in source files; skipping.\n`
+        );
         continue;
       }
       const group = byFile.get(loc.file) ?? [];
@@ -814,6 +841,7 @@ export class TypeScriptMcpRefineSource implements RefineSource {
 - [ ] **Step 7.4: Export from `packages/mcp/src/refine/index.ts`**
 
 Add:
+
 ```typescript
 export { TypeScriptMcpRefineSource } from './build/ts-mcp-source.js';
 ```
@@ -821,7 +849,7 @@ export { TypeScriptMcpRefineSource } from './build/ts-mcp-source.js';
 - [ ] **Step 7.5: Run all mcp tests**
 
 ```bash
-pnpm --filter @to-skills/mcp test --run
+pnpm --filter @skillit/mcp test --run
 ```
 
 Expected: all PASS
@@ -840,6 +868,7 @@ git commit -m "feat(mcp): add TypeScriptMcpRefineSource for build-mode refine"
 ## Chunk 4: Context detection and CLI update
 
 **Files:**
+
 - Create: `packages/client/src/detect-mode.ts`
 - Modify: `packages/client/src/commands/refine.ts`
 - Create: `packages/client/tests/unit/detect-mode.test.ts`
@@ -901,7 +930,7 @@ describe('detectRefineMode', () => {
 - [ ] **Step 8.2: Run tests to verify they fail**
 
 ```bash
-pnpm --filter @to-skills/client test --run -- detect-mode
+pnpm --filter @skillit/client test --run -- detect-mode
 ```
 
 Expected: FAIL — module not found.
@@ -915,10 +944,7 @@ import { readFile, access } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 
-const MCP_SDK_PACKAGES = [
-  '@modelcontextprotocol/sdk',
-  'fastmcp',
-];
+const MCP_SDK_PACKAGES = ['@modelcontextprotocol/sdk', 'fastmcp'];
 
 async function hasMcpSdkDep(cwd: string): Promise<boolean> {
   try {
@@ -926,9 +952,9 @@ async function hasMcpSdkDep(cwd: string): Promise<boolean> {
     const pkg = JSON.parse(raw) as Record<string, unknown>;
     const deps = {
       ...(pkg['dependencies'] as Record<string, string> | undefined),
-      ...(pkg['devDependencies'] as Record<string, string> | undefined),
+      ...(pkg['devDependencies'] as Record<string, string> | undefined)
     };
-    return MCP_SDK_PACKAGES.some(name => name in deps);
+    return MCP_SDK_PACKAGES.some((name) => name in deps);
   } catch {
     return false;
   }
@@ -948,8 +974,8 @@ async function hasMcpConfig(cwd: string): Promise<boolean> {
   let dir = cwd;
   while (dir !== home && dir !== dirname(dir)) {
     if (
-      await fileExists(join(dir, 'mcp.json')) ||
-      await fileExists(join(dir, 'claude_desktop_config.json'))
+      (await fileExists(join(dir, 'mcp.json'))) ||
+      (await fileExists(join(dir, 'claude_desktop_config.json')))
     ) {
       return true;
     }
@@ -958,13 +984,8 @@ async function hasMcpConfig(cwd: string): Promise<boolean> {
   return false;
 }
 
-export async function detectRefineMode(
-  cwd: string
-): Promise<'build' | 'runtime' | 'ambiguous'> {
-  const [hasBuild, hasRuntime] = await Promise.all([
-    hasMcpSdkDep(cwd),
-    hasMcpConfig(cwd),
-  ]);
+export async function detectRefineMode(cwd: string): Promise<'build' | 'runtime' | 'ambiguous'> {
+  const [hasBuild, hasRuntime] = await Promise.all([hasMcpSdkDep(cwd), hasMcpConfig(cwd)]);
 
   if (hasBuild && !hasRuntime) return 'build';
   if (hasRuntime && !hasBuild) return 'runtime';
@@ -975,7 +996,7 @@ export async function detectRefineMode(
 - [ ] **Step 8.4: Run tests to verify they pass**
 
 ```bash
-pnpm --filter @to-skills/client test --run -- detect-mode
+pnpm --filter @skillit/client test --run -- detect-mode
 ```
 
 Expected: all PASS
@@ -994,6 +1015,7 @@ git commit -m "feat(client): add detectRefineMode context detection"
 Wire `detectRefineMode` and `TypeScriptMcpRefineSource` into the CLI refine command.
 
 **Files:**
+
 - Modify: `packages/client/src/commands/refine.ts`
 
 - [ ] **Step 9.1: Read the existing refine command**

@@ -1,5 +1,5 @@
 /**
- * Smoke test for `@to-skills/mcp/adapter-utils` subpath export.
+ * Smoke test for `@skillit/mcp/adapter-utils` subpath export.
  *
  * Two layers of protection:
  *
@@ -10,7 +10,7 @@
  * 2. **`package.json` exports map check**: parses `packages/mcp/package.json`
  *    and asserts the `exports["./adapter-utils"]` mapping points to
  *    `dist/adapter/cli-tools-helpers.{js,d.ts}`. Catches breakage of the
- *    actual subpath consumers (`@to-skills/target-mcpc`, `target-fastmcp`,
+ *    actual subpath consumers (`@skillit/target-mcpc`, `target-fastmcp`,
  *    third-party adapters) would hit at runtime — without requiring a built
  *    `dist/` for the test itself.
  *
@@ -35,7 +35,7 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_JSON_PATH = resolve(__dirname, '..', '..', 'package.json');
 
-describe('@to-skills/mcp/adapter-utils — public surface', () => {
+describe('@skillit/mcp/adapter-utils — public surface', () => {
   it('exports the 7 mandated helpers as functions (source-path probe)', () => {
     expect(typeof resolveLaunchCommand).toBe('function');
     expect(typeof formatCliMarker).toBe('function');

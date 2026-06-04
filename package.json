@@ -31,7 +31,7 @@
     "outdated": "pnpm outdated -r",
     "update:deps": "pnpm update -r --latest",
     "prepare": "simple-git-hooks",
-    "docs": "typedoc --out docs/html --plugin typedoc-plugin-to-skills",
+    "docs": "typedoc --out docs/html --plugin typedoc-plugin-skillit",
     "docs:md": "typedoc"
   },
   "devDependencies": {

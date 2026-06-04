@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { correlateFlags } from '../src/correlator.js';
-import type { ExtractedConfigSurface, ExtractedConfigOption } from '@to-skills/core';
+import type { ExtractedConfigSurface, ExtractedConfigOption } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
 // Factories
@@ -15,7 +15,7 @@ function makeCLIOption(overrides: Partial<ExtractedConfigOption> = {}): Extracte
     description: 'Output directory',
     required: false,
     defaultValue: 'dist',
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -31,7 +31,7 @@ function makeConfigOption(overrides: Partial<ExtractedConfigOption> = {}): Extra
     avoidWhen: ['Using defaults — omit to inherit from tsconfig'],
     pitfalls: ['Must be a relative path'],
     category: 'Output',
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -41,12 +41,12 @@ function makeCLISurface(overrides: Partial<ExtractedConfigSurface> = {}): Extrac
     description: 'Compile the project',
     sourceType: 'cli',
     options: [makeCLIOption()],
-    ...overrides,
+    ...overrides
   };
 }
 
 function makeConfigSurface(
-  overrides: Partial<ExtractedConfigSurface> = {},
+  overrides: Partial<ExtractedConfigSurface> = {}
 ): ExtractedConfigSurface {
   return {
     name: 'BuildOptions',
@@ -57,7 +57,7 @@ function makeConfigSurface(
     avoidWhen: ['Running in CI with pre-built artifacts'],
     pitfalls: ['Always clean dist/ before building'],
     remarks: 'Requires Node >=18',
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -84,7 +84,7 @@ describe('correlateFlags — basic merging', () => {
 
   it('uses config description when CLI description is empty', () => {
     const cli = makeCLISurface({
-      options: [makeCLIOption({ description: '' })],
+      options: [makeCLIOption({ description: '' })]
     });
     const result = correlateFlags(cli, makeConfigSurface());
     const opt = result.options[0]!;
@@ -116,7 +116,7 @@ describe('correlateFlags — command-level tag merging', () => {
       useWhen: ['CLI-specific use case'],
       avoidWhen: ['CLI-specific avoid'],
       pitfalls: ['CLI-specific pitfall'],
-      remarks: 'CLI-specific remarks',
+      remarks: 'CLI-specific remarks'
     });
     const result = correlateFlags(cli, makeConfigSurface());
     expect(result.useWhen).toEqual(['CLI-specific use case']);
@@ -137,10 +137,10 @@ describe('correlateFlags — no config surface', () => {
 describe('correlateFlags — case-insensitive matching', () => {
   it('matches CLI option name to config property case-insensitively', () => {
     const cli = makeCLISurface({
-      options: [makeCLIOption({ name: 'OutputDir', cliFlag: '--output-dir', description: '' })],
+      options: [makeCLIOption({ name: 'OutputDir', cliFlag: '--output-dir', description: '' })]
     });
     const config = makeConfigSurface({
-      options: [makeConfigOption({ name: 'outputDir', description: 'Config output dir' })],
+      options: [makeConfigOption({ name: 'outputDir', description: 'Config output dir' })]
     });
     const result = correlateFlags(cli, config);
     const opt = result.options[0]!;
@@ -152,10 +152,10 @@ describe('correlateFlags — case-insensitive matching', () => {
 describe('correlateFlags — unmatched options', () => {
   it('leaves unmatched CLI options unchanged (no match in config)', () => {
     const cli = makeCLISurface({
-      options: [makeCLIOption({ name: 'verbose', cliFlag: '--verbose', type: 'boolean' })],
+      options: [makeCLIOption({ name: 'verbose', cliFlag: '--verbose', type: 'boolean' })]
     });
     const config = makeConfigSurface({
-      options: [makeConfigOption({ name: 'output' })],
+      options: [makeConfigOption({ name: 'output' })]
     });
     const result = correlateFlags(cli, config);
     const opt = result.options[0]!;
@@ -166,13 +166,13 @@ describe('correlateFlags — unmatched options', () => {
 
   it('ignores config properties with no matching CLI option', () => {
     const cli = makeCLISurface({
-      options: [makeCLIOption({ name: 'output' })],
+      options: [makeCLIOption({ name: 'output' })]
     });
     const config = makeConfigSurface({
       options: [
         makeConfigOption({ name: 'output' }),
-        makeConfigOption({ name: 'minify', configKey: 'minify', type: 'boolean' }),
-      ],
+        makeConfigOption({ name: 'minify', configKey: 'minify', type: 'boolean' })
+      ]
     });
     const result = correlateFlags(cli, config);
     expect(result.options).toHaveLength(1);

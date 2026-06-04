@@ -8,7 +8,7 @@
 ## Summary
 
 Measure, defensibly and publicly, where converting an MCP server's tool surface
-into a progressive-disclosure Agent Skill (via `@to-skills/mcp`) beats consuming
+into a progressive-disclosure Agent Skill (via `@skillit/mcp`) beats consuming
 the server as raw MCP — and where it does not. The study spans five hypotheses
 (H1–H5) covering token economics, latency, tool-selection accuracy, cross-harness
 portability, and multi-session cost.
@@ -57,7 +57,7 @@ What already exists (do not reinvent):
 
 What Phase 0 adds (narrow):
 
-1. **Autonomous loop driver** in `@to-skills/core`, alongside the scorer:
+1. **Autonomous loop driver** in `@skillit/core`, alongside the scorer:
 
    ```
    extract → audit → estimateSkillJudgeScore
@@ -72,13 +72,13 @@ What Phase 0 adds (narrow):
    tool-selection accuracy. This is the same loop core to-skills already performs
    manually.
 
-2. **Single CLI entry point** — `to-skills refine` (in `@to-skills/cli`) detects the
+2. **Single CLI entry point** — `to-skills refine` (in `@skillit/cli`) detects the
    source and dispatches to the correct write-adapter:
 
    ```
-   @to-skills/core   loop driver + estimateSkillJudgeScore (the engine)
-   @to-skills/cli    `to-skills refine` — single front door, dispatches by source
-      ├─ MCP adapter (from @to-skills/mcp) → writes _meta.toSkills sidecar overlay
+   @skillit/core   loop driver + estimateSkillJudgeScore (the engine)
+   @skillit/cli    `to-skills refine` — single front door, dispatches by source
+      ├─ MCP adapter (from @skillit/mcp) → writes _meta.toSkills sidecar overlay
       └─ TypeDoc adapter                   → writes JSDoc tags on source exports
    ```
 
@@ -87,7 +87,7 @@ What Phase 0 adds (narrow):
      time via the existing projection path (`packages/mcp/src/extract.ts:448`).
    - **TypeDoc adapter:** writes `@useWhen` / `@avoidWhen` / `@pitfalls` etc. onto the
      flagged source exports.
-   - `@to-skills/mcp` remains usable programmatically; the CLI is the canonical entry.
+   - `@skillit/mcp` remains usable programmatically; the CLI is the canonical entry.
 
 **Phase 0 critical path** for the benchmark requires only the MCP adapter; the
 TypeDoc adapter rides along on the shared core driver as a fast-follow.
@@ -95,7 +95,7 @@ TypeDoc adapter rides along on the shared core driver as a fast-follow.
 ### ② `to-skills-bench` (separate repo)
 
 Standalone repo, pnpm workspaces, mirroring the `to-skills` layout so contributors
-don't context-switch. Pins `@to-skills/mcp` (and the Phase-0 refine capability) as
+don't context-switch. Pins `@skillit/mcp` (and the Phase-0 refine capability) as
 a normal versioned dependency. Heavy/Python/LLM-SDK deps and pinned MCP servers stay
 out of the published library monorepo.
 
@@ -122,7 +122,7 @@ All four are **tool-generated**. No human authors annotations in any condition.
 | Condition        | Produced by                                                                                 | Delta measures                           |
 | ---------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | **A. Raw MCP**   | `JSON.stringify(tools/list)`                                                                | status quo baseline                      |
-| **B. Auto**      | `@to-skills/mcp` extract — schema only, no doc-mining, no overlay                           | token savings of structure alone         |
+| **B. Auto**      | `@skillit/mcp` extract — schema only, no doc-mining, no overlay                             | token savings of structure alone         |
 | **C. Doc-mined** | extract + doc-scanner mining the server's README/docs (deterministic, one-shot)             | **B→C = free value of existing docs**    |
 | **D. Eval-loop** | extract + Phase-0 `refine` loop → `_meta.toSkills` overlay, iterated to grade-A skill-judge | **C→D = value of autonomous refinement** |
 
@@ -182,13 +182,13 @@ Five servers covering the N-tools range and category mix. **Hard selection
 criterion:** each must ship real documentation, or condition C (doc-mined) collapses
 into B and there is no delta to measure.
 
-| Server                                    | ~Tools  | Category          | Why                                                       |
-| ----------------------------------------- | ------- | ----------------- | --------------------------------------------------------- |
-| `@modelcontextprotocol/server-filesystem` | ~10     | Reference, small  | baseline                                                  |
-| `@modelcontextprotocol/server-github`     | ~25     | Reference, medium | natural namespacing (issues/pulls/repos)                  |
-| Third-party TS server (e.g. Sentry-class) | ~15     | Non-Anthropic TS  | validates non-reference surface                           |
-| FastMCP Python server                     | ~20     | Python            | required by SC-008; exercises `@to-skills/target-fastmcp` |
-| Large server                              | ~80–100 | Stress            | validates H1 at the top of the N curve                    |
+| Server                                    | ~Tools  | Category          | Why                                                     |
+| ----------------------------------------- | ------- | ----------------- | ------------------------------------------------------- |
+| `@modelcontextprotocol/server-filesystem` | ~10     | Reference, small  | baseline                                                |
+| `@modelcontextprotocol/server-github`     | ~25     | Reference, medium | natural namespacing (issues/pulls/repos)                |
+| Third-party TS server (e.g. Sentry-class) | ~15     | Non-Anthropic TS  | validates non-reference surface                         |
+| FastMCP Python server                     | ~20     | Python            | required by SC-008; exercises `@skillit/target-fastmcp` |
+| Large server                              | ~80–100 | Stress            | validates H1 at the top of the N curve                  |
 
 Exact versions pinned in `packages/servers/package.json`. **Open item:** identify the
 concrete ~80–100-tool server and the third-party TS server during scaffolding.

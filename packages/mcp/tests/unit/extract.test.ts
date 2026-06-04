@@ -6,7 +6,7 @@
 // can assert close() was called and connect() saw the right transport.
 
 import { PassThrough } from 'node:stream';
-import type { ExtractedSkill } from '@to-skills/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { McpPromptListEntry } from '../../src/introspect/client-types.js';
 

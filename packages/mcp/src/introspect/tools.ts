@@ -1,6 +1,6 @@
 // MCP tools/list introspection — paginates and maps to ExtractedFunction.
 
-import type { ExtractedFunction, ExtractedParameter } from '@to-skills/core';
+import type { ExtractedFunction, ExtractedParameter } from '@skillit/core';
 import type { JSONSchema7, JSONSchema7TypeName } from 'json-schema';
 import { McpError } from '../errors.js';
 import type { McpClient, McpToolListEntry } from './client-types.js';

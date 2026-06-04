@@ -2,7 +2,7 @@
  * Fingerprint frontmatter helper — shared across CLI-as-proxy adapters.
  *
  * @remarks
- * CLI adapters (`@to-skills/target-mcpc`, `@to-skills/target-fastmcp`) emit
+ * CLI adapters (`@skillit/target-mcpc`, `@skillit/target-fastmcp`) emit
  * a `generated-by:` block in their SKILL.md frontmatter so freshness audits
  * can detect when the rendered output drifts from the adapter that produced
  * it (FR-IT-012). This helper centralizes the shape so every adapter emits
@@ -28,11 +28,11 @@ import type { AdapterFingerprint } from './types.js';
  * @example
  * ```ts
  * const fm = generatedByFrontmatter({
- *   adapter: '@to-skills/target-mcpc',
+ *   adapter: '@skillit/target-mcpc',
  *   version: '0.1.0',
  *   targetCliRange: 'mcpc@^2.1'
  * });
- * // → { 'generated-by': { adapter: '@to-skills/target-mcpc', version: '0.1.0', 'target-cli-range': 'mcpc@^2.1' } }
+ * // → { 'generated-by': { adapter: '@skillit/target-mcpc', version: '0.1.0', 'target-cli-range': 'mcpc@^2.1' } }
  * ```
  */
 export function generatedByFrontmatter(fingerprint: AdapterFingerprint): Record<string, unknown> {

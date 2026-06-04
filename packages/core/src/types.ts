@@ -84,8 +84,8 @@ export interface ExtractedSkill {
    *
    * @remarks
    * The element shape (`McpAuditIssue`) is forward-declared here in
-   * `@to-skills/core` so this field is typeable without a runtime dependency
-   * on `@to-skills/mcp`. The concrete audit engine lives in `@to-skills/mcp`,
+   * `@skillit/core` so this field is typeable without a runtime dependency
+   * on `@skillit/mcp`. The concrete audit engine lives in `@skillit/mcp`,
    * which re-exports the type as `AuditIssue` for adapter-author ergonomics.
    *
    * @deprecated Prefer `audit`. When present, this mirrors
@@ -95,14 +95,14 @@ export interface ExtractedSkill {
 }
 
 // NOTE: Forward-declared for backward-compatible extension point.
-// The concrete audit engine lives in @to-skills/mcp; core has no runtime
-// dependency on it. Core owns the structural contract; @to-skills/mcp
+// The concrete audit engine lives in @skillit/mcp; core has no runtime
+// dependency on it. Core owns the structural contract; @skillit/mcp
 // re-exports as `AuditIssue` / `AuditSeverity` for ergonomics.
 //
 // The names are prefixed with `Mcp` here to avoid a collision with the
 // pre-existing skill-level `AuditIssue` exported from `audit-types.ts`,
 // which has a different shape (file/line/symbol/suggestion). Both are
-// re-exported from `@to-skills/core` under their respective names.
+// re-exported from `@skillit/core` under their respective names.
 /** Audit severity levels for structured extractor findings. */
 export type McpAuditSeverity = 'fatal' | 'error' | 'warning' | 'alert';
 
@@ -189,7 +189,7 @@ export interface SkillSetup {
 
 /** Identifies the adapter that rendered a skill — used for freshness audits. */
 export interface AdapterFingerprint {
-  /** npm package name of the adapter (e.g. "@to-skills/target-mcpc") */
+  /** npm package name of the adapter (e.g. "@skillit/target-mcpc") */
   adapter: string;
   /** Adapter package semver version */
   version: string;
@@ -423,7 +423,7 @@ export interface SkillRenderOptions {
   };
   /**
    * Forwarded into `AdapterRenderContext.packageName` for bundle-mode self-reference.
-   * Set by `@to-skills/mcp` bundle commands so the emitted skill instructs MCP-native
+   * Set by `@skillit/mcp` bundle commands so the emitted skill instructs MCP-native
    * harnesses to launch the server via `npx <packageName>`.
    */
   invocationPackageName?: string;
@@ -441,7 +441,7 @@ export interface SkillRenderOptions {
    * @remarks
    * When the host extracts a skill from an HTTP-based MCP server (`--url ...`),
    * there is no shell launch command — adapters should emit a `{ url, headers }`
-   * shape instead of `{ command, args, env }`. Set by `@to-skills/mcp`'s extract
+   * shape instead of `{ command, args, env }`. Set by `@skillit/mcp`'s extract
    * pipeline. Mutually exclusive with `invocationLaunchCommand` in practice; the
    * MCP adapter prefers `httpEndpoint` when both are present.
    */
@@ -464,8 +464,8 @@ export interface SkillRenderOptions {
    * frontmatter delimiter and BEFORE the first heading.
    *
    * @remarks
-   * CLI-as-proxy invocation adapters (`@to-skills/target-mcpc`,
-   * `@to-skills/target-fastmcp`) use this to inject a Setup section that
+   * CLI-as-proxy invocation adapters (`@skillit/target-mcpc`,
+   * `@skillit/target-fastmcp`) use this to inject a Setup section that
    * tells the consumer how to install/connect the underlying CLI. The string
    * is inserted verbatim — callers are responsible for formatting and
    * trailing newlines. Defaults to empty (no prefix injected).
@@ -482,7 +482,7 @@ export interface SkillRenderOptions {
    * When `false`, the default renderer path returns its `RenderedSkill`
    * without running the trailing canonicalization pass. Adapters that wrap
    * `renderSkill` for body rendering and then mutate `references` (e.g.
-   * `@to-skills/target-mcpc` appending its own `tools.md`) pass `false` here
+   * `@skillit/target-mcpc` appending its own `tools.md`) pass `false` here
    * so canonicalization runs exactly once — at the host's outer wrapper —
    * over the final shape including the appended files. Defaults to `true`.
    *
@@ -493,12 +493,12 @@ export interface SkillRenderOptions {
 }
 
 // NOTE: Forward-declared for backward-compatible extension point.
-// The concrete adapter lives in @to-skills/mcp; core has no runtime dependency on it.
-// Core owns the structural contract; @to-skills/mcp will re-export for ergonomics.
+// The concrete adapter lives in @skillit/mcp; core has no runtime dependency on it.
+// Core owns the structural contract; @skillit/mcp will re-export for ergonomics.
 /**
  * Pluggable rendering strategy — selects the SKILL.md dialect emitted for an `ExtractedSkill`.
  *
- * Built-in implementations (shipped from `@to-skills/mcp`'s target packages) include
+ * Built-in implementations (shipped from `@skillit/mcp`'s target packages) include
  * `mcp-protocol` (emits `mcp:` frontmatter for MCP-native agent harnesses) and
  * `cli:*` targets (emit shell-command skills that route through an external MCP CLI).
  */

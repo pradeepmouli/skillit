@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import type { Dirent } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { RenderedFile, RenderedSkill } from '@to-skills/core';
+import type { RenderedFile, RenderedSkill } from '@skillit/core';
 
 const SKILLS_ROOT = fileURLToPath(new URL('../skills', import.meta.url));
 

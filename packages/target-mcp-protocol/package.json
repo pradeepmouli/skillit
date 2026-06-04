@@ -1,7 +1,7 @@
 {
-  "name": "@to-skills/target-mcp-protocol",
+  "name": "@skillit/target-mcp-protocol",
   "version": "1.0.0",
-  "description": "Default invocation-target adapter for @to-skills/mcp — emits mcp: frontmatter for MCP-native agent harnesses (OpenCode, Codex, Cursor)",
+  "description": "Default invocation-target adapter for @skillit/mcp — emits mcp: frontmatter for MCP-native agent harnesses (OpenCode, Codex, Cursor)",
   "keywords": [
     "agent-skills",
     "ai",
@@ -39,15 +39,15 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@to-skills/core": "workspace:*",
+    "@skillit/core": "workspace:*",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@to-skills/mcp": "workspace:*",
+    "@skillit/mcp": "workspace:*",
     "@types/node": "^25.9.1",
     "vitest": "^4.1.7"
   },
   "peerDependencies": {
-    "@to-skills/mcp": "workspace:*"
+    "@skillit/mcp": "workspace:*"
   }
 }

@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import type { DraftedFix } from '@to-skills/core';
+import type { DraftedFix } from '@skillit/core';
 
 export interface OverlayAnnotations {
   useWhen?: string;

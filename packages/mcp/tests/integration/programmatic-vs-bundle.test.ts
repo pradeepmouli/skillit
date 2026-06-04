@@ -39,8 +39,8 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { canonicalize, renderSkill, writeSkills } from '@to-skills/core';
-import type { RenderedFile, RenderedSkill } from '@to-skills/core';
+import { canonicalize, renderSkill, writeSkills } from '@skillit/core';
+import type { RenderedFile, RenderedSkill } from '@skillit/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { bundleMcpSkill, extractMcpSkill, loadAdapterAsync } from '../../src/index.js';
 

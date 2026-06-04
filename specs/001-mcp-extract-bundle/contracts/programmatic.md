@@ -1,6 +1,6 @@
 # Contract: Programmatic API
 
-**Package**: `@to-skills/mcp`
+**Package**: `@skillit/mcp`
 **Entry point**: `packages/mcp/src/index.ts`
 
 ---
@@ -26,7 +26,7 @@ export function extractMcpSkill(options: McpExtractOptions): Promise<ExtractedSk
 **Example**:
 
 ```typescript
-import { extractMcpSkill } from '@to-skills/mcp';
+import { extractMcpSkill } from '@skillit/mcp';
 
 const skill = await extractMcpSkill({
   transport: { type: 'stdio', command: 'node', args: ['./server.js'] }
@@ -63,7 +63,7 @@ export function bundleMcpSkill(options?: McpBundleOptions): Promise<BundleResult
 **Example**:
 
 ```typescript
-import { bundleMcpSkill } from '@to-skills/mcp';
+import { bundleMcpSkill } from '@skillit/mcp';
 
 const result = await bundleMcpSkill({ packageRoot: process.cwd() });
 for (const [name, skill] of Object.entries(result.skills)) {
@@ -83,8 +83,8 @@ export function loadAdapter(target: InvocationTarget): InvocationAdapter;
 
 **Contract**:
 
-1. For `'mcp-protocol'`, returns the default export of `@to-skills/target-mcp-protocol`.
-2. For `cli:<name>`, attempts `require.resolve('@to-skills/target-<name>')` then `require.resolve('to-skills-target-<name>')`. Returns the default export of the first one found.
+1. For `'mcp-protocol'`, returns the default export of `@skillit/target-mcp-protocol`.
+2. For `cli:<name>`, attempts `require.resolve('@skillit/target-<name>')` then `require.resolve('to-skills-target-<name>')`. Returns the default export of the first one found.
 3. On failure, throws `McpError` with code `ADAPTER_NOT_FOUND` and a message listing the attempted candidates.
 4. Results cached per-process — calling twice with the same target returns the same adapter instance.
 
@@ -94,7 +94,7 @@ export function loadAdapter(target: InvocationTarget): InvocationAdapter;
 
 **FR references**: FR-IT-010.
 
-**Package**: `@to-skills/core` (extended, not new).
+**Package**: `@skillit/core` (extended, not new).
 
 ```typescript
 export function renderSkill(

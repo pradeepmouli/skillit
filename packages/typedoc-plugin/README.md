@@ -1,8 +1,8 @@
 # typedoc-plugin-to-skills
 
-Auto-discovery wrapper for [`@to-skills/typedoc`](https://github.com/pradeepmouli/to-skills/tree/master/packages/typedoc).
+Auto-discovery wrapper for [`@skillit/typedoc`](https://github.com/pradeepmouli/to-skills/tree/master/packages/typedoc).
 
-TypeDoc auto-discovers packages named `typedoc-plugin-*`. This package re-exports `@to-skills/typedoc` so you get zero-config setup:
+TypeDoc auto-discovers packages named `typedoc-plugin-*`. This package re-exports `@skillit/typedoc` so you get zero-config setup:
 
 ```bash
 # Install
@@ -26,7 +26,7 @@ TypeDoc run, add `skillsInstallTargets`:
 When install targets are configured, the plugin installs both the generated
 skills and the bundled `to-skills-docs` guidance skill into each target.
 
-For configuration options, see the [@to-skills/typedoc docs](https://github.com/pradeepmouli/to-skills/tree/master/packages/typedoc).
+For configuration options, see the [@skillit/typedoc docs](https://github.com/pradeepmouli/to-skills/tree/master/packages/typedoc).
 
 ## License
 

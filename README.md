@@ -24,7 +24,7 @@ npx to-skills-mcp extract \
   --out ./skills
 
 # Optional: install non-default CLI invocation adapters
-npm install --save-dev @to-skills/target-mcpc @to-skills/target-fastmcp
+npm install --save-dev @skillit/target-mcpc @skillit/target-fastmcp
 
 # Emit CLI-proxy invocation variants for non-MCP agents
 npx to-skills-mcp extract \
@@ -44,7 +44,7 @@ programmatic API details.
 ### Init: detect → install → generate → refine
 
 `to-skills init` bootstraps a project in one step. It detects the project's
-nature, installs the matching `@to-skills/*` package with your package manager,
+nature, installs the matching `@skillit/*` package with your package manager,
 generates an initial skill into `skills/`, then runs `refine` on it.
 
 ```bash
@@ -62,7 +62,7 @@ Detection:
 
 - **Nature** — `commander` / `yargs` dep → `cli`; `@modelcontextprotocol/sdk` →
   `mcp`; otherwise a plain TS library → `typedoc`. Override with `--source`.
-- **Package** — `cli` → `@to-skills/cli`, `mcp` → `@to-skills/mcp`, `typedoc` →
+- **Package** — `cli` → `@skillit/cli`, `mcp` → `@skillit/mcp`, `typedoc` →
   `typedoc-plugin-to-skills`.
 - **Package manager** — `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, else npm.
 
@@ -84,7 +84,7 @@ asks an LLM to evaluate the current guidance, proposes improvements, and applies
 them — no manual editing required.
 
 Refine is **source-aware**. It auto-detects the source from the installed
-`@to-skills/*` package, or you can choose explicitly:
+`@skillit/*` package, or you can choose explicitly:
 
 ```bash
 # CLI source — writes guidance back into the *Options interface JSDoc
@@ -214,7 +214,7 @@ One skill per package — each with its own SKILL.md, references, and config sur
 ### CLI Tool (commander/yargs)
 
 ```typescript
-import { extractCliSkill, writeCliSkill } from '@to-skills/cli';
+import { extractCliSkill, writeCliSkill } from '@skillit/cli';
 
 const skill = await extractCliSkill({
   program, // commander Program object
@@ -234,7 +234,7 @@ Introspects command definitions, correlates flags with typed `*Options` interfac
 ```typescript
 // .vitepress/config.mts
 import { defineConfig } from 'vitepress';
-import { toSkills } from '@to-skills/vitepress';
+import { toSkills } from '@skillit/vitepress';
 
 export default defineConfig({
   vite: {
@@ -249,7 +249,7 @@ The VitePress plugin uses your sidebar for authoritative page ordering — no fr
 ### Library with Docs Site (Docusaurus)
 
 ```typescript
-import { extractDocusaurusDocs } from '@to-skills/docusaurus';
+import { extractDocusaurusDocs } from '@skillit/docusaurus';
 
 const docs = extractDocusaurusDocs({ projectRoot: '.' });
 // Returns ExtractedDocument[] — merge into your skill
@@ -274,20 +274,20 @@ Scans `docs/` directory for markdown files. Also picks up root-level docs (ARCHI
 
 ### Sources
 
-| Source                         | Extractor                                        | What It Produces                                                        |
-| ------------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------- |
-| TypeScript source + JSDoc      | `typedoc-plugin-to-skills`                       | API reference — functions, classes, types, enums, variables             |
-| `@useWhen` / `@avoidWhen` tags | TypeDoc plugin                                   | Decision procedures in SKILL.md "When to Use"                           |
-| `@pitfalls` tag                | TypeDoc plugin                                   | Anti-patterns in SKILL.md "Pitfalls"                                    |
-| `@remarks` tag                 | TypeDoc plugin                                   | Expert knowledge in references                                          |
-| `@category` tag                | TypeDoc plugin                                   | Export grouping in Quick Reference + references                         |
-| `@config` interfaces           | TypeDoc plugin                                   | Configuration tables in SKILL.md + references/config.md                 |
-| Commander/yargs programs       | `@to-skills/cli`                                 | CLI commands + flags in references/commands.md                          |
-| `examples/` directory          | `@to-skills/core`                                | Linked to matching exports by import analysis                           |
-| `docs/` directory              | `@to-skills/core` or VitePress/Docusaurus plugin | Prose docs as reference files                                           |
-| Root `.md` files               | `@to-skills/core`                                | ARCHITECTURE.md, MIGRATION.md, etc. as references                       |
-| README.md                      | `@to-skills/core`                                | Blockquote description, ## Features, ## Quick Start, ## Troubleshooting |
-| package.json                   | TypeDoc plugin                                   | Name, description, keywords, repository, license                        |
+| Source                         | Extractor                                      | What It Produces                                                        |
+| ------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| TypeScript source + JSDoc      | `typedoc-plugin-to-skills`                     | API reference — functions, classes, types, enums, variables             |
+| `@useWhen` / `@avoidWhen` tags | TypeDoc plugin                                 | Decision procedures in SKILL.md "When to Use"                           |
+| `@pitfalls` tag                | TypeDoc plugin                                 | Anti-patterns in SKILL.md "Pitfalls"                                    |
+| `@remarks` tag                 | TypeDoc plugin                                 | Expert knowledge in references                                          |
+| `@category` tag                | TypeDoc plugin                                 | Export grouping in Quick Reference + references                         |
+| `@config` interfaces           | TypeDoc plugin                                 | Configuration tables in SKILL.md + references/config.md                 |
+| Commander/yargs programs       | `@skillit/cli`                                 | CLI commands + flags in references/commands.md                          |
+| `examples/` directory          | `@skillit/core`                                | Linked to matching exports by import analysis                           |
+| `docs/` directory              | `@skillit/core` or VitePress/Docusaurus plugin | Prose docs as reference files                                           |
+| Root `.md` files               | `@skillit/core`                                | ARCHITECTURE.md, MIGRATION.md, etc. as references                       |
+| README.md                      | `@skillit/core`                                | Blockquote description, ## Features, ## Quick Start, ## Troubleshooting |
+| package.json                   | TypeDoc plugin                                 | Name, description, keywords, repository, license                        |
 
 ### Audit Checks
 
@@ -312,7 +312,7 @@ skills/<package-name>/
     types.md                   # Interfaces with properties, type aliases
     classes.md                 # With inheritance, methods, properties
     config.md                  # @config interfaces as option tables
-    commands.md                # CLI commands with flags (from @to-skills/cli)
+    commands.md                # CLI commands with flags (from @skillit/cli)
     variables.md               # Exported constants
     examples.md                # From @example tags
     architecture.md            # From root ARCHITECTURE.md
@@ -324,18 +324,18 @@ Each reference file is token-budgeted independently (default 4000 tokens).
 
 ## Packages
 
-| Package                                                          | Description                                                            |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`typedoc-plugin-to-skills`](packages/typedoc-plugin)            | Auto-discovery wrapper — just install, no config                       |
-| [`@to-skills/core`](packages/core)                               | Types, renderer, audit engine, token budgeting, docs/examples scanning |
-| [`@to-skills/typedoc`](packages/typedoc)                         | TypeDoc plugin — API + config extraction from the reflection tree      |
-| [`@to-skills/cli`](packages/cli)                                 | Commander/yargs introspection + `--help` fallback + flag correlation   |
-| [`@to-skills/vitepress`](packages/vitepress)                     | VitePress Vite plugin — sidebar-driven docs extraction                 |
-| [`@to-skills/docusaurus`](packages/docusaurus)                   | Docusaurus adapter — `_category_.json` + docs scanning                 |
-| [`@to-skills/mcp`](packages/mcp)                                 | MCP extractor/bundler — introspect live servers and emit SKILL.md      |
-| [`@to-skills/target-mcp-protocol`](packages/target-mcp-protocol) | MCP-native invocation target adapter for rendered skills               |
-| [`@to-skills/target-mcpc`](packages/target-mcpc)                 | CLI-proxy invocation adapter via `mcpc`                                |
-| [`@to-skills/target-fastmcp`](packages/target-fastmcp)           | CLI-proxy invocation adapter via Python `fastmcp` CLI                  |
+| Package                                                        | Description                                                            |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`typedoc-plugin-to-skills`](packages/typedoc-plugin)          | Auto-discovery wrapper — just install, no config                       |
+| [`@skillit/core`](packages/core)                               | Types, renderer, audit engine, token budgeting, docs/examples scanning |
+| [`@skillit/typedoc`](packages/typedoc)                         | TypeDoc plugin — API + config extraction from the reflection tree      |
+| [`@skillit/cli`](packages/cli)                                 | Commander/yargs introspection + `--help` fallback + flag correlation   |
+| [`@skillit/vitepress`](packages/vitepress)                     | VitePress Vite plugin — sidebar-driven docs extraction                 |
+| [`@skillit/docusaurus`](packages/docusaurus)                   | Docusaurus adapter — `_category_.json` + docs scanning                 |
+| [`@skillit/mcp`](packages/mcp)                                 | MCP extractor/bundler — introspect live servers and emit SKILL.md      |
+| [`@skillit/target-mcp-protocol`](packages/target-mcp-protocol) | MCP-native invocation target adapter for rendered skills               |
+| [`@skillit/target-mcpc`](packages/target-mcpc)                 | CLI-proxy invocation adapter via `mcpc`                                |
+| [`@skillit/target-fastmcp`](packages/target-fastmcp)           | CLI-proxy invocation adapter via Python `fastmcp` CLI                  |
 
 ## Configuration
 

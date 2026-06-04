@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Command } from 'commander';
-import { extractCliSkill, loadProgram, writeCliSkill } from '@to-skills/cli';
+import { extractCliSkill, loadProgram, writeCliSkill } from '@skillit/cli';
 import {
   detectPackageManager,
   detectProjectNature,
@@ -51,11 +51,11 @@ interface InitOpts {
 
 const VALID_SOURCES: readonly RefineSourceKind[] = ['cli', 'mcp', 'typedoc'];
 
-/** Map a project nature to the `@to-skills/*` package that handles it. */
+/** Map a project nature to the `@skillit/*` package that handles it. */
 function natureToPackage(nature: RefineSourceKind): string {
-  if (nature === 'cli') return '@to-skills/cli';
-  if (nature === 'mcp') return '@to-skills/mcp';
-  return 'typedoc-plugin-to-skills';
+  if (nature === 'cli') return '@skillit/cli';
+  if (nature === 'mcp') return '@skillit/mcp';
+  return 'typedoc-plugin-skillit';
 }
 
 /** Build the package manager's add-dev command line (for messaging + spawn). */

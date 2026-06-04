@@ -2,7 +2,7 @@
 
 > Compile-time generator of AI agent skills from your codebase. Inline docs, CLI definitions, config schemas, and examples compile into progressively disclosed SKILL.md files that any LLM can discover.
 
-## @to-skills/core
+## @skillit/core
 
 > Shared types, renderers, and utilities for the to-skills ecosystem.
 
@@ -71,7 +71,7 @@ heading and all content that follows it until the next heading.
 - `ParsedMarkdownDoc`: A fully parsed markdown document with structured metadata and sections.
 - `ParsedExample`
 
-## @to-skills/typedoc
+## @skillit/typedoc
 
 > TypeDoc plugin that extracts structured AI agent skills from the TypeDoc reflection tree.
 
@@ -79,7 +79,7 @@ heading and all content that follows it until the next heading.
 
 - `load`
 
-## @to-skills/cli
+## @skillit/cli
 
 > CLI extraction for commander/yargs programs.
 

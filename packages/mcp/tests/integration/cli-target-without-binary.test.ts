@@ -29,7 +29,7 @@ const BIN_PATH = join(__dirname, '..', '..', 'dist', 'bin.js');
 
 describe('cli:mcpc extract works without the mcpc binary on PATH', () => {
   it('loads the McpcAdapter from the package barrel (sanity check, ungated)', async () => {
-    const mod = await import('@to-skills/target-mcpc');
+    const mod = await import('@skillit/target-mcpc');
     expect(mod.default).toBeDefined();
     expect((mod.default as { target: string }).target).toBe('cli:mcpc');
   });

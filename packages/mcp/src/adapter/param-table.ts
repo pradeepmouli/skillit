@@ -2,7 +2,7 @@
  * Markdown parameter table renderer for CLI-as-proxy adapters.
  *
  * @remarks
- * Both `@to-skills/target-mcpc` and `@to-skills/target-fastmcp` need to
+ * Both `@skillit/target-mcpc` and `@skillit/target-fastmcp` need to
  * document each tool's parameters as a Markdown table whose CLI Flag/Key
  * column is encoded by the adapter (mcpc uses `key=` / `key:=`, fastmcp
  * always uses `key=`). This module owns the table layout; adapters supply
@@ -19,7 +19,7 @@
  * @module param-table
  */
 
-import type { ExtractedFunction, ExtractedParameter } from '@to-skills/core';
+import type { ExtractedFunction, ExtractedParameter } from '@skillit/core';
 import type { ParameterPlan } from './classify.js';
 
 /**

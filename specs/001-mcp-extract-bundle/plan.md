@@ -1,23 +1,23 @@
-# Implementation Plan: `@to-skills/mcp` — Extract and Bundle MCP Servers as Agent Skills
+# Implementation Plan: `@skillit/mcp` — Extract and Bundle MCP Servers as Agent Skills
 
 **Branch**: `001-mcp-extract-bundle` | **Date**: 2026-04-24 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-mcp-extract-bundle/spec.md`
 
 ## Summary
 
-Add a new monorepo package `@to-skills/mcp` that introspects live MCP servers (stdio or HTTP) and produces `ExtractedSkill` outputs consumable by the existing `@to-skills/core` renderer. The package has two operating modes (`extract`, `bundle`) and a pluggable invocation-target system that emits either `mcp-protocol` skills (agent harness holds the MCP session) or `cli:*` skills where an external CLI (`mcpc`, `fastmcp`, `mcptools`) terminates MCP at the shell boundary — the CLI-as-proxy architecture. Extraction is shared across all targets; only rendering diverges.
+Add a new monorepo package `@skillit/mcp` that introspects live MCP servers (stdio or HTTP) and produces `ExtractedSkill` outputs consumable by the existing `@skillit/core` renderer. The package has two operating modes (`extract`, `bundle`) and a pluggable invocation-target system that emits either `mcp-protocol` skills (agent harness holds the MCP session) or `cli:*` skills where an external CLI (`mcpc`, `fastmcp`, `mcptools`) terminates MCP at the shell boundary — the CLI-as-proxy architecture. Extraction is shared across all targets; only rendering diverges.
 
-**Approach**: introduce three new fields on `ExtractedSkill` in `@to-skills/core` (`resources`, `prompts`, an optional `setup` block); extend `renderSkill` with an `invocation` selector; ship four packages — the main `@to-skills/mcp` and three target adapters (`@to-skills/target-mcp-protocol` as the default, plus `@to-skills/target-mcpc` and `@to-skills/target-fastmcp`). Depend on `@modelcontextprotocol/sdk` for all transport/protocol concerns; never implement JSON-RPC framing ourselves. Every extraction does a fresh handshake (no caching); every run produces canonicalized output (content-identical, not strictly byte-identical — see Research §2).
+**Approach**: introduce three new fields on `ExtractedSkill` in `@skillit/core` (`resources`, `prompts`, an optional `setup` block); extend `renderSkill` with an `invocation` selector; ship four packages — the main `@skillit/mcp` and three target adapters (`@skillit/target-mcp-protocol` as the default, plus `@skillit/target-mcpc` and `@skillit/target-fastmcp`). Depend on `@modelcontextprotocol/sdk` for all transport/protocol concerns; never implement JSON-RPC framing ourselves. Every extraction does a fresh handshake (no caching); every run produces canonicalized output (content-identical, not strictly byte-identical — see Research §2).
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@to-skills/cli`)
+**Language/Version**: TypeScript 5.x, Node.js ≥20 (matches existing workspace root and `@skillit/cli`)
 **Primary Dependencies**:
 
 - `@modelcontextprotocol/sdk` (client library — stdio + Streamable HTTP + SSE transports)
-- `@to-skills/core` (workspace:\* — existing IR, renderer, token budgeter, audit engine)
+- `@skillit/core` (workspace:\* — existing IR, renderer, token budgeter, audit engine)
 - `@apidevtools/json-schema-ref-parser` (JSON Schema `$ref` resolution)
-- `commander` (CLI — matches the pattern in `@to-skills/cli`)
+- `commander` (CLI — matches the pattern in `@skillit/cli`)
 - `yaml` (frontmatter emission — deterministic serialization)
 
 **Storage**: none (filesystem only — reads `package.json`, `mcp.json` / `claude_desktop_config.json`; writes `skills/<name>/SKILL.md` + `references/*.md`)
@@ -48,7 +48,7 @@ Add a new monorepo package `@to-skills/mcp` that introspects live MCP servers (s
 
 **Scale/Scope**:
 
-- v1 ships four packages: `@to-skills/mcp` (main) + three target adapters (`mcp-protocol`, `mcpc`, `fastmcp`). `mcptools` deferred to v1.1 (FR-IT-003 SHOULD).
+- v1 ships four packages: `@skillit/mcp` (main) + three target adapters (`mcp-protocol`, `mcpc`, `fastmcp`). `mcptools` deferred to v1.1 (FR-IT-003 SHOULD).
 - Expected to handle servers with 0-100 tools routinely; 100-500 tools via namespace splitting (FR-022).
 - Third-party adapter packages resolved by naming convention (FR-IT-005).
 
@@ -66,7 +66,7 @@ The project's `constitution.md` is an unfilled template (placeholders only). No 
 
 **Gate result**: PASS (no constitutional violations; project-level conventions observed via `CLAUDE.md`). No entries in Complexity Tracking.
 
-**Post-design re-check**: PASS (see end of Phase 1 section). The design introduces one new cross-package dependency (`@to-skills/core` → adds `resources`/`prompts` fields + `invocation` selector) which is a backward-compatible addition. Three new target-adapter packages are additive — no existing package is refactored beyond the renderer signature extension.
+**Post-design re-check**: PASS (see end of Phase 1 section). The design introduces one new cross-package dependency (`@skillit/core` → adds `resources`/`prompts` fields + `invocation` selector) which is a backward-compatible addition. Three new target-adapter packages are additive — no existing package is refactored beyond the renderer signature extension.
 
 ## Project Structure
 
@@ -96,7 +96,7 @@ packages/
 │       ├── types.ts                # + ExtractedResource, ExtractedPrompt, SkillSetup
 │       ├── renderer.ts             # renderSkill signature gains `invocation: InvocationAdapter`
 │       └── index.ts                # re-exports new types
-├── mcp/                            # NEW — @to-skills/mcp main package
+├── mcp/                            # NEW — @skillit/mcp main package
 │   ├── src/
 │   │   ├── index.ts                # public exports: extractMcpSkill, bundleMcpSkill, InvocationAdapter
 │   │   ├── extract.ts              # transport selection, initialize handshake, list pagination
@@ -107,7 +107,7 @@ packages/
 │   │   │   ├── prompts.ts          # prompts/list → ExtractedPrompt[]
 │   │   │   └── schema.ts           # JSON Schema $ref resolution + parameter mapping
 │   │   ├── adapter/
-│   │   │   ├── loader.ts           # resolves cli:<name> → @to-skills/target-<name> package
+│   │   │   ├── loader.ts           # resolves cli:<name> → @skillit/target-<name> package
 │   │   │   └── types.ts            # InvocationAdapter, InvocationTarget, AdapterOptions
 │   │   ├── audit/
 │   │   │   └── mcp-rules.ts        # M1-M4 audit checks (missing desc, schema, useWhen, generic name)
@@ -142,7 +142,7 @@ packages/
 └── (target-mcptools/)              # DEFERRED to v1.1 — FR-IT-003 SHOULD
 ```
 
-**Structure Decision**: Option "pnpm workspace package addition." Follows the established pattern from `packages/cli` / `packages/typedoc`. Each target adapter is its own package so third-party adapters can be published under the same `@to-skills/target-<name>` convention (FR-IT-005). The adapter interface lives in `@to-skills/mcp` (the host) and is imported by each target package — not the other way around — so a third party writing an adapter only depends on `@to-skills/mcp`, not on core internals.
+**Structure Decision**: Option "pnpm workspace package addition." Follows the established pattern from `packages/cli` / `packages/typedoc`. Each target adapter is its own package so third-party adapters can be published under the same `@skillit/target-<name>` convention (FR-IT-005). The adapter interface lives in `@skillit/mcp` (the host) and is imported by each target package — not the other way around — so a third party writing an adapter only depends on `@skillit/mcp`, not on core internals.
 
 ## Complexity Tracking
 
@@ -161,10 +161,10 @@ Generated artifact: [research.md](./research.md).
 Seven research questions resolved. Summary:
 
 1. **MCP SDK version** — pin to `@modelcontextprotocol/sdk ^1.x` (current stable, actively maintained, supports stdio + Streamable HTTP + SSE). Transport auto-negotiation handled by the SDK's `Client` + `*Transport` abstractions.
-2. **Idempotency strategy** — relax SC-009 from "byte-identical" to "canonicalized-content-identical." Apply three normalizations in the renderer: deterministic key order (sorted), stable array order (by `name` for tools/resources/prompts), and stripped timestamps from descriptions. Write a canonicalization pass in `@to-skills/core/src/canonical.ts` and gate snapshot tests on it.
+2. **Idempotency strategy** — relax SC-009 from "byte-identical" to "canonicalized-content-identical." Apply three normalizations in the renderer: deterministic key order (sorted), stable array order (by `name` for tools/resources/prompts), and stripped timestamps from descriptions. Write a canonicalization pass in `@skillit/core/src/canonical.ts` and gate snapshot tests on it.
 3. **`$ref` resolution** — use `@apidevtools/json-schema-ref-parser`. Dereferences in-place; handles cycles (throws explicit error, which the extractor converts to an audit error rather than a crash).
-4. **`_meta.toSkills.pitfalls` vs `@never`** — extension key stays `pitfalls` (matches MCP-side naming convention — underscore-free, shorter, already in the spec's acceptance scenarios). The renderer maps it to the `pitfalls` field in `ExtractedSkill` (which `@to-skills/core` already has — line 54 of `types.ts`). Project-level rename of `@never` JSDoc tag is unrelated; the IR field name bridges both worlds.
-5. **Adapter plugin resolution** — use Node's `require.resolve()` against a list of candidate names: `@to-skills/target-<name>` first, then `to-skills-target-<name>`. Default export of the resolved module must be an `InvocationAdapter`. No dynamic registry, no config plumbing.
+4. **`_meta.toSkills.pitfalls` vs `@never`** — extension key stays `pitfalls` (matches MCP-side naming convention — underscore-free, shorter, already in the spec's acceptance scenarios). The renderer maps it to the `pitfalls` field in `ExtractedSkill` (which `@skillit/core` already has — line 54 of `types.ts`). Project-level rename of `@never` JSDoc tag is unrelated; the IR field name bridges both worlds.
+5. **Adapter plugin resolution** — use Node's `require.resolve()` against a list of candidate names: `@skillit/target-<name>` first, then `to-skills-target-<name>`. Default export of the resolved module must be an `InvocationAdapter`. No dynamic registry, no config plumbing.
 6. **CLI argument encoding per target** — `mcpc` uses `key:=value` for typed args + `--json '{...}'` for complex payloads. `fastmcp` uses `key=value` (stringy) + single-JSON-argument form. `mcptools` uses `--flag=value` + `-p '{...}'` (deferred). All three adapters share a common "simple vs complex" decision logic (scalar/enum/simple-array → native, else JSON fallback) implemented in the host package.
 7. **Frontmatter writer** — use the `yaml` library (yaml.org's reference TypeScript impl) for deterministic emission. Disable key sorting, force block style for `mcp:` block, flow style for `args` arrays to match observed conventions in OpenCode / Codex fixtures.
 
@@ -197,7 +197,7 @@ PASS. Design:
 
 - Adds three fields to `ExtractedSkill` — backward-compatible (all optional).
 - Extends `renderSkill(skill, options)` with an optional `invocation` param — backward-compatible (defaults to `mcp-protocol`).
-- Introduces four new packages (`@to-skills/mcp` + three adapters) — follows `packages/*` convention.
+- Introduces four new packages (`@skillit/mcp` + three adapters) — follows `packages/*` convention.
 - No modification to existing TypeDoc or CLI extractor packages required.
 - CI gate remains unchanged: type-check, lint, test. New packages wired into the root `pnpm -r` cascade.
 
@@ -205,7 +205,7 @@ PASS. Design:
 
 From the checklist's remaining-risks note:
 
-- **Idempotency** (resolved by Research §2 with canonicalization). Tasks file should include a canonicalization-pass task in `@to-skills/core` plus snapshot-test coverage for determinism.
+- **Idempotency** (resolved by Research §2 with canonicalization). Tasks file should include a canonicalization-pass task in `@skillit/core` plus snapshot-test coverage for determinism.
 - **`_meta.toSkills.pitfalls` naming** (resolved by Research §4 — keep `pitfalls` in extension key, map to existing IR field). Tasks file should include a doc note in the contract spelling this out.
 
 ---

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ExtractedPrompt, ExtractedResource } from '@to-skills/core';
-import { renderPromptsReference, renderResourcesReference } from '@to-skills/core';
+import type { ExtractedPrompt, ExtractedResource } from '@skillit/core';
+import { renderPromptsReference, renderResourcesReference } from '@skillit/core';
 
 describe('renderResourcesReference', () => {
   it('returns null for empty input', () => {

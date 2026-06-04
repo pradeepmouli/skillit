@@ -83,12 +83,12 @@ async function run(deps: InitDeps, argv: string[] = []): Promise<void> {
 }
 
 describe('buildInitCommand', () => {
-  it('chooses @to-skills/cli with the detected pnpm add command for a cli project', async () => {
+  it('chooses @skillit/cli with the detected pnpm add command for a cli project', async () => {
     const dir = await writeCliFixture();
     const { deps, installCalls } = makeStubs();
     await run(deps);
     expect(installCalls).toHaveLength(1);
-    expect(installCalls[0]!.pkg).toBe('@to-skills/cli');
+    expect(installCalls[0]!.pkg).toBe('@skillit/cli');
     expect(installCalls[0]!.pm).toBe('pnpm');
     expect(installCalls[0]!.cwd).toBe(dir);
   });
@@ -145,7 +145,7 @@ describe('buildInitCommand', () => {
       generateSkill: generate,
       runRefine: refine
     });
-    await expect(run(deps)).rejects.toThrow(/pnpm add -D @to-skills\/cli/);
+    await expect(run(deps)).rejects.toThrow(/pnpm add -D @skillit\/cli/);
     expect(generate).not.toHaveBeenCalled();
     expect(refine).not.toHaveBeenCalled();
   });
@@ -179,12 +179,12 @@ describe('buildInitCommand', () => {
     }
     expect(refine).not.toHaveBeenCalled();
     const out = logged.join('\n');
-    expect(out).toMatch(/Installed @to-skills\/cli/);
+    expect(out).toMatch(/Installed @skillit\/cli/);
     expect(out).toMatch(/not a commander program/);
     expect(out).toMatch(/to-skills refine --source cli --program/);
   });
 
-  it('installs @to-skills/mcp but skips generate + refine for an mcp project', async () => {
+  it('installs @skillit/mcp but skips generate + refine for an mcp project', async () => {
     await writeMcpFixture();
     const { deps, installCalls, generateCalls, refineCalls } = makeStubs();
     // Override console.log directly: vitest's console interceptor bypasses
@@ -200,7 +200,7 @@ describe('buildInitCommand', () => {
       console.log = originalLog;
     }
     expect(installCalls).toHaveLength(1);
-    expect(installCalls[0]!.pkg).toBe('@to-skills/mcp');
+    expect(installCalls[0]!.pkg).toBe('@skillit/mcp');
     // CLI-first: no auto generate or refine for the mcp source this pass.
     expect(generateCalls).toHaveLength(0);
     expect(refineCalls).toHaveLength(0);

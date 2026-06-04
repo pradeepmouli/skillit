@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { loadProgram } from '@to-skills/cli';
+import { loadProgram } from '@skillit/cli';
 
 export type RefineSourceKind = 'cli' | 'mcp' | 'typedoc';
 export type DetectedRefineSource = RefineSourceKind | 'ambiguous' | 'none';
@@ -26,9 +26,9 @@ async function readDeps(cwd: string): Promise<Record<string, string>> {
 
 /** Map an installed package name to its refine source kind, if any. */
 function packageToSource(dep: string): RefineSourceKind | undefined {
-  if (dep === '@to-skills/cli') return 'cli';
-  if (dep === '@to-skills/mcp') return 'mcp';
-  if (dep === 'typedoc-plugin-to-skills' || dep === '@to-skills/typedoc') return 'typedoc';
+  if (dep === '@skillit/cli') return 'cli';
+  if (dep === '@skillit/mcp') return 'mcp';
+  if (dep === 'typedoc-plugin-skillit' || dep === '@skillit/typedoc') return 'typedoc';
   return undefined;
 }
 
@@ -66,7 +66,7 @@ export function classifyRefineSources(sources: readonly RefineSourceKind[]): Det
 }
 
 /**
- * Detect the refine source from `@to-skills/*` packages installed in `cwd`'s
+ * Detect the refine source from `@skillit/*` packages installed in `cwd`'s
  * `package.json` (union of `dependencies` + `devDependencies`).
  *
  * - 0 matching packages → `'none'`

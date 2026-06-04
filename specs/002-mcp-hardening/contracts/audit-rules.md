@@ -1,6 +1,6 @@
 # Contract — Audit Rules: M3 Sub-Rule for Malformed `_meta.toSkills`
 
-**Owner**: `@to-skills/mcp`
+**Owner**: `@skillit/mcp`
 **Stability**: stable (additive — extends existing M3 rule)
 
 ---

@@ -1,6 +1,6 @@
 // MCP prompts/list introspection — paginates and maps to ExtractedPrompt.
 
-import type { ExtractedPrompt, ExtractedPromptArgument } from '@to-skills/core';
+import type { ExtractedPrompt, ExtractedPromptArgument } from '@skillit/core';
 import type { McpClient, McpPromptListEntry } from './client-types.js';
 import { paginate } from './paginate.js';
 

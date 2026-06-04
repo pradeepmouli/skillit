@@ -1,4 +1,4 @@
-import { readJsDocTags, type RefineTag } from '@to-skills/core';
+import { readJsDocTags, type RefineTag } from '@skillit/core';
 
 /**
  * Reads routing tags (`@useWhen`/`@avoidWhen`/`@pitfalls`/`@remarks`/`@example`)

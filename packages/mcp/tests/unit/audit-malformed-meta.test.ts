@@ -11,7 +11,7 @@
  *     a `metaToSkillsMalformed` sentinel.
  */
 
-import type { ExtractedFunction, ExtractedSkill } from '@to-skills/core';
+import type { ExtractedFunction, ExtractedSkill } from '@skillit/core';
 import { describe, expect, it } from 'vitest';
 import type {
   McpClient,

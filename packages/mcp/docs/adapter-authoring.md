@@ -1,12 +1,12 @@
-# Building a custom invocation adapter for `@to-skills/mcp`
+# Building a custom invocation adapter for `@skillit/mcp`
 
-`@to-skills/mcp` extracts a target-agnostic `ExtractedSkill` IR from a live MCP server. **Invocation adapters** decide how that IR becomes a `SKILL.md`. Three are shipped:
+`@skillit/mcp` extracts a target-agnostic `ExtractedSkill` IR from a live MCP server. **Invocation adapters** decide how that IR becomes a `SKILL.md`. Three are shipped:
 
-- [`@to-skills/target-mcp-protocol`](../../target-mcp-protocol/) — `mcp:` frontmatter for MCP-native harnesses (default).
-- [`@to-skills/target-mcpc`](../../target-mcpc/) — shell commands routed through Apify's `mcpc` CLI.
-- [`@to-skills/target-fastmcp`](../../target-fastmcp/) — shell commands routed through the Python `fastmcp` CLI.
+- [`@skillit/target-mcp-protocol`](../../target-mcp-protocol/) — `mcp:` frontmatter for MCP-native harnesses (default).
+- [`@skillit/target-mcpc`](../../target-mcpc/) — shell commands routed through Apify's `mcpc` CLI.
+- [`@skillit/target-fastmcp`](../../target-fastmcp/) — shell commands routed through the Python `fastmcp` CLI.
 
-If you ship a different MCP CLI (or a wholly different target — say, a Lua REPL bridge), you can publish a third-party adapter and `@to-skills/mcp` will load it on demand. This guide walks through the contract, the loader, and the testing/publishing checklist.
+If you ship a different MCP CLI (or a wholly different target — say, a Lua REPL bridge), you can publish a third-party adapter and `@skillit/mcp` will load it on demand. This guide walks through the contract, the loader, and the testing/publishing checklist.
 
 ---
 
@@ -14,18 +14,18 @@ If you ship a different MCP CLI (or a wholly different target — say, a Lua REP
 
 The loader resolves `--invocation <target>` to an npm package name. Two target shapes are accepted:
 
-| Target syntax               | Resolves to (in order)                                     |
-| --------------------------- | ---------------------------------------------------------- |
-| `--invocation mcp-protocol` | `@to-skills/target-mcp-protocol` (single canonical name)   |
-| `--invocation cli:<name>`   | `@to-skills/target-<name>`, then `to-skills-target-<name>` |
+| Target syntax               | Resolves to (in order)                                   |
+| --------------------------- | -------------------------------------------------------- |
+| `--invocation mcp-protocol` | `@skillit/target-mcp-protocol` (single canonical name)   |
+| `--invocation cli:<name>`   | `@skillit/target-<name>`, then `to-skills-target-<name>` |
 
 Bare names without the `cli:` prefix (other than the literal `mcp-protocol`) are **rejected** with `UNKNOWN_TARGET` — the loader does not auto-prefix arbitrary `--invocation foo` to `cli:foo`. Always pass `cli:<name>` for third-party adapters.
 
 So a third-party adapter for, say, the hypothetical `mcp-runner` CLI would be published as either:
 
-- `@your-org/to-skills-target-mcp-runner` — _not yet supported_ (only the `@to-skills/` namespace and the unscoped `to-skills-target-*` form resolve today; arbitrary scopes can install but you'll need to import + pass programmatically). For most third parties, **use the unscoped `to-skills-target-<name>` form** so the loader picks it up.
+- `@your-org/to-skills-target-mcp-runner` — _not yet supported_ (only the `@skillit/` namespace and the unscoped `to-skills-target-*` form resolve today; arbitrary scopes can install but you'll need to import + pass programmatically). For most third parties, **use the unscoped `to-skills-target-<name>` form** so the loader picks it up.
 
-Pick the unscoped form unless you intend to have `@to-skills/mcp` users import your adapter explicitly.
+Pick the unscoped form unless you intend to have `@skillit/mcp` users import your adapter explicitly.
 
 ---
 
@@ -56,7 +56,7 @@ import type {
   AdapterRenderContext,
   ExtractedSkill,
   RenderedSkill
-} from '@to-skills/core';
+} from '@skillit/core';
 
 export class MyAdapter implements InvocationAdapter {
   readonly target = 'cli:my-runner' as const;
@@ -72,7 +72,7 @@ export class MyAdapter implements InvocationAdapter {
     //
     // A) Frontmatter-only: delegate body rendering to core's default path,
     //    inject your own frontmatter via `additionalFrontmatter`. This is what
-    //    `@to-skills/target-mcp-protocol` does.
+    //    `@skillit/target-mcp-protocol` does.
     //
     // B) Full body override: render SKILL.md + references yourself. This is
     //    what the CLI-as-proxy adapters do — they replace the Tools section
@@ -142,7 +142,7 @@ For the renderer test, the smallest viable skeleton is:
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import type { AdapterRenderContext, ExtractedSkill } from '@to-skills/core';
+import type { AdapterRenderContext, ExtractedSkill } from '@skillit/core';
 import { MyAdapter } from '../src/render.js';
 
 const skill: ExtractedSkill = {
@@ -197,10 +197,10 @@ Before `npm publish`:
 - [ ] Unit tests cover empty skills, schema-cycle tools (`tags.schemaError === 'true'`), and bundle-mode (`packageName` set).
 - [ ] README documents the install command, the `--invocation` flag value users should pass, and the upstream CLI install steps.
 
-Once published, end-users can install your adapter alongside `@to-skills/mcp` and it works without any host-side change:
+Once published, end-users can install your adapter alongside `@skillit/mcp` and it works without any host-side change:
 
 ```bash
-npm install --save-dev @to-skills/mcp to-skills-target-my-runner
+npm install --save-dev @skillit/mcp to-skills-target-my-runner
 npx to-skills-mcp extract --command "..." --invocation cli:my-runner
 ```
 
@@ -208,7 +208,7 @@ npx to-skills-mcp extract --command "..." --invocation cli:my-runner
 
 ## See also
 
-- [`@to-skills/core` — `InvocationAdapter` and `AdapterRenderContext` types](../../core/src/types.ts).
+- [`@skillit/core` — `InvocationAdapter` and `AdapterRenderContext` types](../../core/src/types.ts).
 - [Source: `target-mcp-protocol`](../../target-mcp-protocol/src/render.ts) — frontmatter-only adapter (delegates body to core).
 - [Source: `target-mcpc`](../../target-mcpc/src/render.ts) — full-body adapter overriding the Tools section.
 - [Source: `target-fastmcp`](../../target-fastmcp/src/render.ts) — full-body adapter for a Python CLI surface.

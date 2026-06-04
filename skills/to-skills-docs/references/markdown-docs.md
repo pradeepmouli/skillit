@@ -89,13 +89,13 @@ The markdown parser extracts structured data from each file:
 
 ## Framework Adapters
 
-### VitePress Sites (`@to-skills/vitepress`)
+### VitePress Sites (`@skillit/vitepress`)
 
-For projects using VitePress (like this documentation site), the `@to-skills/vitepress` package provides a Vite plugin that integrates with your existing build:
+For projects using VitePress (like this documentation site), the `@skillit/vitepress` package provides a Vite plugin that integrates with your existing build:
 
 ```typescript
 // vite.config.ts (or .vitepress/config.ts)
-import { toSkillsVitePlugin } from '@to-skills/vitepress';
+import { toSkillsVitePlugin } from '@skillit/vitepress';
 
 export default {
   plugins: [
@@ -108,13 +108,13 @@ export default {
 
 The plugin reads VitePress conventions: sidebar configuration, frontmatter ordering, and directory structure.
 
-### Docusaurus Sites (`@to-skills/docusaurus`)
+### Docusaurus Sites (`@skillit/docusaurus`)
 
-For Docusaurus projects, the `@to-skills/docusaurus` adapter handles Docusaurus-specific conventions:
+For Docusaurus projects, the `@skillit/docusaurus` adapter handles Docusaurus-specific conventions:
 
 ```typescript
-import { extractDocusaurusDocs } from '@to-skills/docusaurus';
-import { renderSkill } from '@to-skills/core';
+import { extractDocusaurusDocs } from '@skillit/docusaurus';
+import { renderSkill } from '@skillit/core';
 
 const docs = extractDocusaurusDocs({
   docsDir: 'docs',
@@ -140,7 +140,7 @@ Docusaurus-specific behavior:
 Install:
 
 ```bash
-pnpm add -D @to-skills/docusaurus
+pnpm add -D @skillit/docusaurus
 ```
 
 No Docusaurus peer dependency --- it reads markdown files and JSON configs, not the Docusaurus runtime.
@@ -150,7 +150,7 @@ No Docusaurus peer dependency --- it reads markdown files and JSON configs, not 
 For projects without a docs framework, the core `scanDocs` function works with any directory of markdown files:
 
 ```typescript
-import { scanDocs, docsToExtractedDocuments } from '@to-skills/core';
+import { scanDocs, docsToExtractedDocuments } from '@skillit/core';
 
 const docs = scanDocs({
   docsDir: 'docs',

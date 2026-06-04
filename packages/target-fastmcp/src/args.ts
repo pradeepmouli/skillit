@@ -21,7 +21,7 @@
  * @module args
  */
 
-import type { ParameterPlan } from '@to-skills/mcp';
+import type { ParameterPlan } from '@skillit/mcp';
 
 /** Encoder result — separated into normal flags vs Tier 3 fallback. */
 export interface EncodedArgs {

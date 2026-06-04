@@ -27,8 +27,8 @@
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { renderSkill, writeSkills } from '@to-skills/core';
-import type { ExtractedSkill, RenderedSkill } from '@to-skills/core';
+import { renderSkill, writeSkills } from '@skillit/core';
+import type { ExtractedSkill, RenderedSkill } from '@skillit/core';
 import YAML from 'yaml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { extractMcpSkill, loadAdapterAsync } from '../../src/index.js';
@@ -122,7 +122,7 @@ describe.skipIf(!RUN)('programmatic render twice — SC-011', () => {
     expect(mcpFm.mcp).toBeTruthy();
     expect(mcpFm['generated-by']).toBeUndefined();
     expect(cliFm['generated-by']).toBeTruthy();
-    expect(cliFm['generated-by']!.adapter).toBe('@to-skills/target-mcpc');
+    expect(cliFm['generated-by']!.adapter).toBe('@skillit/target-mcpc');
     expect(cliFm.mcp).toBeUndefined();
 
     // 7. Setup section — present in cli:mcpc body, absent from mcp-protocol.

@@ -19,7 +19,7 @@ export type McpErrorCode =
   | 'AUDIT_FAILED';
 
 /**
- * Base error for all @to-skills/mcp failures.
+ * Base error for all @skillit/mcp failures.
  * The `code` field distinguishes recoverable (user-correctable) from environmental errors.
  */
 export class McpError extends Error {
