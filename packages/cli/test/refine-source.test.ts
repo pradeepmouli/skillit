@@ -218,6 +218,37 @@ describe('CliRefineSource', () => {
     expect(stray).toBeUndefined();
   });
 
+  it('applyFixes() matches non-conventional <Command>Opts / <Command>CommandOpts interfaces', async () => {
+    // skillit's own CLI names these `InitOpts` / `RefineCommandOpts`, not the
+    // documented `<Command>Options`. The variant probe must still find them.
+    const program = new Command().name('demo');
+    program.command('init').description('Init');
+    program.command('refine').description('Refine');
+
+    const initFile = path.join(cwd, 'init.ts');
+    const refineFile = path.join(cwd, 'refine.ts');
+    writeFileSync(initFile, `export interface InitOpts {\n  out: string;\n}\n`, 'utf8');
+    writeFileSync(
+      refineFile,
+      `export interface RefineCommandOpts {\n  source: string;\n}\n`,
+      'utf8'
+    );
+
+    const source = new CliRefineSource({
+      program,
+      sourceGlob: path.join(cwd, '**/*.ts'),
+      cwd
+    });
+
+    await source.applyFixes([
+      { toolName: 'init', tag: 'useWhen', value: 'When scaffolding' },
+      { toolName: 'refine', tag: 'pitfalls', value: 'Needs a built program' }
+    ]);
+
+    expect(readFileSync(initFile, 'utf8')).toContain('@useWhen When scaffolding');
+    expect(readFileSync(refineFile, 'utf8')).toContain('@pitfalls Needs a built program');
+  });
+
   it('guidance() returns the bundled CLI conventions skill', async () => {
     const source = new CliRefineSource({
       program: makeProgram(),
