@@ -89,11 +89,14 @@ export const claudeAdapter: CliAdapter = {
       cmd: 'claude',
       // Isolate claude as a pure text generator for the refine loop. Without
       // this, `claude -p` runs its full agent loop: it once rewrote CLAUDE.md
-      // mid-draft (file tools enabled) and leaked explanatory "Insight" prose
-      // from the ambient output style into the JSON `result` we parse. So:
-      //   --disallowedTools  deny every side-effecting tool (no file edits)
-      //   --strict-mcp-config ignore project/user MCP servers
-      //   --settings outputStyle:default  strip the user's output style
+      // mid-draft (file tools enabled) and emitted decorative "★ Insight"
+      // blocks that leaked verbatim into the JSDoc tags refine writes. So:
+      //   --disallowedTools     deny every side-effecting tool (no file edits)
+      //   --strict-mcp-config   ignore project/user MCP servers
+      //   --settings outputStyle:default  default style (belt-and-suspenders)
+      //   --append-system-prompt  forbid decoration — the drafter model
+      //     (sonnet) adds "★ Insight" blocks even under the default style, and
+      //     only an explicit system-prompt instruction reliably suppresses them
       args: [
         '-p',
         '--output-format',
@@ -104,7 +107,9 @@ export const claudeAdapter: CliAdapter = {
         '--disallowedTools',
         'Edit,Write,MultiEdit,NotebookEdit,Bash,Task,WebFetch,WebSearch',
         '--settings',
-        '{"outputStyle":"default"}'
+        '{"outputStyle":"default"}',
+        '--append-system-prompt',
+        'CRITICAL: Output ONLY the requested content. Never add "★ Insight" blocks, horizontal-rule (─) decorations, section headers, preambles, or meta-commentary.'
       ],
       input: prompt
     };

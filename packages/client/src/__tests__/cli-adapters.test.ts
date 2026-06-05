@@ -17,14 +17,16 @@ describe('claudeAdapter', () => {
       '--disallowedTools',
       'Edit,Write,MultiEdit,NotebookEdit,Bash,Task,WebFetch,WebSearch',
       '--settings',
-      '{"outputStyle":"default"}'
+      '{"outputStyle":"default"}',
+      '--append-system-prompt',
+      'CRITICAL: Output ONLY the requested content. Never add "★ Insight" blocks, horizontal-rule (─) decorations, section headers, preambles, or meta-commentary.'
     ]);
     expect(draft.input).toBe('PROMPT');
     const review = claudeAdapter.invocation('review', 'PROMPT');
     expect(review.args).toContain(REVIEWER);
   });
 
-  it('isolates claude as a pure generator: denies side-effecting tools and overrides output style', () => {
+  it('isolates claude as a pure generator: denies side-effecting tools, overrides style, forbids decoration', () => {
     const { args } = claudeAdapter.invocation('draft', 'PROMPT');
     expect(args).toContain('--strict-mcp-config');
     const disallowed = args[args.indexOf('--disallowedTools') + 1] ?? '';
@@ -32,6 +34,8 @@ describe('claudeAdapter', () => {
       expect(disallowed).toContain(tool);
     }
     expect(args).toContain('{"outputStyle":"default"}');
+    const sysPrompt = args[args.indexOf('--append-system-prompt') + 1] ?? '';
+    expect(sysPrompt).toContain('Insight');
   });
 
   it('extracts result from the claude json envelope', () => {
