@@ -7,10 +7,31 @@ describe('claudeAdapter', () => {
   it('maps draft role to the drafter model and review role to the reviewer model', () => {
     const draft = claudeAdapter.invocation('draft', 'PROMPT');
     expect(draft.cmd).toBe('claude');
-    expect(draft.args).toEqual(['-p', '--output-format', 'json', '--model', DRAFTER]);
+    expect(draft.args).toEqual([
+      '-p',
+      '--output-format',
+      'json',
+      '--model',
+      DRAFTER,
+      '--strict-mcp-config',
+      '--disallowedTools',
+      'Edit,Write,MultiEdit,NotebookEdit,Bash,Task,WebFetch,WebSearch',
+      '--settings',
+      '{"outputStyle":"default"}'
+    ]);
     expect(draft.input).toBe('PROMPT');
     const review = claudeAdapter.invocation('review', 'PROMPT');
     expect(review.args).toContain(REVIEWER);
+  });
+
+  it('isolates claude as a pure generator: denies side-effecting tools and overrides output style', () => {
+    const { args } = claudeAdapter.invocation('draft', 'PROMPT');
+    expect(args).toContain('--strict-mcp-config');
+    const disallowed = args[args.indexOf('--disallowedTools') + 1] ?? '';
+    for (const tool of ['Edit', 'Write', 'NotebookEdit', 'Bash']) {
+      expect(disallowed).toContain(tool);
+    }
+    expect(args).toContain('{"outputStyle":"default"}');
   });
 
   it('extracts result from the claude json envelope', () => {

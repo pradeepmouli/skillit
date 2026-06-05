@@ -87,7 +87,25 @@ export const claudeAdapter: CliAdapter = {
     const model = role === 'review' ? REVIEWER : DRAFTER;
     return {
       cmd: 'claude',
-      args: ['-p', '--output-format', 'json', '--model', model],
+      // Isolate claude as a pure text generator for the refine loop. Without
+      // this, `claude -p` runs its full agent loop: it once rewrote CLAUDE.md
+      // mid-draft (file tools enabled) and leaked explanatory "Insight" prose
+      // from the ambient output style into the JSON `result` we parse. So:
+      //   --disallowedTools  deny every side-effecting tool (no file edits)
+      //   --strict-mcp-config ignore project/user MCP servers
+      //   --settings outputStyle:default  strip the user's output style
+      args: [
+        '-p',
+        '--output-format',
+        'json',
+        '--model',
+        model,
+        '--strict-mcp-config',
+        '--disallowedTools',
+        'Edit,Write,MultiEdit,NotebookEdit,Bash,Task,WebFetch,WebSearch',
+        '--settings',
+        '{"outputStyle":"default"}'
+      ],
       input: prompt
     };
   },
