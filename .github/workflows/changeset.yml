@@ -3,7 +3,7 @@ name: Auto-generate Changeset
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [master]
+    branches: [master, develop]
   workflow_dispatch:
     inputs:
       type:
