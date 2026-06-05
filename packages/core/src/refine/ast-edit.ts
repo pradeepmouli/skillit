@@ -116,15 +116,27 @@ export function upsertJsDocTag(
     const block = jsdocNode.text();
     if (block.includes(tagText)) return source;
 
-    // Determine the indent of the closing */ line
-    const closeOffset = block.lastIndexOf('*/');
-    const beforeClose = block.slice(0, closeOffset);
-    // The whitespace prefix of the closing `*/` line
-    const linePrefix = beforeClose.match(/([^\n]*)$/)?.[1] ?? ' ';
+    // Normalize the existing block into its inner content lines, then rebuild
+    // a well-formed multi-line block with the new tag appended. This handles
+    // both multi-line blocks and single-line `/** text */` comments — the old
+    // closing-`*/` indent heuristic mis-fired on single-line blocks (the
+    // "indent" capture swallowed the whole comment body, producing malformed
+    // duplicate `/** ... ` headers with no closing `*/`).
+    const indent = ' '.repeat(anchorNode.range().start.column);
+    const innerLines = block
+      .replace(/^\/\*\*/, '')
+      .replace(/\s*\*\/\s*$/, '')
+      .split('\n')
+      .map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+    while (innerLines.length > 0 && innerLines[0] === '') innerLines.shift();
+    while (innerLines.length > 0 && innerLines[innerLines.length - 1] === '') innerLines.pop();
 
-    const merged =
-      block.slice(0, closeOffset - linePrefix.length) +
-      `${linePrefix}* ${tagText}\n${linePrefix}*/`;
+    // Prefix every physical line (including multi-line tag content) with ` * `.
+    const allLines = [...innerLines, ...tagText.split('\n')];
+    const body = allLines
+      .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+      .join('\n');
+    const merged = `/**\n${body}\n${indent} */`;
 
     return root.commitEdits([jsdocNode.replace(merged)]);
   }

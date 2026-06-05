@@ -22,6 +22,25 @@ describe('upsertJsDocTag', () => {
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
   });
 
+  it('merges a tag into a single-line JSDoc block without mangling it', () => {
+    const src = `/** Parsed options. */\nexport interface RefineCommandOpts {\n  source: string;\n}\n`;
+    const out = upsertJsDocTag(src, 'RefineCommandOpts', 'pitfalls', 'NEVER trust input');
+    // Exactly one comment opener, one closer, and a well-formed multi-line body.
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+    expect(out.match(/\*\//g)).toHaveLength(1);
+    expect(out).toContain(' * Parsed options.');
+    expect(out).toMatch(/\n \* @pitfalls NEVER trust input\n \*\//);
+    expect(readJsDocTags(out, 'RefineCommandOpts')).toEqual({ pitfalls: 'NEVER trust input' });
+  });
+
+  it('prefixes every line of multi-line tag content with ` * `', () => {
+    const src = `/** Parsed options. */\nexport interface Opts {\n  a: string;\n}\n`;
+    const out = upsertJsDocTag(src, 'Opts', 'avoidWhen', '- first reason\n- second reason');
+    expect(out).toContain(' * @avoidWhen - first reason');
+    expect(out).toContain(' * - second reason');
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
   it('is idempotent for an identical tag', () => {
     const src = `/**\n * @useWhen X\n */\nexport const f = () => {};\n`;
     expect(upsertJsDocTag(src, 'f', 'useWhen', 'X')).toBe(src);
