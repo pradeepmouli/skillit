@@ -1,6 +1,11 @@
 // packages/client/src/model/cli/cli-client.ts
 import type { DraftRequest, ReviewRequest, ReviewResult, ModelClient } from '@skillit/core';
-import { buildDraftPrompt, buildReviewPrompt, parseReviewVerdict } from '../anthropic.js';
+import {
+  buildDraftPrompt,
+  buildReviewPrompt,
+  extractDraftAnswer,
+  parseReviewVerdict
+} from '../anthropic.js';
 import { runCli, type RunCliOptions } from './run.js';
 import type { CliAdapter } from './adapters.js';
 
@@ -42,7 +47,9 @@ export class CliModelClient implements ModelClient {
 
   async draft(req: DraftRequest): Promise<string> {
     const result = await this.run('draft', buildDraftPrompt(req));
-    return result.trim();
+    // The CLI backends are chatty: strip any preamble outside the <answer> tags
+    // the drafter was told to use, so only the annotation reaches the JSDoc.
+    return extractDraftAnswer(result);
   }
 
   async review(req: ReviewRequest): Promise<ReviewResult> {
