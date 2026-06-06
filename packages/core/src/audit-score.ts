@@ -249,6 +249,9 @@ function sourceDepth(sourceModule: string | undefined): number {
   return sourceModule.split('/').length;
 }
 
+/** Per-tag cap on config-option targets — high enough that real config surfaces aren't truncated. */
+const MAX_CONFIG_OPTION_TARGETS = 24;
+
 /** Classes and functions missing a given tag, sorted by source tree depth (top-level first). */
 function targetsForMissingTag(
   skill: ExtractedSkill,
@@ -288,7 +291,10 @@ function targetsForMissingTag(
 
   // Config surfaces are tagged per-OPTION: the target is the option's dot-path
   // `configKey`, which the ConfigRefineSource maps to a property declaration via
-  // `upsertPropertyJsDocTag`. An option missing the tag is a gap.
+  // `upsertPropertyJsDocTag`. An option missing the tag is a gap. Capped well
+  // above the class cap (a config commonly has more documentable options than a
+  // module has classes) so a 7-key surface isn't silently truncated to 5; the
+  // loop's itemsPerIteration still paces how many are drafted each pass.
   const configOptionTargets: ImprovementTarget[] = SURFACE_TAGS.has(tag as SurfaceTag)
     ? (skill.configSurfaces ?? [])
         .filter((s) => s.sourceType === 'config')
@@ -297,7 +303,7 @@ function targetsForMissingTag(
             .filter((o) => !(o[tag as SurfaceTag] as string[] | undefined)?.length)
             .map((o) => ({ file: '', name: o.configKey ?? o.name, kind: 'config-option' }))
         )
-        .slice(0, maxClasses)
+        .slice(0, MAX_CONFIG_OPTION_TARGETS)
     : [];
 
   return [...classTargets, ...fnTargets, ...cliTargets, ...configOptionTargets];

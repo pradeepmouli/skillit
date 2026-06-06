@@ -98,6 +98,22 @@ describe('nested option uses its dot-path configKey as the target name', () => {
   });
 });
 
+describe('config option targets are not truncated at the class cap (5)', () => {
+  const audit = makeAuditResult([]);
+  // 7 options — more than the 5-class cap that previously dropped the tail.
+  const names = ['components', 'defaults', 'types', 'include', 'exclude', 'fields', 'schemas'];
+  const skill = makeConfigSkill(names.map((name) => option({ name })));
+  const estimate = estimateSkillJudgeScore(audit, skill);
+
+  it('emits a @useWhen target for every one of the 7 options', () => {
+    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    const targeted = new Set(
+      (useWhenImp?.targets ?? []).filter((t) => t.kind === 'config-option').map((t) => t.name)
+    );
+    for (const name of names) expect(targeted.has(name)).toBe(true);
+  });
+});
+
 describe('config example target (E4) is threshold-independent', () => {
   // E4 absent from `passing` => no example anywhere. The config-example
   // improvement should appear with a config-example target regardless of
