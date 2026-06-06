@@ -1,4 +1,9 @@
-import { buildInitCommand, type GenerateSkillOpts, type InitDeps } from '../commands/init.js';
+import {
+  buildInitCommand,
+  type GenerateConfigSkillOpts,
+  type GenerateSkillOpts,
+  type InitDeps
+} from '../commands/init.js';
 import type { RefineCommandOpts } from '../commands/refine.js';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -57,10 +62,12 @@ function makeStubs(overrides?: Partial<InitDeps>): {
   deps: InitDeps;
   installCalls: InstallCall[];
   generateCalls: GenerateSkillOpts[];
+  configGenerateCalls: GenerateConfigSkillOpts[];
   refineCalls: unknown[];
 } {
   const installCalls: InstallCall[] = [];
   const generateCalls: GenerateSkillOpts[] = [];
+  const configGenerateCalls: GenerateConfigSkillOpts[] = [];
   const refineCalls: unknown[] = [];
   const deps: InitDeps = {
     runInstall: async (pkg, pm, cwd) => {
@@ -69,12 +76,31 @@ function makeStubs(overrides?: Partial<InitDeps>): {
     generateSkill: async (opts) => {
       generateCalls.push(opts);
     },
+    generateConfigSkill: async (opts) => {
+      configGenerateCalls.push(opts);
+    },
     runRefine: async (opts) => {
       refineCalls.push(opts);
     },
     ...overrides
   };
-  return { deps, installCalls, generateCalls, refineCalls };
+  return { deps, installCalls, generateCalls, configGenerateCalls, refineCalls };
+}
+
+/** A config-nature project fixture with a declared config type. */
+async function writeConfigFixture(): Promise<string> {
+  tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
+  await writeFile(
+    join(tmpDir, 'package.json'),
+    JSON.stringify({ name: '@scope/my-lib', dependencies: {} })
+  );
+  await writeFile(
+    join(tmpDir, 'config.ts'),
+    `export interface MyConfig {\n  outDir?: string;\n}\n`
+  );
+  await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+  process.chdir(tmpDir);
+  return process.cwd();
 }
 
 async function run(deps: InitDeps, argv: string[] = []): Promise<void> {
@@ -214,5 +240,50 @@ describe('buildInitCommand', () => {
     const opts = refineCalls[0] as RefineCommandOpts;
     expect(opts.modelClient).toBe('claude');
     expect(opts.modelCliTimeout).toBe('7000');
+  });
+
+  it('config source generates → refines → regenerates without installing a package', async () => {
+    const dir = await writeConfigFixture();
+    const { deps, installCalls, configGenerateCalls, refineCalls } = makeStubs();
+    await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
+
+    // Config is built into the client — nothing to install.
+    expect(installCalls).toHaveLength(0);
+    // Generated once before refine and once after (mirrors the cli flow).
+    expect(configGenerateCalls).toHaveLength(2);
+    expect(configGenerateCalls[0]!.typeName).toBe('MyConfig');
+    expect(configGenerateCalls[0]!.configFile).toBe(join(dir, 'config.ts'));
+    expect(configGenerateCalls[0]!.outDir).toBe(join(dir, 'skills'));
+    expect(refineCalls).toHaveLength(1);
+  });
+
+  it('config source dispatches refine with source=config and the config-type', async () => {
+    await writeConfigFixture();
+    const { deps, refineCalls } = makeStubs();
+    await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
+    const opts = refineCalls[0] as RefineCommandOpts;
+    expect(opts.source).toBe('config');
+    expect(opts.configType).toBe('./config.ts#MyConfig');
+  });
+
+  it('config source requires --config-type', async () => {
+    await writeConfigFixture();
+    const { deps } = makeStubs();
+    await expect(run(deps, ['--source', 'config'])).rejects.toThrow(/--config-type/);
+  });
+
+  it('runs config generate → refine → regenerate in order', async () => {
+    await writeConfigFixture();
+    const order: string[] = [];
+    const { deps } = makeStubs({
+      generateConfigSkill: async () => {
+        order.push('generate');
+      },
+      runRefine: async () => {
+        order.push('refine');
+      }
+    });
+    await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
+    expect(order).toEqual(['generate', 'refine', 'generate']);
   });
 });
