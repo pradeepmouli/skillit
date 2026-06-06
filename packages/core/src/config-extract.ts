@@ -39,7 +39,7 @@ export function extractConfigSurface(
  * `type X = { … }` alias (returns the `object_type` value). Returns `undefined`
  * for non-object type aliases (unions, primitives, etc.) or a missing name.
  */
-function findTypeBody(root: SgNode, typeName: string): SgNode | undefined {
+export function findTypeBody(root: SgNode, typeName: string): SgNode | undefined {
   for (const node of descendants(root)) {
     const kind = node.kind();
     if (kind === 'interface_declaration' && node.field('name')?.text() === typeName) {
@@ -49,6 +49,33 @@ function findTypeBody(root: SgNode, typeName: string): SgNode | undefined {
       const value = node.field('value');
       return value?.kind() === 'object_type' ? value : undefined;
     }
+  }
+  return undefined;
+}
+
+/**
+ * Navigate a dot path (e.g. `outDir` or `components.prefix`) from a type body
+ * to the `property_signature` node it names, descending into inline
+ * object-literal types for each intermediate segment. Returns `undefined` if
+ * any segment is missing. Used by the config refine source to locate the
+ * declaration whose leading JSDoc carries a property's routing tags.
+ */
+export function findPropertyByPath(body: SgNode, path: string): SgNode | undefined {
+  const parts = path.split('.');
+  let currentBody: SgNode | undefined = body;
+  for (let i = 0; i < parts.length; i++) {
+    if (!currentBody) return undefined;
+    const prop: SgNode | undefined = currentBody
+      .children()
+      .find(
+        (c: SgNode) => c.kind() === 'property_signature' && c.field('name')?.text() === parts[i]
+      );
+    if (!prop) return undefined;
+    if (i === parts.length - 1) return prop;
+    currentBody = prop
+      .field('type')
+      ?.children()
+      .find((n: SgNode) => n.kind() === 'object_type');
   }
   return undefined;
 }

@@ -1,6 +1,7 @@
 // packages/core/src/refine/ast-edit.ts
 import { parse, Lang } from '@ast-grep/napi';
 import type { SgNode } from '@ast-grep/napi';
+import { findPropertyByPath, findTypeBody } from '../config-extract.js';
 import type { RefineTag } from './types.js';
 
 // `satisfies` ensures every listed value is a valid RefineTag. The
@@ -108,25 +109,56 @@ export function upsertJsDocTag(
   const root = parse(Lang.TypeScript, source).root();
   const anchorNode = findDeclaration(root, declName);
   if (!anchorNode) return source;
+  return upsertTagOnAnchor(source, root, anchorNode, tag, content);
+}
 
+/**
+ * Insert or update a JSDoc tag on a property of a config type.
+ *
+ * `propertyPath` is a dot path into the interface or object-type alias named
+ * `typeName` (e.g. `outDir` or `components.prefix`). Otherwise behaves like
+ * {@link upsertJsDocTag}. Returns the source unchanged when the type or
+ * property is not found. Used by the config refine source to write routing
+ * tags back onto a config type's property declarations.
+ */
+export function upsertPropertyJsDocTag(
+  source: string,
+  typeName: string,
+  propertyPath: string,
+  tag: RefineTag,
+  content: string
+): string {
+  const root = parse(Lang.TypeScript, source).root();
+  const body = findTypeBody(root, typeName);
+  if (!body) return source;
+  const property = findPropertyByPath(body, propertyPath);
+  if (!property) return source;
+  return upsertTagOnAnchor(source, root, property, tag, content);
+}
+
+/**
+ * Insert or update `@tag content` on the JSDoc block leading `anchorNode`,
+ * creating the block when absent. Idempotent per tag (matches the tag NAME, so
+ * multi-line content never produces duplicates) and rebuilds the block as
+ * well-formed multi-line (handling single-line `/** text *\/` inputs). Shared by
+ * the declaration-level ({@link upsertJsDocTag}) and property-level
+ * ({@link upsertPropertyJsDocTag}) upserts.
+ */
+function upsertTagOnAnchor(
+  source: string,
+  root: SgNode,
+  anchorNode: SgNode,
+  tag: RefineTag,
+  content: string
+): string {
   const tagText = `@${tag} ${content}`;
   const jsdocNode = leadingJsDoc(anchorNode);
+  const indent = ' '.repeat(anchorNode.range().start.column);
 
   if (jsdocNode) {
     const block = jsdocNode.text();
-    // Idempotent per tag: skip if the tag is already present. We check the tag
-    // NAME on a JSDoc line, not the exact `tagText` — multi-line content is
-    // stored with ` * ` line prefixes, so a literal `tagText` with bare
-    // newlines would never match and re-runs would append duplicate tags.
     if (block.match(new RegExp(`(^|\\n)\\s*\\*?\\s*@${tag}\\b`))) return source;
 
-    // Normalize the existing block into its inner content lines, then rebuild
-    // a well-formed multi-line block with the new tag appended. This handles
-    // both multi-line blocks and single-line `/** text */` comments — the old
-    // closing-`*/` indent heuristic mis-fired on single-line blocks (the
-    // "indent" capture swallowed the whole comment body, producing malformed
-    // duplicate `/** ... ` headers with no closing `*/`).
-    const indent = ' '.repeat(anchorNode.range().start.column);
     const innerLines = block
       .replace(/^\/\*\*/, '')
       .replace(/\s*\*\/\s*$/, '')
@@ -146,8 +178,6 @@ export function upsertJsDocTag(
   }
 
   // No existing JSDoc — create one before the anchor node.
-  const col = anchorNode.range().start.column;
-  const indent = ' '.repeat(col);
   const at = anchorNode.range().start.index;
   const blockText = `/**\n${indent} * ${tagText}\n${indent} */\n${indent}`;
   return source.slice(0, at) + blockText + source.slice(at);

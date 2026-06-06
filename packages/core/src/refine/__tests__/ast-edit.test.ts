@@ -1,6 +1,6 @@
 // packages/core/src/refine/__tests__/ast-edit.test.ts
 import { describe, it, expect } from 'vitest';
-import { upsertJsDocTag, readJsDocTags } from '../ast-edit.js';
+import { upsertJsDocTag, upsertPropertyJsDocTag, readJsDocTags } from '../ast-edit.js';
 import type { RefineTag } from '../types.js';
 
 describe('upsertJsDocTag', () => {
@@ -101,6 +101,38 @@ describe('upsertJsDocTag', () => {
     expect(out).toContain('* Options.');
     expect(out).toContain('@pitfalls NEVER trust input');
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+});
+
+describe('upsertPropertyJsDocTag', () => {
+  it('creates a JSDoc block on a config-type property that has none', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'useWhen', 'emitting build artifacts');
+    expect(out).toContain('@useWhen emitting build artifacts');
+    expect(out.indexOf('@useWhen')).toBeLessThan(out.indexOf('outDir'));
+    expect(readJsDocTags(out, 'Cfg')).toEqual({}); // tag is on the property, not the type
+  });
+
+  it('merges into an existing property JSDoc without mangling', () => {
+    const src = `export interface Cfg {\n  /** Output dir. */\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', 'must be writable');
+    expect(out).toContain('* Output dir.');
+    expect(out).toContain('@pitfalls must be writable');
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
+  it('targets a nested property via dot path', () => {
+    const src = `export interface Cfg {\n  components: { prefix: string };\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'components.prefix', 'useWhen', 'namespacing');
+    expect(out).toContain('@useWhen namespacing');
+    // landed inside the nested object, right before `prefix`
+    expect(out.indexOf('@useWhen')).toBeLessThan(out.indexOf('prefix'));
+  });
+
+  it('returns source unchanged when the type or property is absent', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    expect(upsertPropertyJsDocTag(src, 'Nope', 'outDir', 'useWhen', 'X')).toBe(src);
+    expect(upsertPropertyJsDocTag(src, 'Cfg', 'missing', 'useWhen', 'X')).toBe(src);
   });
 });
 
