@@ -52,7 +52,9 @@ describe('config options as refine work items (per-option targeting)', () => {
   const estimate = estimateSkillJudgeScore(audit, skill);
 
   it('@useWhen improvement includes a target per un-annotated option with kind="config-option"', () => {
-    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    const useWhenImp = estimate.improvements.find(
+      (imp) => imp.suggestion.includes('@useWhen') && imp.suggestion.includes('config option')
+    );
     expect(useWhenImp).toBeDefined();
     const outDir = useWhenImp?.targets?.find(
       (t) => t.name === 'outDir' && t.kind === 'config-option'
@@ -72,7 +74,9 @@ describe('config option already annotated is excluded from targets', () => {
   const estimate = estimateSkillJudgeScore(audit, skill);
 
   it('annotated option is not a target; unannotated one still is', () => {
-    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    const useWhenImp = estimate.improvements.find(
+      (imp) => imp.suggestion.includes('@useWhen') && imp.suggestion.includes('config option')
+    );
     expect(
       useWhenImp?.targets?.find((t) => t.name === 'outDir' && t.kind === 'config-option')
     ).toBeUndefined();
@@ -91,7 +95,9 @@ describe('nested option uses its dot-path configKey as the target name', () => {
   const estimate = estimateSkillJudgeScore(audit, skill);
 
   it('@useWhen target name is the dot path "components.prefix"', () => {
-    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    const useWhenImp = estimate.improvements.find(
+      (imp) => imp.suggestion.includes('@useWhen') && imp.suggestion.includes('config option')
+    );
     const nested = useWhenImp?.targets?.find((t) => t.name === 'components.prefix');
     expect(nested).toBeDefined();
     expect(nested?.kind).toBe('config-option');
@@ -106,7 +112,9 @@ describe('config option targets are not truncated at the class cap (5)', () => {
   const estimate = estimateSkillJudgeScore(audit, skill);
 
   it('emits a @useWhen target for every one of the 7 options', () => {
-    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    const useWhenImp = estimate.improvements.find(
+      (imp) => imp.suggestion.includes('@useWhen') && imp.suggestion.includes('config option')
+    );
     const targeted = new Set(
       (useWhenImp?.targets ?? []).filter((t) => t.kind === 'config-option').map((t) => t.name)
     );
@@ -147,7 +155,9 @@ describe('config surfaces do not produce command-kind targets', () => {
   const estimate = estimateSkillJudgeScore(audit, skill);
 
   it('no target has kind="command"', () => {
-    const useWhenImp = estimate.improvements.find((imp) => imp.suggestion.includes('@useWhen'));
+    const useWhenImp = estimate.improvements.find(
+      (imp) => imp.suggestion.includes('@useWhen') && imp.suggestion.includes('config option')
+    );
     expect(useWhenImp?.targets?.some((t) => t.kind === 'command')).toBe(false);
   });
 });

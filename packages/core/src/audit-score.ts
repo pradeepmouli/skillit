@@ -289,24 +289,34 @@ function targetsForMissingTag(
         .map((s) => ({ file: '', name: s.name, kind: 'command' }))
     : [];
 
-  // Config surfaces are tagged per-OPTION: the target is the option's dot-path
-  // `configKey`, which the ConfigRefineSource maps to a property declaration via
-  // `upsertPropertyJsDocTag`. An option missing the tag is a gap. Capped well
-  // above the class cap (a config commonly has more documentable options than a
-  // module has classes) so a 7-key surface isn't silently truncated to 5; the
-  // loop's itemsPerIteration still paces how many are drafted each pass.
-  const configOptionTargets: ImprovementTarget[] = SURFACE_TAGS.has(tag as SurfaceTag)
-    ? (skill.configSurfaces ?? [])
-        .filter((s) => s.sourceType === 'config')
-        .flatMap((s) =>
-          s.options
-            .filter((o) => !(o[tag as SurfaceTag] as string[] | undefined)?.length)
-            .map((o) => ({ file: '', name: o.configKey ?? o.name, kind: 'config-option' }))
-        )
-        .slice(0, MAX_CONFIG_OPTION_TARGETS)
-    : [];
+  // Config per-OPTION targets are NOT emitted here: routing-tag dimensions clear
+  // their 80% threshold as soon as a FEW options carry a tag (W7/W8/W9 need only
+  // one), so threshold-gated targeting stops at partial coverage. They are
+  // surfaced threshold-independently in buildImprovements instead, so the loop
+  // drives EVERY option to full coverage. See configOptionTargetsForTag.
 
-  return [...classTargets, ...fnTargets, ...cliTargets, ...configOptionTargets];
+  return [...classTargets, ...fnTargets, ...cliTargets];
+}
+
+/**
+ * Config options still missing a routing `tag`, as work-item targets. Each maps
+ * to the option's dot-path `configKey`, which the ConfigRefineSource writes via
+ * `upsertPropertyJsDocTag`. Capped well above the class cap (a config commonly
+ * has more documentable options than a module has classes); the loop's
+ * itemsPerIteration paces how many are drafted per pass.
+ */
+function configOptionTargetsForTag(
+  skill: ExtractedSkill,
+  tag: 'useWhen' | 'avoidWhen' | 'pitfalls'
+): ImprovementTarget[] {
+  return (skill.configSurfaces ?? [])
+    .filter((s) => s.sourceType === 'config')
+    .flatMap((s) =>
+      s.options
+        .filter((o) => !(o[tag] as string[] | undefined)?.length)
+        .map((o) => ({ file: '', name: o.configKey ?? o.name, kind: 'config-option' }))
+    )
+    .slice(0, MAX_CONFIG_OPTION_TARGETS);
 }
 
 /**
@@ -654,6 +664,30 @@ function buildImprovements(
         dimension: 'D2',
         targets: exampleTargets
       });
+    }
+  }
+
+  // Config per-option completeness: routing-tag dimensions saturate once a few
+  // options are tagged (W7/W8/W9 need only one), so the threshold-gated path
+  // above leaves the remaining options bare. Append one improvement per routing
+  // tag — OUTSIDE the top-3 cap — carrying every still-untagged option, so the
+  // loop documents the whole surface, not just enough to clear the rubric.
+  if (skill) {
+    const ROUTING: ReadonlyArray<{ tag: 'pitfalls' | 'useWhen' | 'avoidWhen'; points: number }> = [
+      { tag: 'pitfalls', points: 3 },
+      { tag: 'useWhen', points: 2 },
+      { tag: 'avoidWhen', points: 2 }
+    ];
+    for (const { tag, points } of ROUTING) {
+      const targets = configOptionTargetsForTag(skill, tag);
+      if (targets.length > 0) {
+        top.push({
+          suggestion: `Add @${tag} to every config option for full per-option coverage`,
+          points,
+          dimension: tag === 'pitfalls' ? 'D3' : 'D2',
+          targets
+        });
+      }
     }
   }
 
