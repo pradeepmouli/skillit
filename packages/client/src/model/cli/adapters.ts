@@ -166,7 +166,17 @@ export const copilotAdapter: CliAdapter = {
     // copilot uses its default model; prompt piped via stdin (not `-p <text>`)
     // so untrusted prompt content never reaches argv — keeps the Windows
     // shell-launch path injection-safe (only static flags are args).
-    return { cmd: 'copilot', args: ['--output-format', 'json', '--no-color'], input: prompt };
+    //
+    // `--available-tools=` (empty whitelist) is the critical isolation: copilot
+    // is a full agent that can edit files + run shell, and as a refine model
+    // backend it once checked out a branch and pushed a commit. An empty
+    // whitelist means NO tools are available to the model, so it can only
+    // generate text. Verified live: edit + `git status` are both denied.
+    return {
+      cmd: 'copilot',
+      args: ['--output-format', 'json', '--no-color', '--available-tools='],
+      input: prompt
+    };
   },
   extractResult(stdout) {
     // copilot emits JSONL; the answer is the last `assistant.message` event's

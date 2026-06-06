@@ -97,9 +97,14 @@ describe('copilotAdapter', () => {
   it('pipes the prompt via stdin (not argv) so untrusted content stays out of argv', () => {
     const inv = copilotAdapter.invocation('draft', 'PROMPT');
     expect(inv.cmd).toBe('copilot');
-    expect(inv.args).toEqual(['--output-format', 'json', '--no-color']);
+    expect(inv.args).toEqual(['--output-format', 'json', '--no-color', '--available-tools=']);
     expect(inv.args).not.toContain('PROMPT');
     expect(inv.input).toBe('PROMPT');
+  });
+
+  it('isolates copilot with an empty tool whitelist so it cannot edit files or run shell', () => {
+    const inv = copilotAdapter.invocation('draft', 'PROMPT');
+    expect(inv.args).toContain('--available-tools=');
   });
 
   it('extracts the last assistant.message content from the jsonl stream, skipping deltas/result', () => {
