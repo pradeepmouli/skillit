@@ -93,14 +93,13 @@ export class ConfigRefineSource implements RefineSource {
     // A sibling `<config>.example.ts` (if present) is the skill's usage example
     // — clears E4 and feeds the rendered Examples section. The refine loop
     // drafts it once when absent; reading it back here surfaces it thereafter.
-    const examplePath = this.exampleFilePath();
-    if (existsSync(examplePath)) {
-      try {
-        const example = (await readFile(examplePath, 'utf8')).trim();
-        if (example) skill.examples = [example];
-      } catch {
-        // Unreadable example — leave examples empty (E4 stays a gap).
-      }
+    // Read directly and tolerate ENOENT (no existsSync precheck — that is a
+    // check-then-use race).
+    try {
+      const example = (await readFile(this.exampleFilePath(), 'utf8')).trim();
+      if (example) skill.examples = [example];
+    } catch {
+      // No/unreadable example — leave examples empty (E4 stays a gap).
     }
     return skill;
   }
@@ -125,9 +124,17 @@ export class ConfigRefineSource implements RefineSource {
     // already exist, so a hand-authored example is never clobbered.
     const exampleFix = fixes.find((fix) => fix.tag === 'example');
     if (exampleFix) {
-      const examplePath = this.exampleFilePath();
-      if (!existsSync(examplePath)) {
-        await writeFile(examplePath, normalizeExampleFile(exampleFix.value), 'utf8');
+      // Write-if-absent atomically with the `wx` flag (create, fail if exists)
+      // rather than existsSync-then-write — the latter is a TOCTOU race, and the
+      // atomic flag enforces the no-clobber intent at the syscall.
+      try {
+        await writeFile(this.exampleFilePath(), normalizeExampleFile(exampleFix.value), {
+          encoding: 'utf8',
+          flag: 'wx'
+        });
+      } catch (error) {
+        // EEXIST = an example already exists; preserve it. Re-throw anything else.
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
       }
     }
 
