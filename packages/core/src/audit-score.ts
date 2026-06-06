@@ -268,22 +268,39 @@ function targetsForMissingTag(
     .slice(0, maxFunctions)
     .map((f) => ({ file: fileForModule(f.sourceModule), name: f.name, kind: 'function' }));
 
-  // CLI command surfaces also carry useWhen / avoidWhen / pitfalls.
-  // Only emit targets for the tags that ExtractedConfigSurface actually holds.
-  const CLI_SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'pitfalls'] as const);
-  type CliTag = 'useWhen' | 'avoidWhen' | 'pitfalls';
+  // CLI command surfaces and config options also carry useWhen / avoidWhen /
+  // pitfalls. Only emit targets for the tags that the surface model holds.
+  const SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'pitfalls'] as const);
+  type SurfaceTag = 'useWhen' | 'avoidWhen' | 'pitfalls';
 
-  const cliTargets: ImprovementTarget[] = CLI_SURFACE_TAGS.has(tag as CliTag)
+  // CLI surfaces are tagged at the surface (command) level: the target is the
+  // command name, which the CliRefineSource maps to its `<Command>Options`
+  // interface.
+  const cliTargets: ImprovementTarget[] = SURFACE_TAGS.has(tag as SurfaceTag)
     ? (skill.configSurfaces ?? [])
         // Empty array = no content = a gap, so treat it the same as a missing tag.
         .filter(
-          (s) => s.sourceType === 'cli' && !(s[tag as CliTag] as string[] | undefined)?.length
+          (s) => s.sourceType === 'cli' && !(s[tag as SurfaceTag] as string[] | undefined)?.length
         )
         .slice(0, maxFunctions)
         .map((s) => ({ file: '', name: s.name, kind: 'command' }))
     : [];
 
-  return [...classTargets, ...fnTargets, ...cliTargets];
+  // Config surfaces are tagged per-OPTION: the target is the option's dot-path
+  // `configKey`, which the ConfigRefineSource maps to a property declaration via
+  // `upsertPropertyJsDocTag`. An option missing the tag is a gap.
+  const configOptionTargets: ImprovementTarget[] = SURFACE_TAGS.has(tag as SurfaceTag)
+    ? (skill.configSurfaces ?? [])
+        .filter((s) => s.sourceType === 'config')
+        .flatMap((s) =>
+          s.options
+            .filter((o) => !(o[tag as SurfaceTag] as string[] | undefined)?.length)
+            .map((o) => ({ file: '', name: o.configKey ?? o.name, kind: 'config-option' }))
+        )
+        .slice(0, maxClasses)
+    : [];
+
+  return [...classTargets, ...fnTargets, ...cliTargets, ...configOptionTargets];
 }
 
 /** Functions with 3+ parameters missing @remarks, sorted by source tree depth. */
