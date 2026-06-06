@@ -56,12 +56,27 @@ export function buildDraftPrompt(req: DraftRequest): string {
     `Tag to fill: @${req.tag}`,
     `Guidance: ${req.suggestion}`,
     req.currentValue ? `Current value:\n${req.currentValue}` : 'No current value.',
-    'Write only the annotation content — no code fences, no extra commentary.'
+    'Wrap ONLY the annotation content in <answer></answer> tags. Put nothing outside the tags — no preamble, no code fences, no commentary, and no description of what you are about to do.'
   ];
   if (req.guidance) {
     parts.push(`Conventions (follow these):\n${req.guidance}`);
   }
   return parts.join('\n\n');
+}
+
+/**
+ * Extracts the drafted annotation from a model response.
+ *
+ * The drafter is instructed (see {@link buildDraftPrompt}) to wrap its answer
+ * in `<answer>…</answer>`. We return the inner text so any conversational
+ * preamble a chatty backend adds outside the tags (e.g. the `claude` CLI's
+ * "Now I have full context… Let me write the annotation.") is discarded.
+ * Falls back to the trimmed response when the tags are absent, so a
+ * well-behaved backend that omits them still works.
+ */
+export function extractDraftAnswer(text: string): string {
+  const match = text.match(/<answer>([\s\S]*?)<\/answer>/i);
+  return (match?.[1] ?? text).trim();
 }
 
 export function buildReviewPrompt(req: ReviewRequest): string {
@@ -96,7 +111,7 @@ export class AnthropicModelClient implements ModelClient {
     if (!block || block.type !== 'text') {
       throw new Error(`Unexpected response from ${DRAFTER}: no text block`);
     }
-    return block.text.trim();
+    return extractDraftAnswer(block.text);
   }
 
   async review(req: ReviewRequest): Promise<ReviewResult> {

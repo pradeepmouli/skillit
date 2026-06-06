@@ -1,6 +1,12 @@
 // packages/core/src/refine/ast-edit.ts
 import { parse, Lang } from '@ast-grep/napi';
 import type { SgNode } from '@ast-grep/napi';
+import {
+  escapeJsDocClose,
+  findPropertyByPath,
+  findTypeBody,
+  unescapeJsDocClose
+} from '../config-extract.js';
 import type { RefineTag } from './types.js';
 
 // `satisfies` ensures every listed value is a valid RefineTag. The
@@ -108,32 +114,88 @@ export function upsertJsDocTag(
   const root = parse(Lang.TypeScript, source).root();
   const anchorNode = findDeclaration(root, declName);
   if (!anchorNode) return source;
+  return upsertTagOnAnchor(source, root, anchorNode, tag, content);
+}
 
-  const tagText = `@${tag} ${content}`;
+/**
+ * Insert or update a JSDoc tag on a property of a config type.
+ *
+ * `propertyPath` is a dot path into the interface or object-type alias named
+ * `typeName` (e.g. `outDir` or `components.prefix`). Otherwise behaves like
+ * {@link upsertJsDocTag}. Returns the source unchanged when the type or
+ * property is not found. Used by the config refine source to write routing
+ * tags back onto a config type's property declarations.
+ */
+export function upsertPropertyJsDocTag(
+  source: string,
+  typeName: string,
+  propertyPath: string,
+  tag: RefineTag,
+  content: string
+): string {
+  const root = parse(Lang.TypeScript, source).root();
+  const body = findTypeBody(root, typeName);
+  if (!body) return source;
+  const property = findPropertyByPath(body, propertyPath);
+  if (!property) return source;
+  return upsertTagOnAnchor(source, root, property, tag, content);
+}
+
+/**
+ * Insert or update `@tag content` on the JSDoc block leading `anchorNode`,
+ * creating the block when absent. Idempotent per tag (matches the tag NAME, so
+ * multi-line content never produces duplicates) and rebuilds the block as
+ * well-formed multi-line (handling single-line `/** text *\/` inputs). Shared by
+ * the declaration-level ({@link upsertJsDocTag}) and property-level
+ * ({@link upsertPropertyJsDocTag}) upserts.
+ */
+function upsertTagOnAnchor(
+  source: string,
+  root: SgNode,
+  anchorNode: SgNode,
+  tag: RefineTag,
+  content: string
+): string {
+  // Escape any comment-close sequence in the content so a value containing it
+  // (e.g. a glob like `**/*.ts` in a config pitfall) can't terminate the block
+  // early and corrupt the file. readJsDocTags / config extraction unescape it.
+  const tagText = escapeJsDocClose(`@${tag} ${content}`);
   const jsdocNode = leadingJsDoc(anchorNode);
+  const indent = ' '.repeat(anchorNode.range().start.column);
 
   if (jsdocNode) {
     const block = jsdocNode.text();
-    if (block.includes(tagText)) return source;
+    if (block.match(new RegExp(`(^|\\n)\\s*\\*?\\s*@${tag}\\b`))) return source;
 
-    // Determine the indent of the closing */ line
-    const closeOffset = block.lastIndexOf('*/');
-    const beforeClose = block.slice(0, closeOffset);
-    // The whitespace prefix of the closing `*/` line
-    const linePrefix = beforeClose.match(/([^\n]*)$/)?.[1] ?? ' ';
+    const innerLines = block
+      .replace(/^\/\*\*/, '')
+      .replace(/\s*\*\/\s*$/, '')
+      .split('\n')
+      .map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+    while (innerLines.length > 0 && innerLines[0] === '') innerLines.shift();
+    while (innerLines.length > 0 && innerLines[innerLines.length - 1] === '') innerLines.pop();
 
-    const merged =
-      block.slice(0, closeOffset - linePrefix.length) +
-      `${linePrefix}* ${tagText}\n${linePrefix}*/`;
+    // Prefix every physical line (including multi-line tag content) with ` * `.
+    const allLines = [...innerLines, ...tagText.split('\n')];
+    const body = allLines
+      .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+      .join('\n');
+    const merged = `/**\n${body}\n${indent} */`;
 
     return root.commitEdits([jsdocNode.replace(merged)]);
   }
 
-  // No existing JSDoc — create one before the anchor node.
-  const col = anchorNode.range().start.column;
-  const indent = ' '.repeat(col);
+  // No existing JSDoc — create one before the anchor node. Prefix EVERY physical
+  // line of the tag (multi-line content too) with ` * `, mirroring the merge
+  // branch above. Without this, a multi-line first tag left continuation lines
+  // at column 0 — malformed JSDoc that also broke the re-parse for any tag
+  // appended to the same declaration in a later pass.
   const at = anchorNode.range().start.index;
-  const blockText = `/**\n${indent} * ${tagText}\n${indent} */\n${indent}`;
+  const body = tagText
+    .split('\n')
+    .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+    .join('\n');
+  const blockText = `/**\n${body}\n${indent} */\n${indent}`;
   return source.slice(0, at) + blockText + source.slice(at);
 }
 
@@ -156,15 +218,36 @@ export function readJsDocTags(
   if (!jsdocNode) return {};
 
   const block = jsdocNode.text();
-  const result: Partial<Record<RefineTag, string>> = {};
 
-  for (const tag of REFINE_TAGS) {
-    const pattern = new RegExp(`@${tag}\\s+(.+?)(?:\\s*\\n|\\s*\\*\\/|$)`, 'm');
-    const hit = block.match(pattern);
-    if (hit) {
-      result[tag] = hit[1]?.trim() ?? '';
+  // Strip the block to inner content lines (no `/** */` wrapper, no ` * `
+  // prefixes), then walk them: a known `@tag` line opens a capture and the
+  // following non-tag lines are its continuation. This keeps multi-line tag
+  // content (e.g. bullet lists) intact instead of truncating at the first
+  // newline — otherwise a refined `@pitfalls` with several bullets would lose
+  // everything past line one when re-extracted into SKILL.md.
+  const innerLines = block
+    .replace(/^\/\*\*/, '')
+    .replace(/\s*\*\/\s*$/, '')
+    .split('\n')
+    .map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+
+  const collected: Partial<Record<RefineTag, string[]>> = {};
+  let current: RefineTag | undefined;
+  for (const line of innerLines) {
+    const tagMatch = line.match(/^@(\w+)\s?(.*)$/);
+    const matchedTag = tagMatch ? REFINE_TAGS.find((t) => t === tagMatch[1]) : undefined;
+    if (matchedTag) {
+      current = matchedTag;
+      collected[current] = [tagMatch![2] ?? ''];
+    } else if (current) {
+      collected[current]!.push(line);
     }
   }
 
+  const result: Partial<Record<RefineTag, string>> = {};
+  for (const tag of REFINE_TAGS) {
+    const lines = collected[tag];
+    if (lines) result[tag] = unescapeJsDocClose(lines.join('\n').trim());
+  }
   return result;
 }

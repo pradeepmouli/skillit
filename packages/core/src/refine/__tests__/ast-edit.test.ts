@@ -1,6 +1,6 @@
 // packages/core/src/refine/__tests__/ast-edit.test.ts
 import { describe, it, expect } from 'vitest';
-import { upsertJsDocTag, readJsDocTags } from '../ast-edit.js';
+import { upsertJsDocTag, upsertPropertyJsDocTag, readJsDocTags } from '../ast-edit.js';
 import type { RefineTag } from '../types.js';
 
 describe('upsertJsDocTag', () => {
@@ -20,6 +20,33 @@ describe('upsertJsDocTag', () => {
     // Exact alignment: the appended line must keep the surrounding ` * ` indent
     expect(out).toMatch(/\n \* @pitfalls NEVER trust input\n/);
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
+  it('merges a tag into a single-line JSDoc block without mangling it', () => {
+    const src = `/** Parsed options. */\nexport interface RefineCommandOpts {\n  source: string;\n}\n`;
+    const out = upsertJsDocTag(src, 'RefineCommandOpts', 'pitfalls', 'NEVER trust input');
+    // Exactly one comment opener, one closer, and a well-formed multi-line body.
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+    expect(out.match(/\*\//g)).toHaveLength(1);
+    expect(out).toContain(' * Parsed options.');
+    expect(out).toMatch(/\n \* @pitfalls NEVER trust input\n \*\//);
+    expect(readJsDocTags(out, 'RefineCommandOpts')).toEqual({ pitfalls: 'NEVER trust input' });
+  });
+
+  it('prefixes every line of multi-line tag content with ` * `', () => {
+    const src = `/** Parsed options. */\nexport interface Opts {\n  a: string;\n}\n`;
+    const out = upsertJsDocTag(src, 'Opts', 'avoidWhen', '- first reason\n- second reason');
+    expect(out).toContain(' * @avoidWhen - first reason');
+    expect(out).toContain(' * - second reason');
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
+  it('does not duplicate a tag on re-run when the content is multi-line', () => {
+    const src = `/** Opts. */\nexport interface O {\n  a: string;\n}\n`;
+    const once = upsertJsDocTag(src, 'O', 'pitfalls', '- one\n- two');
+    const twice = upsertJsDocTag(once, 'O', 'pitfalls', '- one\n- two');
+    expect(twice).toBe(once);
+    expect((once.match(/@pitfalls/g) ?? []).length).toBe(1);
   });
 
   it('is idempotent for an identical tag', () => {
@@ -77,6 +104,76 @@ describe('upsertJsDocTag', () => {
   });
 });
 
+describe('upsertPropertyJsDocTag', () => {
+  it('creates a JSDoc block on a config-type property that has none', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'useWhen', 'emitting build artifacts');
+    expect(out).toContain('@useWhen emitting build artifacts');
+    expect(out.indexOf('@useWhen')).toBeLessThan(out.indexOf('outDir'));
+    expect(readJsDocTags(out, 'Cfg')).toEqual({}); // tag is on the property, not the type
+  });
+
+  it('merges into an existing property JSDoc without mangling', () => {
+    const src = `export interface Cfg {\n  /** Output dir. */\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', 'must be writable');
+    expect(out).toContain('* Output dir.');
+    expect(out).toContain('@pitfalls must be writable');
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
+  it('targets a nested property via dot path', () => {
+    const src = `export interface Cfg {\n  components: { prefix: string };\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'components.prefix', 'useWhen', 'namespacing');
+    expect(out).toContain('@useWhen namespacing');
+    // landed inside the nested object, right before `prefix`
+    expect(out.indexOf('@useWhen')).toBeLessThan(out.indexOf('prefix'));
+  });
+
+  it('returns source unchanged when the type or property is absent', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    expect(upsertPropertyJsDocTag(src, 'Nope', 'outDir', 'useWhen', 'X')).toBe(src);
+    expect(upsertPropertyJsDocTag(src, 'Cfg', 'missing', 'useWhen', 'X')).toBe(src);
+  });
+
+  it('prefixes every line when CREATING a block with multi-line content', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- one\n- two\n- three');
+    // No continuation bullet may sit at column 0 — every line carries ` * `.
+    expect(out).not.toMatch(/\n- two/);
+    expect(out).toMatch(/\* @pitfalls - one/);
+    expect(out).toMatch(/\* - two/);
+    expect(out).toMatch(/\* - three/);
+  });
+
+  it('escapes a comment-close sequence in content so the block stays parseable', () => {
+    const src = `export interface Cfg {\n  include?: string[];\n}\n`;
+    const withGlob = upsertPropertyJsDocTag(
+      src,
+      'Cfg',
+      'include',
+      'pitfalls',
+      'avoid the `**/*.ts` glob — too broad'
+    );
+    // The glob's terminator is escaped (`*\/`), so it does not close the block.
+    expect(withGlob).toContain('**\\/*.ts');
+    // The declaration still parses afterward — a corrupted comment would make
+    // this second upsert a no-op (property not found), returning the input.
+    expect(upsertPropertyJsDocTag(withGlob, 'Cfg', 'include', 'useWhen', 'x')).not.toBe(withGlob);
+  });
+
+  it('a second tag merges cleanly onto a multi-line-created block (no malformation)', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const once = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- a\n- b');
+    const twice = upsertPropertyJsDocTag(once, 'Cfg', 'outDir', 'useWhen', 'when emitting');
+    // Both tags present, exactly one comment, every body line prefixed.
+    expect(twice).toContain('@pitfalls - a');
+    expect(twice).toContain('@useWhen when emitting');
+    expect(twice.match(/\/\*\*/g)).toHaveLength(1);
+    expect(twice).not.toMatch(/\n- b/);
+    expect(readJsDocTags(twice, 'outDir')).toBeDefined(); // declaration still parses
+  });
+});
+
 describe('readJsDocTags', () => {
   it('returns tag content from an existing leading JSDoc block', () => {
     const src = `/**\n * @useWhen Foo\n */\nexport function f() {}\n`;
@@ -96,6 +193,11 @@ describe('readJsDocTags', () => {
   it('parses multiple tags', () => {
     const src = `/**\n * @useWhen Foo\n * @pitfalls Bar\n */\nexport function f() {}\n`;
     expect(readJsDocTags(src, 'f')).toEqual({ useWhen: 'Foo', pitfalls: 'Bar' });
+  });
+
+  it('captures multi-line tag content (continuation lines), not just the first line', () => {
+    const src = upsertJsDocTag(`export interface O {}\n`, 'O', 'pitfalls', '- one\n- two\n- three');
+    expect(readJsDocTags(src, 'O')).toEqual({ pitfalls: '- one\n- two\n- three' });
   });
 
   it('reads a tag from a non-exported interface leading JSDoc', () => {

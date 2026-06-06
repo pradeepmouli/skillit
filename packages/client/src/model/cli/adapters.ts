@@ -87,7 +87,30 @@ export const claudeAdapter: CliAdapter = {
     const model = role === 'review' ? REVIEWER : DRAFTER;
     return {
       cmd: 'claude',
-      args: ['-p', '--output-format', 'json', '--model', model],
+      // Isolate claude as a pure text generator for the refine loop. Without
+      // this, `claude -p` runs its full agent loop: it once rewrote CLAUDE.md
+      // mid-draft (file tools enabled) and emitted decorative "★ Insight"
+      // blocks that leaked verbatim into the JSDoc tags refine writes. So:
+      //   --disallowedTools     deny every side-effecting tool (no file edits)
+      //   --strict-mcp-config   ignore project/user MCP servers
+      //   --settings outputStyle:default  default style (belt-and-suspenders)
+      //   --append-system-prompt  forbid decoration — the drafter model
+      //     (sonnet) adds "★ Insight" blocks even under the default style, and
+      //     only an explicit system-prompt instruction reliably suppresses them
+      args: [
+        '-p',
+        '--output-format',
+        'json',
+        '--model',
+        model,
+        '--strict-mcp-config',
+        '--disallowedTools',
+        'Edit,Write,MultiEdit,NotebookEdit,Bash,Task,WebFetch,WebSearch',
+        '--settings',
+        '{"outputStyle":"default"}',
+        '--append-system-prompt',
+        'CRITICAL: Output ONLY the requested content. Never add "★ Insight" blocks, horizontal-rule (─) decorations, section headers, preambles, or meta-commentary.'
+      ],
       input: prompt
     };
   },
@@ -143,7 +166,17 @@ export const copilotAdapter: CliAdapter = {
     // copilot uses its default model; prompt piped via stdin (not `-p <text>`)
     // so untrusted prompt content never reaches argv — keeps the Windows
     // shell-launch path injection-safe (only static flags are args).
-    return { cmd: 'copilot', args: ['--output-format', 'json', '--no-color'], input: prompt };
+    //
+    // `--available-tools=` (empty whitelist) is the critical isolation: copilot
+    // is a full agent that can edit files + run shell, and as a refine model
+    // backend it once checked out a branch and pushed a commit. An empty
+    // whitelist means NO tools are available to the model, so it can only
+    // generate text. Verified live: edit + `git status` are both denied.
+    return {
+      cmd: 'copilot',
+      args: ['--output-format', 'json', '--no-color', '--available-tools='],
+      input: prompt
+    };
   },
   extractResult(stdout) {
     // copilot emits JSONL; the answer is the last `assistant.message` event's

@@ -1,6 +1,6 @@
 // packages/client/src/__tests__/anthropic-prompt.test.ts
 import { describe, it, expect } from 'vitest';
-import { buildDraftPrompt, buildReviewPrompt } from '../model/anthropic.js';
+import { buildDraftPrompt, buildReviewPrompt, extractDraftAnswer } from '../model/anthropic.js';
 import type { DraftRequest, ReviewRequest, ExtractedSkill } from '@skillit/core';
 
 const baseSkill = (): ExtractedSkill =>
@@ -24,7 +24,29 @@ const baseReviewReq = (overrides: Partial<ReviewRequest> = {}): ReviewRequest =>
   ...overrides
 });
 
+describe('extractDraftAnswer', () => {
+  it('returns only the <answer> inner text, discarding chatty preamble', () => {
+    const raw =
+      'Now I have full context. Let me write the annotation.\n<answer>Use when bootstrapping a project from scratch.</answer>';
+    expect(extractDraftAnswer(raw)).toBe('Use when bootstrapping a project from scratch.');
+  });
+
+  it('trims the inner text and tolerates multi-line answers', () => {
+    expect(extractDraftAnswer('<answer>\n  line one\n  line two\n</answer>')).toBe(
+      'line one\n  line two'
+    );
+  });
+
+  it('falls back to the trimmed response when no <answer> tags are present', () => {
+    expect(extractDraftAnswer('  a plain value  ')).toBe('a plain value');
+  });
+});
+
 describe('buildDraftPrompt', () => {
+  it('instructs the model to wrap its answer in <answer> tags', () => {
+    expect(buildDraftPrompt(baseDraftReq())).toContain('<answer></answer>');
+  });
+
   it('includes a Conventions section with guidance text when guidance is provided', () => {
     const req = baseDraftReq({ guidance: 'Always use active voice.' });
     const prompt = buildDraftPrompt(req);

@@ -4,12 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Command } from 'commander';
 import { extractCliSkill, loadProgram, writeCliSkill } from '@skillit/cli';
+import { ConfigRefineSource, renderSkills, writeSkills } from '@skillit/core';
 import {
   detectPackageManager,
   detectProjectNature,
   type RefineSourceKind
 } from '../detect-source.js';
-import { runRefineCommand, type RefineCommandOpts } from './refine.js';
+import { parseConfigTypeSpec, runRefineCommand, type RefineCommandOpts } from './refine.js';
 
 type PackageManager = 'pnpm' | 'yarn' | 'npm';
 
@@ -27,6 +28,18 @@ export interface GenerateSkillOpts {
   program?: string;
 }
 
+/** Options passed to the (config-path) skill generator. */
+export interface GenerateConfigSkillOpts {
+  /** Absolute path to the TypeScript file declaring the config type. */
+  configFile: string;
+  /** Exported interface / type-alias name to document. */
+  typeName: string;
+  /** Skill name (consumer package name, scope stripped). */
+  name: string;
+  /** Absolute output directory (`<cwd>/<out>`). */
+  outDir: string;
+}
+
 /**
  * Injectable side-effecting steps for {@link buildInitCommand}. All optional;
  * real defaults run install / generate / refine. Tests inject stubs so no real
@@ -37,13 +50,30 @@ export interface InitDeps {
   runInstall?(pkg: string, pm: PackageManager, cwd: string): Promise<void>;
   /** Generate the initial skill (CLI path only). */
   generateSkill?(opts: GenerateSkillOpts): Promise<void>;
+  /** Generate the initial skill (config path only). */
+  generateConfigSkill?(opts: GenerateConfigSkillOpts): Promise<void>;
   /** Dispatch the refine loop for the resolved source. */
   runRefine?(opts: RefineCommandOpts): Promise<void>;
 }
 
+/**
+ * @pitfalls - NEVER pass both `program` and `helpTexts` to `extractCliSkill` — `helpTexts` is silently ignored when `program` is present, producing incomplete output with no warning
+ * - NEVER omit `configSurfaces` when typed config interfaces exist — `correlateFlags` has nothing to merge from, so `@useWhen`/`@avoidWhen`/`@never` JSDoc tags are lost from the generated skill
+ * - NEVER pass a non-Commander program object to `introspectCommander` — unrecognized shapes return an empty array without throwing, silently producing a blank skill
+ * - NEVER rely on `parseHelpOutput` for multi-line option descriptions — only the first line after the two-space separator is captured; continuation lines are dropped
+ * - NEVER assume `correlateFlags` name matching works when config interface names deviate from the `<commandName>Options` convention — mismatches produce unmerged CLI surfaces with no diagnostic
+ * - NEVER export a factory that calls `.parse()` or `.parseAsync()` for `loadProgram` — side effects cause the process to exit during skill extraction before writing completes
+ * - NEVER omit `installTargets` in `writeCliSkill` when you want the bundled `skillit-cli-docs` guidance skill co-installed — it is only written when at least one install target is provided
+ * - NEVER skip `runCliAudit` before rendering — missing descriptions, undocumented env vars, and absent usage strings are not surfaced unless the audit runs explicitly
+ * @useWhen bootstrapping a new project skill from scratch — when you want skillit to auto-detect the project type (cli, mcp, or typedoc), install the right @skillit package, and generate + refine an initial SKILL.md in one command
+ * @avoidWhen - Your package exposes no CLI entry point — use `@skillit/typedoc` for pure TypeScript API documentation instead
+ * - You have a non-Commander, non-yargs CLI with no accessible `--help` output to parse
+ * - You only need to document TypeScript types, functions, or classes with no command-line option metadata
+ */
 interface InitOpts {
   source?: string;
   program?: string;
+  configType?: string;
   out: string;
   modelClient?: string;
   modelCliTimeout?: string;
@@ -105,6 +135,22 @@ async function defaultGenerateSkill(opts: GenerateSkillOpts): Promise<void> {
   writeCliSkill(skill, { outDir: opts.outDir });
 }
 
+/** Default config-path skill generation: extract the surface → render → write. */
+async function defaultGenerateConfigSkill(opts: GenerateConfigSkillOpts): Promise<void> {
+  const skill = await new ConfigRefineSource({
+    configFile: opts.configFile,
+    typeName: opts.typeName,
+    name: opts.name,
+    // A config-specific description so the rendered skill describes the config
+    // surface, not the package blurb (which is about the whole package).
+    description: `Configuration options for ${opts.typeName}.`
+  }).extract();
+  // Config skills are content-rich (per-option routing + example); raise the
+  // per-reference token budget so a multi-option surface isn't truncated.
+  const rendered = renderSkills([skill], { outDir: opts.outDir, maxTokens: 16000 });
+  writeSkills(rendered, { outDir: opts.outDir });
+}
+
 /** Default refine dispatch: reuse the shared refine command body. */
 function defaultRunRefine(opts: RefineCommandOpts): Promise<void> {
   return runRefineCommand(opts);
@@ -113,14 +159,16 @@ function defaultRunRefine(opts: RefineCommandOpts): Promise<void> {
 export function buildInitCommand(deps: InitDeps = {}): Command {
   const runInstall = deps.runInstall ?? defaultRunInstall;
   const generateSkill = deps.generateSkill ?? defaultGenerateSkill;
+  const generateConfigSkill = deps.generateConfigSkill ?? defaultGenerateConfigSkill;
   const runRefine = deps.runRefine ?? defaultRunRefine;
 
   return new Command('init')
     .description(
       'Detect the project, install the right @skillit package, generate + refine a skill'
     )
-    .option('--source <kind>', 'cli | mcp | typedoc (auto-detected if omitted)')
+    .option('--source <kind>', 'cli | mcp | typedoc | config (auto-detected if omitted)')
     .option('--program <file#export>', 'commander program entry (cli source)')
+    .option('--config-type <file#export>', 'config type entry (config source)')
     .option('--out <dir>', 'output directory for the generated skill', 'skills')
     .option(
       '--model-client <kind>',
@@ -130,6 +178,40 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
     .option('--model-cli-timeout <ms>', 'per-call timeout for cli model backends (ms)')
     .action(async (opts: InitOpts) => {
       const cwd = process.cwd();
+
+      // Config source is explicit-only and built into the client (there is no
+      // separate @skillit package to install), so handle it before the
+      // detect/install path: generate → refine in place → regenerate, mirroring
+      // the cli flow.
+      if (opts.source === 'config') {
+        if (opts.configType === undefined) {
+          throw new Error(
+            'The config source requires --config-type <file#export> (e.g. ./src/config.ts#MyConfig).'
+          );
+        }
+        const parsed = parseConfigTypeSpec(opts.configType, cwd);
+        if ('error' in parsed) throw new Error(parsed.error);
+
+        const genOpts: GenerateConfigSkillOpts = {
+          configFile: parsed.configFile,
+          typeName: parsed.typeName,
+          name: skillNameFrom(await readPackageName(cwd)),
+          outDir: join(cwd, opts.out)
+        };
+        await generateConfigSkill(genOpts);
+        await runRefine({
+          source: 'config',
+          configType: opts.configType,
+          ...(opts.modelClient !== undefined ? { modelClient: opts.modelClient } : {}),
+          ...(opts.modelCliTimeout !== undefined ? { modelCliTimeout: opts.modelCliTimeout } : {}),
+          maxIterations: '5',
+          items: '5'
+        });
+        // refine wrote routing JSDoc back into the config type; regenerate so
+        // the on-disk skill reflects the freshly-written annotations.
+        await generateConfigSkill(genOpts);
+        return;
+      }
 
       // 1. Resolve nature: explicit --source wins, else detect.
       let nature: RefineSourceKind;
