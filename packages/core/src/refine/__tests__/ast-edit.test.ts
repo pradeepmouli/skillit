@@ -121,6 +121,28 @@ describe('upsertPropertyJsDocTag', () => {
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
   });
 
+  it('rebuilds a same-line property JSDoc without over-indenting or packing the declaration', () => {
+    // `/** desc */ outDir` — comment and property share a line. The indent must
+    // come from the COMMENT, not the property's (post-comment) column, and the
+    // declaration must drop to its own line rather than trail the closing `*/`.
+    const src = `export interface Cfg {\n  /** Output directory. */ outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'useWhen', 'emitting build artifacts');
+    expect(out).toContain('* Output directory.');
+    expect(out).toContain('@useWhen emitting build artifacts');
+    // Continuation lines align at the comment's indent (2 → ` * ` star at col 3),
+    // not the property's ~27-space column.
+    expect(out).toMatch(/\n {3}\* Output directory\./);
+    expect(out).not.toMatch(/ {6,}\*/); // no runaway indentation
+    // The declaration starts on its own line, not packed after `*/`.
+    expect(out).not.toMatch(/\*\/ *outDir/);
+    expect(out).toMatch(/\*\/\n {2}outDir\?: string;/);
+    // Still exactly one block, and a second upsert round-trips (declaration parses).
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+    const twice = upsertPropertyJsDocTag(out, 'Cfg', 'outDir', 'pitfalls', 'must be writable');
+    expect(twice).toContain('@pitfalls must be writable');
+    expect(twice.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
   it('targets a nested property via dot path', () => {
     const src = `export interface Cfg {\n  components: { prefix: string };\n}\n`;
     const out = upsertPropertyJsDocTag(src, 'Cfg', 'components.prefix', 'useWhen', 'namespacing');

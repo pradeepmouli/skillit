@@ -267,9 +267,11 @@ export class ConfigRefineSource implements RefineSource {
 
   /**
    * Read the grounding globs into a single token-capped implementation
-   * reference. Skips `.d.ts`, excluded dirs, and the config file itself (the
-   * model already has the type). Returns `''` when no globs are configured or
-   * nothing matches — never throws.
+   * reference. Prepends the config module's own declarations (refine tags
+   * stripped — see {@link stripRefineTags}) so preset tables/defaults/validation
+   * ground the model, then appends the matched glob files (skipping `.d.ts`,
+   * excluded dirs, and the already-included config file). Returns `''` when no
+   * globs are configured or nothing matches — never throws.
    */
   private async loadGrounding(): Promise<string> {
     const globs = this.opts.groundingGlobs;

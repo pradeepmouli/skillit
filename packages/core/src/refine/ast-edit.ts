@@ -161,7 +161,12 @@ function upsertTagOnAnchor(
   // early and corrupt the file. readJsDocTags / config extraction unescape it.
   const tagText = escapeJsDocClose(`@${tag} ${content}`);
   const jsdocNode = leadingJsDoc(anchorNode);
-  const indent = ' '.repeat(anchorNode.range().start.column);
+  // Indent from the comment when one exists: it may sit on the SAME line as the
+  // declaration (`/** x */ prop`), where the declaration's own column is the
+  // text after the comment, not the line indent — using it over-indented every
+  // rebuilt continuation line. With no comment, indent from the declaration the
+  // new block is prepended to.
+  const indent = ' '.repeat((jsdocNode ?? anchorNode).range().start.column);
 
   if (jsdocNode) {
     const block = jsdocNode.text();
@@ -182,7 +187,17 @@ function upsertTagOnAnchor(
       .join('\n');
     const merged = `/**\n${body}\n${indent} */`;
 
-    return root.commitEdits([jsdocNode.replace(merged)]);
+    // Own-line comment: a clean node replace suffices.
+    if (jsdocNode.range().end.line !== anchorNode.range().start.line) {
+      return root.commitEdits([jsdocNode.replace(merged)]);
+    }
+    // Same-line `/** x */ prop`: a node replace swaps only the comment text and
+    // leaves the declaration packed onto the closing `*/` line. Splice manually
+    // — drop the inline gap and start the declaration on its own indented line.
+    const start = jsdocNode.range().start.index;
+    const end = jsdocNode.range().end.index;
+    const tail = source.slice(end).replace(/^[^\S\n]+/, '');
+    return `${source.slice(0, start)}${merged}\n${indent}${tail}`;
   }
 
   // No existing JSDoc — create one before the anchor node. Prefix EVERY physical
