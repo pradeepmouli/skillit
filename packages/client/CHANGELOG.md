@@ -1,5 +1,54 @@
 # @skillit/client
 
+## 0.3.0
+
+### Minor Changes
+
+- [#58](https://github.com/pradeepmouli/skillit/pull/58) [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: refine TypeScript config surfaces (`--source config`)
+  - `@skillit/core` adds `ConfigRefineSource` + `extractConfigSurface`: extract a
+    config type's options (incl. nested dot-path keys) and refine their per-option
+    routing JSDoc (`@useWhen`/`@avoidWhen`/`@pitfalls`) in place via
+    `upsertPropertyJsDocTag`. The audit credits per-option config tags and
+    audit-score emits per-option `config-option` targets so the refine loop
+    converges on a config skill.
+  - `@skillit/client` wires `skillit refine --source config --config-type <file#export>`
+    and `skillit init --source config` (generate → refine in place → regenerate;
+    installs nothing — config is built into the client).
+  - `ConfigRefineSource` enriches the skill + audit context from the nearest
+    package.json (description/keywords/repository) and a sibling README, and drafts
+    a type-correct example to a sibling `<config>.example.ts` (only if absent),
+    read back as the skill's usage example. `guidance()` scopes drafting to the
+    single named option.
+  - audit-score surfaces config per-option routing coverage and the example
+    independent of dimension thresholds, so the loop documents the whole surface
+    rather than stopping once the rubric is satisfied.
+  - `--ground <glob>` (repeatable) feeds the code that CONSUMES the config to the
+    draft model as a token-capped implementation reference, so it states correct
+    runtime behavior instead of guessing from the type; without it the model is
+    instructed not to assert unverifiable runtime semantics.
+  - fixes surfaced by dogfooding against a real generic config:
+    - normalize multi-line option types to one line (mapped types can't corrupt
+      the options table);
+    - prefix every line when creating a JSDoc block with multi-line content
+      (no column-0 continuation bullets, which also broke later merges);
+    - escape the comment-close sequence in written tag content so a value
+      containing it (e.g. a `**`-glob) can't terminate the block and corrupt the
+      file; unescape on read;
+    - don't truncate per-option targets at the class cap;
+    - the rendered skill describes the config surface, not the package blurb.
+
+### Patch Changes
+
+- [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+  - fix(client): isolate the copilot model backend with an empty tool whitelist
+  - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
+  - fix(client): extract drafted annotation from <answer> tags
+  - fix(client): forbid Insight-block decoration in the claude refine backend
+- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2), [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186)]:
+  - @skillit/cli@0.4.1
+  - @skillit/core@1.6.0
+  - @skillit/mcp@0.3.1
+
 ## 0.2.0
 
 ### Minor Changes

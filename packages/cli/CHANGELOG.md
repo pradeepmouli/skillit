@@ -1,5 +1,17 @@
 # @to-skills/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+  - fix(client): isolate the copilot model backend with an empty tool whitelist
+  - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
+  - fix(client): extract drafted annotation from <answer> tags
+  - fix(client): forbid Insight-block decoration in the claude refine backend
+- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2), [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186)]:
+  - @skillit/core@1.6.0
+
 ## 0.4.0
 
 ### Minor Changes
