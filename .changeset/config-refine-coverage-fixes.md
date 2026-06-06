@@ -18,3 +18,10 @@ Two refinements surfaced by review of the config refine pipeline:
   score plateau stop early with those dimensions still failing. It now
   round-robins across tags so each iteration spreads over all still-failing
   dimensions. With one target per group this is identical to the old order.
+- The refine loop's plateau check stopped on any flat-score iteration, but
+  per-option coverage targets are score-neutral once the routing thresholds
+  pass — so wide surfaces halted before every option was documented. The check
+  is now coverage-aware: it only plateaus when the score is flat AND the
+  available-work backlog is not shrinking, so score-neutral completeness work
+  runs to exhaustion (bounded by `maxIterations`) while the genuinely-stuck case
+  still stops early.

@@ -98,6 +98,40 @@ describe('refineSkill', () => {
     expect(result.iterations).toHaveLength(1);
   });
 
+  it('does not plateau while a score-neutral coverage backlog is still shrinking', async () => {
+    // Wide config surface: the score is flat (routing thresholds already pass)
+    // but each iteration tags more options, so the available-work pool shrinks.
+    // The loop must keep documenting options instead of stopping on plateau.
+    let call = 0;
+    const remainingByCall = [4, 3, 2, 1, 0]; // untagged options at each score
+    const score = (): SkillJudgeEstimate => {
+      const remaining = remainingByCall[Math.min(call++, remainingByCall.length - 1)]!;
+      const targets = Array.from({ length: remaining }, (_, i) => ({
+        file: 'c.ts',
+        name: `opt_${i}`,
+        kind: 'function' as const
+      }));
+      return {
+        grade: 'B',
+        total: 80,
+        percentage: 66.7,
+        improvements:
+          remaining > 0
+            ? [{ suggestion: 'Add @useWhen …', points: 2, dimension: 'D2', targets }]
+            : [],
+        dimensions: {} as SkillJudgeEstimate['dimensions']
+      };
+    };
+    const opts = makeOptions(score, {
+      maxIterations: 10,
+      source: makeSource(Array.from({ length: 12 }, () => baseSkill()))
+    });
+    const result = await refineSkill(opts);
+    // Reaches full coverage (no items left), not an early score plateau.
+    expect(result.stoppedReason).toBe('no-improvements');
+    expect(result.iterations.length).toBeGreaterThan(1);
+  });
+
   it('calls onIteration callback each iteration', async () => {
     let call = 0;
     const onIteration = vi.fn();

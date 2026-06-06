@@ -25,6 +25,17 @@ function defaultScore(source: RefineOptions['source']): ScoreSkill {
   };
 }
 
+/**
+ * Total work items currently available across all improvements (uncapped), used
+ * as the loop's "backlog" signal. Reuses {@link selectWorkItems} so it counts
+ * exactly what would become work — i.e. improvements with a parseable tag and
+ * targets. Shrinks as config options get tagged; stays flat when the model is
+ * stuck re-drafting the same still-failing targets.
+ */
+function countAvailableWork(improvements: SkillJudgeEstimate['improvements']): number {
+  return selectWorkItems(improvements, Number.POSITIVE_INFINITY).length;
+}
+
 export async function refineSkill(
   opts: RefineOptions & { scoreSkill?: ScoreSkill }
 ): Promise<RefineResult> {
@@ -49,10 +60,22 @@ export async function refineSkill(
   }
 
   let prevTotal = estimate.total;
+  let prevAvailable = countAvailableWork(estimate.improvements);
 
   for (let i = 0; i < maxIterations; i++) {
-    // Plateau: if this isn't the last allowed iteration and score hasn't improved, stop early.
-    if (i > 0 && i < maxIterations - 1 && estimate.total <= prevTotal) {
+    const available = countAvailableWork(estimate.improvements);
+    // Plateau: stop early when the score has stalled — but NOT while we're still
+    // burning down a backlog of work. Per-option config coverage targets become
+    // score-neutral once the routing thresholds (W7/W8/W9) pass, yet each
+    // iteration still documents more options; a pure score check would halt that
+    // mid-surface. Only plateau when the score is flat AND the available-work
+    // pool is not shrinking (the genuinely-stuck case the check exists to catch).
+    if (
+      i > 0 &&
+      i < maxIterations - 1 &&
+      estimate.total <= prevTotal &&
+      available >= prevAvailable
+    ) {
       return finished('plateau', skill, estimate, iterations, guidance);
     }
 
@@ -104,6 +127,7 @@ export async function refineSkill(
 
     await source.applyFixes(fixes);
     prevTotal = estimate.total;
+    prevAvailable = available;
     skill = await source.extract();
     estimate = scoreSkill(skill);
 
