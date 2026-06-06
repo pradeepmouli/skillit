@@ -153,7 +153,12 @@ describe('ConfigRefineSource grounding', () => {
   it('feeds matched grounding files into guidance and switches to the grounded directive', async () => {
     tmp = mkdtempSync(join(tmpdir(), 'config-source-'));
     const file = join(tmp, 'config.ts');
-    writeFileSync(file, `export interface Cfg {\n  include?: string[];\n}`, 'utf8');
+    writeFileSync(
+      file,
+      `export interface Cfg {\n  /** A glob. */\n  include?: string[];\n}\n` +
+        `export const PRESET_OVERRIDES = { Select: { controlled: true } };`,
+      'utf8'
+    );
     writeFileSync(
       join(tmp, 'filter.ts'),
       `export function matchesAnyPattern(p: string[]) {\n  // empty array means MATCH ALL\n  return !p || p.length === 0;\n}`,
@@ -167,10 +172,15 @@ describe('ConfigRefineSource grounding', () => {
     await source.extract();
     const g = source.guidance();
     expect(g).toContain('IMPLEMENTATION REFERENCE');
-    expect(g).toContain('empty array means MATCH ALL'); // real behavior is now in context
+    expect(g).toContain('empty array means MATCH ALL'); // consumer behavior in context
     expect(g).toMatch(/GROUND every runtime-behavior claim in the IMPLEMENTATION REFERENCE/);
-    // The config file itself is excluded (the model already has the type).
-    expect(g).not.toContain('export interface Cfg');
+    // The config module's NON-type declarations (e.g. preset tables) are now
+    // included so the model can be accurate about them.
+    expect(g).toContain('PRESET_OVERRIDES');
+    expect(g).toContain('Select: { controlled: true }');
+    // ...but its JSDoc is stripped (the routing tags we accumulate are docs, not
+    // implementation, and must not be fed back as grounding).
+    expect(g).not.toContain('A glob.');
   });
 
   it('uses the conservative directive when no grounding is configured', async () => {

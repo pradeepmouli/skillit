@@ -276,8 +276,19 @@ export class ConfigRefineSource implements RefineSource {
     if (!globs?.length) return '';
 
     const configAbs = resolve(this.opts.configFile);
-    const seen = new Set<string>();
+    const seen = new Set<string>([configAbs]);
     const parts: string[] = [];
+
+    // The config module itself often holds non-type declarations the model
+    // needs to be accurate — preset tables, defaults, `defineConfig`/validation
+    // (e.g. z2f's `SHADCN_OVERRIDES`). Include it (JSDoc stripped, so the routing
+    // tags we accumulate across iterations aren't fed back as "implementation"),
+    // not just the external consuming globs.
+    const configSource = await readFile(this.opts.configFile, 'utf8').catch(() => '');
+    const configDecls = stripJsDocBlocks(configSource).trim();
+    if (configDecls)
+      parts.push(`// ${this.opts.configFile} (config module declarations)\n${configDecls}`);
+
     for (const pattern of globs) {
       let matches: AsyncIterable<string>;
       try {
@@ -290,7 +301,7 @@ export class ConfigRefineSource implements RefineSource {
       }
       for await (const file of matches) {
         const abs = resolve(file);
-        if (abs === configAbs || seen.has(abs)) continue;
+        if (seen.has(abs)) continue; // config file is pre-seeded above
         seen.add(abs);
         const content = await readFile(file, 'utf8').catch(() => '');
         if (content.trim()) parts.push(`// ${file}\n${content.trim()}`);
@@ -311,6 +322,17 @@ export class ConfigRefineSource implements RefineSource {
     }
     return undefined;
   }
+}
+
+/**
+ * Remove JSDoc (`/**` … `*​/`) blocks from source. Used to feed the config
+ * module as grounding without its doc comments — chiefly the routing tags this
+ * source accumulates across iterations, which are documentation, not the
+ * implementation the model should ground runtime claims in. Non-greedy, so it
+ * stops at the real terminator; our escaped `*\/` inside content is not a match.
+ */
+function stripJsDocBlocks(source: string): string {
+  return source.replace(/\/\*\*[\s\S]*?\*\//g, '');
 }
 
 /** Strip a leading `@scope/` from a package name. */
