@@ -9,6 +9,9 @@ globs (the consuming code) and explicitly skipped the config file. But config
 modules routinely hold the non-type declarations the model needs to be
 accurate — preset/override tables, defaults, `defineConfig`/validation (e.g.
 z2f's `SHADCN_OVERRIDES`). Excluding the config file forced the model to guess
-those runtime values, producing factually-wrong routing prose. The config
-module is now prepended to grounding with its JSDoc stripped (so the routing
-tags accumulated across refine iterations aren't fed back as "implementation").
+those runtime values, producing factually-wrong routing prose.
+
+The config module is now prepended to grounding, with only the refine routing
+tags this source writes back across iterations stripped out (`stripRefineTags`)
+— so our own accumulated annotations aren't fed back as "implementation", while
+hand-authored docs (the real runtime-behavior grounding) are preserved.
