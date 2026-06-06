@@ -36,14 +36,24 @@ export interface CliRefineSourceOptions {
 export class CliRefineSource implements RefineSource {
   constructor(private readonly opts: CliRefineSourceOptions) {}
 
-  /** Maps a command name to its options-interface name, e.g. `add-remote` → `AddRemoteOptions`, `db:migrate` → `DbMigrateOptions`. */
-  private interfaceName(command: string): string {
+  /**
+   * Candidate option-interface names for a command, in priority order.
+   *
+   * The documented convention is `<Command>Options` (e.g. `add-remote` →
+   * `AddRemoteOptions`, `db:migrate` → `DbMigrateOptions`), but real consumers —
+   * including skillit's own CLI — commonly name these `<Command>Opts` or
+   * `<Command>CommandOpts` (e.g. `init` → `InitOpts`, `refine` →
+   * `RefineCommandOpts`). We probe all three and use the first that a source
+   * file actually declares, so a non-conventional consumer still gets matched
+   * instead of silently skipped (or colliding with an unrelated `XOptions`).
+   */
+  private interfaceNameCandidates(command: string): string[] {
     const pascal = command
       .split(/[-_:.\s]+/)
       .filter((part) => part.length > 0)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join('');
-    return `${pascal}Options`;
+    return [`${pascal}Options`, `${pascal}Opts`, `${pascal}CommandOpts`];
   }
 
   async extract(): Promise<ExtractedSkill> {
@@ -52,8 +62,8 @@ export class CliRefineSource implements RefineSource {
 
     const configSurfaces: ExtractedConfigSurface[] = [];
     for (const surface of surfaces) {
-      const iface = this.interfaceName(surface.name);
-      const tags = this.readTagsAcross(iface, sources);
+      const candidates = this.interfaceNameCandidates(surface.name);
+      const tags = this.readTagsAcross(candidates, sources);
 
       // Key the correlation-input surface by the COMMAND name (not the
       // interface name) so `extractCliSkill`'s `<command>`/`<command>options`
@@ -113,11 +123,20 @@ export class CliRefineSource implements RefineSource {
     const sources = await this.readSources();
 
     for (const fix of fixes) {
-      const iface = this.interfaceName(fix.toolName);
-      const file = this.findInterfaceFile(iface, sources);
-      if (!file) {
+      const candidates = this.interfaceNameCandidates(fix.toolName);
+      let iface: string | undefined;
+      let file: string | undefined;
+      for (const candidate of candidates) {
+        const found = this.findInterfaceFile(candidate, sources);
+        if (found) {
+          iface = candidate;
+          file = found;
+          break;
+        }
+      }
+      if (file === undefined || iface === undefined) {
         process.stderr.write(
-          `[skillit] no ${iface} interface for command '${fix.toolName}'; skipped ${fix.tag}\n`
+          `[skillit] no options interface (${candidates.join(', ')}) for command '${fix.toolName}'; skipped ${fix.tag}\n`
         );
         continue;
       }
@@ -132,18 +151,25 @@ export class CliRefineSource implements RefineSource {
     }
   }
 
-  /** Reads tags for an interface across every globbed source file, first match wins. */
+  /**
+   * Reads tags for the first candidate interface that a globbed source file
+   * declares with at least one tag. Candidates are tried in priority order so
+   * the documented `<Command>Options` name wins over the `Opts`/`CommandOpts`
+   * fallbacks when more than one is present.
+   */
   private readTagsAcross(
-    iface: string,
+    candidates: string[],
     sources: Map<string, string>
   ): Partial<Record<RefineTag, string>> {
-    for (const src of sources.values()) {
-      if (!fileDeclaresInterface(src, iface)) {
-        continue;
-      }
-      const tags = readOptionsTags(iface, src);
-      if (Object.keys(tags).length > 0) {
-        return tags;
+    for (const iface of candidates) {
+      for (const src of sources.values()) {
+        if (!fileDeclaresInterface(src, iface)) {
+          continue;
+        }
+        const tags = readOptionsTags(iface, src);
+        if (Object.keys(tags).length > 0) {
+          return tags;
+        }
       }
     }
     return {};

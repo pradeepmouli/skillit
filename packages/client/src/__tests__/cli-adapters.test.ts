@@ -7,10 +7,35 @@ describe('claudeAdapter', () => {
   it('maps draft role to the drafter model and review role to the reviewer model', () => {
     const draft = claudeAdapter.invocation('draft', 'PROMPT');
     expect(draft.cmd).toBe('claude');
-    expect(draft.args).toEqual(['-p', '--output-format', 'json', '--model', DRAFTER]);
+    expect(draft.args).toEqual([
+      '-p',
+      '--output-format',
+      'json',
+      '--model',
+      DRAFTER,
+      '--strict-mcp-config',
+      '--disallowedTools',
+      'Edit,Write,MultiEdit,NotebookEdit,Bash,Task,WebFetch,WebSearch',
+      '--settings',
+      '{"outputStyle":"default"}',
+      '--append-system-prompt',
+      'CRITICAL: Output ONLY the requested content. Never add "★ Insight" blocks, horizontal-rule (─) decorations, section headers, preambles, or meta-commentary.'
+    ]);
     expect(draft.input).toBe('PROMPT');
     const review = claudeAdapter.invocation('review', 'PROMPT');
     expect(review.args).toContain(REVIEWER);
+  });
+
+  it('isolates claude as a pure generator: denies side-effecting tools, overrides style, forbids decoration', () => {
+    const { args } = claudeAdapter.invocation('draft', 'PROMPT');
+    expect(args).toContain('--strict-mcp-config');
+    const disallowed = args[args.indexOf('--disallowedTools') + 1] ?? '';
+    for (const tool of ['Edit', 'Write', 'NotebookEdit', 'Bash']) {
+      expect(disallowed).toContain(tool);
+    }
+    expect(args).toContain('{"outputStyle":"default"}');
+    const sysPrompt = args[args.indexOf('--append-system-prompt') + 1] ?? '';
+    expect(sysPrompt).toContain('Insight');
   });
 
   it('extracts result from the claude json envelope', () => {
@@ -72,9 +97,14 @@ describe('copilotAdapter', () => {
   it('pipes the prompt via stdin (not argv) so untrusted content stays out of argv', () => {
     const inv = copilotAdapter.invocation('draft', 'PROMPT');
     expect(inv.cmd).toBe('copilot');
-    expect(inv.args).toEqual(['--output-format', 'json', '--no-color']);
+    expect(inv.args).toEqual(['--output-format', 'json', '--no-color', '--available-tools=']);
     expect(inv.args).not.toContain('PROMPT');
     expect(inv.input).toBe('PROMPT');
+  });
+
+  it('isolates copilot with an empty tool whitelist so it cannot edit files or run shell', () => {
+    const inv = copilotAdapter.invocation('draft', 'PROMPT');
+    expect(inv.args).toContain('--available-tools=');
   });
 
   it('extracts the last assistant.message content from the jsonl stream, skipping deltas/result', () => {

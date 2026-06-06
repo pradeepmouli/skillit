@@ -41,6 +41,20 @@ export interface InitDeps {
   runRefine?(opts: RefineCommandOpts): Promise<void>;
 }
 
+/**
+ * @pitfalls - NEVER pass both `program` and `helpTexts` to `extractCliSkill` — `helpTexts` is silently ignored when `program` is present, producing incomplete output with no warning
+ * - NEVER omit `configSurfaces` when typed config interfaces exist — `correlateFlags` has nothing to merge from, so `@useWhen`/`@avoidWhen`/`@never` JSDoc tags are lost from the generated skill
+ * - NEVER pass a non-Commander program object to `introspectCommander` — unrecognized shapes return an empty array without throwing, silently producing a blank skill
+ * - NEVER rely on `parseHelpOutput` for multi-line option descriptions — only the first line after the two-space separator is captured; continuation lines are dropped
+ * - NEVER assume `correlateFlags` name matching works when config interface names deviate from the `<commandName>Options` convention — mismatches produce unmerged CLI surfaces with no diagnostic
+ * - NEVER export a factory that calls `.parse()` or `.parseAsync()` for `loadProgram` — side effects cause the process to exit during skill extraction before writing completes
+ * - NEVER omit `installTargets` in `writeCliSkill` when you want the bundled `skillit-cli-docs` guidance skill co-installed — it is only written when at least one install target is provided
+ * - NEVER skip `runCliAudit` before rendering — missing descriptions, undocumented env vars, and absent usage strings are not surfaced unless the audit runs explicitly
+ * @useWhen bootstrapping a new project skill from scratch — when you want skillit to auto-detect the project type (cli, mcp, or typedoc), install the right @skillit package, and generate + refine an initial SKILL.md in one command
+ * @avoidWhen - Your package exposes no CLI entry point — use `@skillit/typedoc` for pure TypeScript API documentation instead
+ * - You have a non-Commander, non-yargs CLI with no accessible `--help` output to parse
+ * - You only need to document TypeScript types, functions, or classes with no command-line option metadata
+ */
 interface InitOpts {
   source?: string;
   program?: string;

@@ -82,7 +82,24 @@ Pass ${SOURCE_FORM} to choose one.`
   return { kind };
 }
 
-/** Parsed options for the `refine` action / {@link runRefineCommand}. */
+/**
+ * Parsed options for the `refine` action / {@link runRefineCommand}.
+ * @pitfalls - **`introspectCommander`** — Never pass a Commander program before its subcommands have been registered; the result will be an empty array with no warning, silently producing a skill with no commands.
+ * - **`introspectCommander`** — Never use with yargs, oclif, minimist, or other non-Commander frameworks; it reads Commander's internal `.commands` array which does not exist on other program objects.
+ * - **`parseHelpOutput`** — Never use when you have access to the Commander program object; help-text parsing is lossy — default values, variadic flags, and required/optional distinctions are inferred heuristically and may be wrong.
+ * - **`parseHelpOutput`** — Never expect multi-line option descriptions to be captured; the parser treats the first indented line as the full description and silently discards continuation lines.
+ * - **`correlateFlags`** — Never rely on option name matching when pairing `parseHelpOutput` output with a typed config interface; help parsing preserves raw kebab-case names (e.g. `output-dir`) while TypeDoc extracts camelCase properties (`outputDir`) — correlation will silently produce no enrichment.
+ * - **`extractCliSkill`** — Never pass both `program` and `helpTexts`; `program` silently takes precedence and the entire `helpTexts` map is ignored without any warning or error.
+ * - **`extractCliSkill`** — Never call from a file that invokes `program.parse(process.argv)` at import time; Commander will consume `process.argv` (and may exit) before the skill extraction pipeline can run.
+ * - **`loadProgram`** — Never omit the `#exportName` separator in `opts.program` (e.g. pass `"./cli.js"` instead of `"./cli.js#buildProgram"`); the function throws immediately without attempting auto-discovery from `package.json`.
+ * @useWhen - Your Commander `.description()` reads as a bare verb or repeats the command name with no behavioral context (e.g., `"run"` instead of `"Run the build pipeline and emit artifacts to dist/"`)
+ * - An `.option()` description states what the flag is named but not what it changes — the `--help` output leaves the caller guessing at the effect
+ * - A positional argument added via `.argument()` has no expected-format hint, leaving callers unsure whether to pass a file path, a glob, a semver string, or a named identifier
+ * - An option that accepts an environment-variable override has no mention of that env var in its description, so the config surface is invisible in `--help` output
+ * @avoidWhen - `introspectCommander` — the Commander `program` object is unavailable at runtime; use `parseHelpOutput` with raw `--help` text instead
+ * - `parseHelpOutput` — you have direct access to the Commander `program` object; `introspectCommander` captures default values, variadic flags, and required/optional distinctions that help-text parsing misses
+ * - `correlateFlags` — no TypeDoc-extracted `configSurfaces` are available; without a matching config surface the call is a no-op and no JSDoc metadata is merged into CLI options
+ */
 export interface RefineCommandOpts {
   source?: string;
   program?: string;

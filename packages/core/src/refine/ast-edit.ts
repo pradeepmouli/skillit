@@ -114,17 +114,33 @@ export function upsertJsDocTag(
 
   if (jsdocNode) {
     const block = jsdocNode.text();
-    if (block.includes(tagText)) return source;
+    // Idempotent per tag: skip if the tag is already present. We check the tag
+    // NAME on a JSDoc line, not the exact `tagText` — multi-line content is
+    // stored with ` * ` line prefixes, so a literal `tagText` with bare
+    // newlines would never match and re-runs would append duplicate tags.
+    if (block.match(new RegExp(`(^|\\n)\\s*\\*?\\s*@${tag}\\b`))) return source;
 
-    // Determine the indent of the closing */ line
-    const closeOffset = block.lastIndexOf('*/');
-    const beforeClose = block.slice(0, closeOffset);
-    // The whitespace prefix of the closing `*/` line
-    const linePrefix = beforeClose.match(/([^\n]*)$/)?.[1] ?? ' ';
+    // Normalize the existing block into its inner content lines, then rebuild
+    // a well-formed multi-line block with the new tag appended. This handles
+    // both multi-line blocks and single-line `/** text */` comments — the old
+    // closing-`*/` indent heuristic mis-fired on single-line blocks (the
+    // "indent" capture swallowed the whole comment body, producing malformed
+    // duplicate `/** ... ` headers with no closing `*/`).
+    const indent = ' '.repeat(anchorNode.range().start.column);
+    const innerLines = block
+      .replace(/^\/\*\*/, '')
+      .replace(/\s*\*\/\s*$/, '')
+      .split('\n')
+      .map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+    while (innerLines.length > 0 && innerLines[0] === '') innerLines.shift();
+    while (innerLines.length > 0 && innerLines[innerLines.length - 1] === '') innerLines.pop();
 
-    const merged =
-      block.slice(0, closeOffset - linePrefix.length) +
-      `${linePrefix}* ${tagText}\n${linePrefix}*/`;
+    // Prefix every physical line (including multi-line tag content) with ` * `.
+    const allLines = [...innerLines, ...tagText.split('\n')];
+    const body = allLines
+      .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+      .join('\n');
+    const merged = `/**\n${body}\n${indent} */`;
 
     return root.commitEdits([jsdocNode.replace(merged)]);
   }
@@ -156,15 +172,36 @@ export function readJsDocTags(
   if (!jsdocNode) return {};
 
   const block = jsdocNode.text();
-  const result: Partial<Record<RefineTag, string>> = {};
 
-  for (const tag of REFINE_TAGS) {
-    const pattern = new RegExp(`@${tag}\\s+(.+?)(?:\\s*\\n|\\s*\\*\\/|$)`, 'm');
-    const hit = block.match(pattern);
-    if (hit) {
-      result[tag] = hit[1]?.trim() ?? '';
+  // Strip the block to inner content lines (no `/** */` wrapper, no ` * `
+  // prefixes), then walk them: a known `@tag` line opens a capture and the
+  // following non-tag lines are its continuation. This keeps multi-line tag
+  // content (e.g. bullet lists) intact instead of truncating at the first
+  // newline — otherwise a refined `@pitfalls` with several bullets would lose
+  // everything past line one when re-extracted into SKILL.md.
+  const innerLines = block
+    .replace(/^\/\*\*/, '')
+    .replace(/\s*\*\/\s*$/, '')
+    .split('\n')
+    .map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+
+  const collected: Partial<Record<RefineTag, string[]>> = {};
+  let current: RefineTag | undefined;
+  for (const line of innerLines) {
+    const tagMatch = line.match(/^@(\w+)\s?(.*)$/);
+    const matchedTag = tagMatch ? REFINE_TAGS.find((t) => t === tagMatch[1]) : undefined;
+    if (matchedTag) {
+      current = matchedTag;
+      collected[current] = [tagMatch![2] ?? ''];
+    } else if (current) {
+      collected[current]!.push(line);
     }
   }
 
+  const result: Partial<Record<RefineTag, string>> = {};
+  for (const tag of REFINE_TAGS) {
+    const lines = collected[tag];
+    if (lines) result[tag] = lines.join('\n').trim();
+  }
   return result;
 }
