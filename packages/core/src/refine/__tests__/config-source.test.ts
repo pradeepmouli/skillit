@@ -143,6 +143,9 @@ describe('ConfigRefineSource.guidance', () => {
     expect(g).toMatch(/@example/);
     expect(g).toContain('`outDir`: string');
     expect(g).toContain("`mode`: 'a' | 'b'");
+    // Grounding directive: forbid inventing unverifiable runtime semantics.
+    expect(g).toMatch(/GROUND every claim/);
+    expect(g).toMatch(/do NOT assert runtime behavior you cannot verify/);
   });
 });
 

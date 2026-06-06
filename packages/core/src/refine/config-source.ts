@@ -165,10 +165,11 @@ export class ConfigRefineSource implements RefineSource {
 
   /**
    * Drafting conventions passed to the model each iteration. Scopes every
-   * routing tag to the single named option (so the model writes option-specific
-   * guidance instead of whole-config advice repeated across keys), and tells it
-   * how to draft the `@example` config file. Built from the cached surface that
-   * {@link extract} populates first.
+   * routing tag to the single named option, constrains claims to what the type
+   * and provided context can support (the model sees the type, NOT the code that
+   * consumes the config, so unconstrained drafting invents wrong runtime
+   * semantics), and tells it how to draft the `@example` config file. Built from
+   * the cached surface that {@link extract} populates first.
    */
   guidance(): string {
     const optionList = (this.surface?.options ?? [])
@@ -179,7 +180,8 @@ export class ConfigRefineSource implements RefineSource {
       `You are documenting the individual options of the TypeScript configuration object \`${typeName}\`.`,
       `Each work item's "Tool" is ONE option, named by its dot-path key (e.g. \`outDir\`, \`components.prefix\`) — except an @example work item, whose "Tool" is the config type \`${typeName}\` itself.`,
       `For @useWhen / @avoidWhen / @pitfalls: write guidance SPECIFIC to that single option — when to set it (and to what kind of value), when to leave it unset, and footguns unique to its value or interactions. Do NOT describe the configuration type as a whole, the annotate-vs-\`defineConfig()\` choice, or anything that applies to every option; never repeat the same point across options.`,
-      `For @example: output a COMPLETE, type-correct example configuration FILE — import statements plus a default export — saved verbatim as a sibling \`*.config.example.ts\` that must compile. Prefer the project's \`defineConfig()\` helper if one exists, otherwise annotate the export with \`${typeName}\`. Use realistic values for required options and a few common optional ones. Output ONLY the file source: no prose, no markdown, no code fences.`,
+      `GROUND every claim in the option's TYPE and the documentation provided to you. You can see the type, not the code that reads this config — so do NOT assert runtime behavior you cannot verify: whether an empty array/object means "all" or "none", whether an invalid value throws or is silently ignored, what a boolean flag actually toggles, or how two options interact at runtime. If a behavior is not evidenced by the type or the docs, omit it or phrase it as a type-level fact ("\`mode\` accepts 'submit' | 'auto-save'"). A confidently wrong "NEVER" is worse than no pitfall — prefer fewer, verifiable points over speculative ones.`,
+      `For @example: output a COMPLETE, type-correct example configuration FILE — import statements plus a default export — saved verbatim as a sibling \`*.config.example.ts\` that must compile. Import \`defineConfig\`/\`${typeName}\` from the package by its published name ONLY if the example lives outside that package; if it sits inside the package's own \`src\`, import from the local source entrypoint (a relative path) so the self-import does not resolve to an unbuilt \`dist\`. Use realistic values for required options and a few common optional ones. Output ONLY the file source: no prose, no markdown, no code fences.`,
       `Options (key: type):\n${optionList}`
     ].join('\n\n');
   }
