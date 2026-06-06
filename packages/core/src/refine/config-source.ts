@@ -1,9 +1,10 @@
 // packages/core/src/refine/config-source.ts
 import { existsSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
+import { glob, readFile, writeFile } from 'node:fs/promises';
+import { basename, dirname, join, resolve } from 'node:path';
 import { extractConfigSurface } from '../config-extract.js';
 import { parseReadme } from '../readme-parser.js';
+import { truncateToTokenBudget } from '../tokens.js';
 import type { AuditContext, ParsedReadme } from '../audit-types.js';
 import type { ExtractedConfigSurface } from '../config-types.js';
 import type { ExtractedSkill } from '../types.js';
@@ -19,7 +20,20 @@ export interface ConfigRefineSourceOptions {
   name?: string;
   /** Skill description (defaults to the package.json description). */
   description?: string;
+  /**
+   * Globs pointing at the code that CONSUMES this config (e.g. the CLI/filter
+   * logic). Their contents are fed to the draft model as an implementation
+   * reference so it can state CORRECT runtime behavior instead of guessing it
+   * from the type alone. Token-capped. Without grounding the model is told not
+   * to assert unverifiable runtime semantics.
+   */
+  groundingGlobs?: string[];
 }
+
+/** Token cap for the implementation-reference grounding fed to the model. */
+const GROUNDING_TOKEN_CAP = 8000;
+
+const EXCLUDED_GROUNDING_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage']);
 
 /** Package metadata + parsed README discovered alongside the config file. */
 interface ConfigMetadata {
@@ -54,6 +68,8 @@ export class ConfigRefineSource implements RefineSource {
   private metadata: ConfigMetadata = {};
   /** Cached surface, populated by {@link extract}; read by {@link guidance}. */
   private surface: ExtractedConfigSurface | undefined;
+  /** Cached implementation-reference grounding, populated by {@link extract}. */
+  private grounding = '';
 
   constructor(private readonly opts: ConfigRefineSourceOptions) {}
 
@@ -66,6 +82,7 @@ export class ConfigRefineSource implements RefineSource {
       );
     }
     this.surface = surface;
+    this.grounding = await this.loadGrounding();
 
     const meta = await this.loadMetadata();
 
@@ -180,9 +197,16 @@ export class ConfigRefineSource implements RefineSource {
       `You are documenting the individual options of the TypeScript configuration object \`${typeName}\`.`,
       `Each work item's "Tool" is ONE option, named by its dot-path key (e.g. \`outDir\`, \`components.prefix\`) — except an @example work item, whose "Tool" is the config type \`${typeName}\` itself.`,
       `For @useWhen / @avoidWhen / @pitfalls: write guidance SPECIFIC to that single option — when to set it (and to what kind of value), when to leave it unset, and footguns unique to its value or interactions. Do NOT describe the configuration type as a whole, the annotate-vs-\`defineConfig()\` choice, or anything that applies to every option; never repeat the same point across options.`,
-      `GROUND every claim in the option's TYPE and the documentation provided to you. You can see the type, not the code that reads this config — so do NOT assert runtime behavior you cannot verify: whether an empty array/object means "all" or "none", whether an invalid value throws or is silently ignored, what a boolean flag actually toggles, or how two options interact at runtime. If a behavior is not evidenced by the type or the docs, omit it or phrase it as a type-level fact ("\`mode\` accepts 'submit' | 'auto-save'"). A confidently wrong "NEVER" is worse than no pitfall — prefer fewer, verifiable points over speculative ones.`,
+      this.grounding
+        ? `GROUND every runtime-behavior claim in the IMPLEMENTATION REFERENCE below (the actual code that consumes this config) and the option's type. State behavior the code actually exhibits — e.g. what an empty array/object means, whether an invalid value throws or is silently ignored, what a flag toggles, how options interact. Do NOT contradict the reference, and do NOT assert behavior absent from both the reference and the type; omit it instead. A confidently wrong "NEVER" is worse than no pitfall.`
+        : `GROUND every claim in the option's TYPE and the documentation provided to you. You can see the type, not the code that reads this config — so do NOT assert runtime behavior you cannot verify: whether an empty array/object means "all" or "none", whether an invalid value throws or is silently ignored, what a boolean flag actually toggles, or how two options interact at runtime. If a behavior is not evidenced by the type or the docs, omit it or phrase it as a type-level fact ("\`mode\` accepts 'submit' | 'auto-save'"). A confidently wrong "NEVER" is worse than no pitfall — prefer fewer, verifiable points over speculative ones.`,
       `For @example: output a COMPLETE, type-correct example configuration FILE — import statements plus a default export — saved verbatim as a sibling \`*.config.example.ts\` that must compile. Import \`defineConfig\`/\`${typeName}\` from the package by its published name ONLY if the example lives outside that package; if it sits inside the package's own \`src\`, import from the local source entrypoint (a relative path) so the self-import does not resolve to an unbuilt \`dist\`. Use realistic values for required options and a few common optional ones. Output ONLY the file source: no prose, no markdown, no code fences.`,
-      `Options (key: type):\n${optionList}`
+      `Options (key: type):\n${optionList}`,
+      ...(this.grounding
+        ? [
+            `IMPLEMENTATION REFERENCE (the code that consumes this config — ground runtime-behavior claims in it):\n${this.grounding}`
+          ]
+        : [])
     ].join('\n\n');
   }
 
@@ -239,6 +263,41 @@ export class ConfigRefineSource implements RefineSource {
     const dir = dirname(this.opts.configFile);
     const base = basename(this.opts.configFile).replace(/\.[cm]?tsx?$/, '');
     return join(dir, `${base}.example.ts`);
+  }
+
+  /**
+   * Read the grounding globs into a single token-capped implementation
+   * reference. Skips `.d.ts`, excluded dirs, and the config file itself (the
+   * model already has the type). Returns `''` when no globs are configured or
+   * nothing matches — never throws.
+   */
+  private async loadGrounding(): Promise<string> {
+    const globs = this.opts.groundingGlobs;
+    if (!globs?.length) return '';
+
+    const configAbs = resolve(this.opts.configFile);
+    const seen = new Set<string>();
+    const parts: string[] = [];
+    for (const pattern of globs) {
+      let matches: AsyncIterable<string>;
+      try {
+        matches = glob(pattern, {
+          exclude: (f) =>
+            f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_GROUNDING_DIRS.has(seg))
+        });
+      } catch {
+        continue; // bad pattern — skip
+      }
+      for await (const file of matches) {
+        const abs = resolve(file);
+        if (abs === configAbs || seen.has(abs)) continue;
+        seen.add(abs);
+        const content = await readFile(file, 'utf8').catch(() => '');
+        if (content.trim()) parts.push(`// ${file}\n${content.trim()}`);
+      }
+    }
+    if (parts.length === 0) return '';
+    return truncateToTokenBudget(parts.join('\n\n'), GROUNDING_TOKEN_CAP);
   }
 
   /** Nearest ancestor directory of the config file that holds a package.json. */

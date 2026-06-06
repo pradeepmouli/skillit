@@ -22,6 +22,10 @@ feat: refine TypeScript config surfaces (`--source config`)
 - audit-score surfaces config per-option routing coverage and the example
   independent of dimension thresholds, so the loop documents the whole surface
   rather than stopping once the rubric is satisfied.
+- `--ground <glob>` (repeatable) feeds the code that CONSUMES the config to the
+  draft model as a token-capped implementation reference, so it states correct
+  runtime behavior instead of guessing from the type; without it the model is
+  instructed not to assert unverifiable runtime semantics.
 - fixes surfaced by dogfooding against a real generic config:
   - normalize multi-line option types to one line (mapped types can't corrupt
     the options table);

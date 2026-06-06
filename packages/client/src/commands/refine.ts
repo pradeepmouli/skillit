@@ -120,6 +120,7 @@ export interface RefineCommandOpts {
   source?: string;
   program?: string;
   configType?: string;
+  ground?: string[];
   mcp?: string;
   server?: string;
   overlay?: string;
@@ -212,7 +213,8 @@ export async function runRefineCommand(opts: RefineCommandOpts): Promise<void> {
     source = new ConfigRefineSource({
       configFile: parsed.configFile,
       typeName: parsed.typeName,
-      name: parsed.typeName
+      name: parsed.typeName,
+      ...(opts.ground?.length ? { groundingGlobs: opts.ground } : {})
     });
     reportInPlace = true;
   } else {
@@ -285,6 +287,12 @@ export function buildRefineCommand(): Command {
     .option('--source <kind>', 'cli | mcp | typedoc | config (auto-detected if omitted)')
     .option('--program <file#export>', 'commander program entry (cli source)')
     .option('--config-type <file#export>', 'config type entry (config source)')
+    .option(
+      '--ground <glob>',
+      'glob(s) of code that consumes the config — fed to the model so runtime claims are grounded (repeatable; config source)',
+      (val: string, prev: string[]) => [...prev, val],
+      [] as string[]
+    )
     .option('--mcp <path>', 'path to mcp.json or MCP config file')
     .option('--server <name>', 'server name within the config (defaults to first enabled)')
     .option('--overlay <path>', 'path to overlay JSON file (runtime mode only)')

@@ -149,6 +149,40 @@ describe('ConfigRefineSource.guidance', () => {
   });
 });
 
+describe('ConfigRefineSource grounding', () => {
+  it('feeds matched grounding files into guidance and switches to the grounded directive', async () => {
+    tmp = mkdtempSync(join(tmpdir(), 'config-source-'));
+    const file = join(tmp, 'config.ts');
+    writeFileSync(file, `export interface Cfg {\n  include?: string[];\n}`, 'utf8');
+    writeFileSync(
+      join(tmp, 'filter.ts'),
+      `export function matchesAnyPattern(p: string[]) {\n  // empty array means MATCH ALL\n  return !p || p.length === 0;\n}`,
+      'utf8'
+    );
+    const source = new ConfigRefineSource({
+      configFile: file,
+      typeName: 'Cfg',
+      groundingGlobs: [join(tmp, '*.ts')]
+    });
+    await source.extract();
+    const g = source.guidance();
+    expect(g).toContain('IMPLEMENTATION REFERENCE');
+    expect(g).toContain('empty array means MATCH ALL'); // real behavior is now in context
+    expect(g).toMatch(/GROUND every runtime-behavior claim in the IMPLEMENTATION REFERENCE/);
+    // The config file itself is excluded (the model already has the type).
+    expect(g).not.toContain('export interface Cfg');
+  });
+
+  it('uses the conservative directive when no grounding is configured', async () => {
+    const file = fixture(`export interface Cfg {\n  a: string;\n}`);
+    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
+    await source.extract();
+    const g = source.guidance();
+    expect(g).not.toContain('IMPLEMENTATION REFERENCE');
+    expect(g).toMatch(/do NOT assert runtime behavior you cannot verify/);
+  });
+});
+
 describe('ConfigRefineSource.auditContext', () => {
   it('returns the discovered package + README context after extract()', async () => {
     const file = fixture(`export interface Cfg { a: string; }`, {
