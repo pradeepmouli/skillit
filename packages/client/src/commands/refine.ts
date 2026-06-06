@@ -7,7 +7,12 @@ import {
   readMcpConfigFile
 } from '@skillit/mcp';
 import { CliRefineSource, loadProgram } from '@skillit/cli';
-import { refineSkill, type ModelClient, type RefineSource } from '@skillit/core';
+import {
+  ConfigRefineSource,
+  refineSkill,
+  type ModelClient,
+  type RefineSource
+} from '@skillit/core';
 import { createModelClient } from '../model/model-client-factory.js';
 import { detectRefineMode } from '../detect-mode.js';
 import {
@@ -16,7 +21,7 @@ import {
   type DetectedRefineSource,
   type RefineSourceKind
 } from '../detect-source.js';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 
 function parsePositiveInt(raw: string, flag: string): number {
   const n = parseInt(raw, 10);
@@ -30,13 +35,18 @@ function parsePositiveInt(raw: string, flag: string): number {
 export interface RefineSourceResolveOpts {
   source?: string;
   mcp?: string;
+  configType?: string;
 }
 
 /** Result of resolving the refine source: a concrete kind or an actionable error. */
-export type RefineSourceResolution = { kind: 'cli' | 'mcp' } | { error: string };
+export type RefineSourceResolution = { kind: 'cli' | 'mcp' | 'config' } | { error: string };
 
-const VALID_SOURCES = ['cli', 'mcp', 'typedoc'] as const;
+// `config` is an explicit-only source: it never auto-detects (no installed
+// `@skillit/*` package implies it), so the ambiguous/none guidance keeps
+// pointing at the detectable sources while `--source config` is still accepted.
+const VALID_SOURCES = ['cli', 'mcp', 'typedoc', 'config'] as const;
 const SOURCE_FORM = '--source <cli|mcp|typedoc>';
+const INVALID_SOURCE_FORM = '--source <cli|mcp|typedoc|config>';
 
 /**
  * Resolve the refine source from explicit `--source` (wins) or detection,
@@ -53,12 +63,12 @@ export function resolveRefineSource(
   detected: DetectedRefineSource,
   candidates: readonly RefineSourceKind[] = []
 ): RefineSourceResolution {
-  let kind: RefineSourceKind;
+  let kind: RefineSourceKind | 'config';
   if (opts.source !== undefined) {
-    if (!VALID_SOURCES.includes(opts.source as RefineSourceKind)) {
-      return { error: `Invalid --source value: ${opts.source}. Use ${SOURCE_FORM}.` };
+    if (!VALID_SOURCES.includes(opts.source as (typeof VALID_SOURCES)[number])) {
+      return { error: `Invalid --source value: ${opts.source}. Use ${INVALID_SOURCE_FORM}.` };
     }
-    kind = opts.source as RefineSourceKind;
+    kind = opts.source as RefineSourceKind | 'config';
   } else if (detected === 'ambiguous') {
     return {
       error: `Cannot determine refine source: multiple @skillit sources installed (found: ${candidates.join(', ')}).
@@ -74,7 +84,13 @@ Pass ${SOURCE_FORM} to choose one.`
   }
 
   if (kind === 'typedoc') {
-    return { error: 'typedoc refine not yet supported; use --source cli|mcp.' };
+    return { error: 'typedoc refine not yet supported; use --source cli|mcp|config.' };
+  }
+  if (kind === 'config' && opts.configType === undefined) {
+    return {
+      error:
+        'The config source requires --config-type <file#export> (e.g. ./src/config.ts#MyConfig).'
+    };
   }
   if (kind === 'mcp' && opts.mcp === undefined) {
     return { error: 'The mcp source requires --mcp <path> (path to mcp.json or MCP config file).' };
@@ -103,6 +119,7 @@ Pass ${SOURCE_FORM} to choose one.`
 export interface RefineCommandOpts {
   source?: string;
   program?: string;
+  configType?: string;
   mcp?: string;
   server?: string;
   overlay?: string;
@@ -117,6 +134,27 @@ export interface RefineCommandOpts {
 /** The model backend to use; defaults to the API client. */
 export function resolveModelClientKind(raw: string | undefined): string {
   return raw ?? 'api';
+}
+
+/**
+ * Parse a `--config-type <file#export>` spec (e.g. `./src/config.ts#MyConfig`)
+ * into its file and exported type name. Pure and unit-testable. The `#` is the
+ * required separator; both sides must be non-empty (mirrors `--program`'s
+ * `file#export` form). `cwd` resolves a relative file to an absolute path.
+ */
+export function parseConfigTypeSpec(
+  spec: string,
+  cwd: string
+): { configFile: string; typeName: string } | { error: string } {
+  const hashIdx = spec.lastIndexOf('#');
+  if (hashIdx <= 0 || hashIdx === spec.length - 1) {
+    return {
+      error: `--config-type must be <file>#<ExportName> (e.g. ./src/config.ts#MyConfig), got: ${spec}`
+    };
+  }
+  const file = spec.slice(0, hashIdx);
+  const typeName = spec.slice(hashIdx + 1);
+  return { configFile: isAbsolute(file) ? file : join(cwd, file), typeName };
 }
 
 /**
@@ -162,6 +200,20 @@ export async function runRefineCommand(opts: RefineCommandOpts): Promise<void> {
     const program = await loadProgram({ program: opts.program, cwd });
     const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
     source = new CliRefineSource({ program, sourceGlob, cwd });
+    reportInPlace = true;
+  } else if (resolution.kind === 'config') {
+    // --config-type guaranteed present by resolveRefineSource.
+    const parsed = parseConfigTypeSpec(opts.configType!, cwd);
+    if ('error' in parsed) {
+      console.error(parsed.error);
+      process.exitCode = 1;
+      return;
+    }
+    source = new ConfigRefineSource({
+      configFile: parsed.configFile,
+      typeName: parsed.typeName,
+      name: parsed.typeName
+    });
     reportInPlace = true;
   } else {
     // mcp source: --mcp guaranteed present by resolveRefineSource.
@@ -230,8 +282,9 @@ Use --mode build  (TypeScript MCP server you own)
 export function buildRefineCommand(): Command {
   return new Command('refine')
     .description('Autonomously improve a skill via the audit→draft→review loop')
-    .option('--source <kind>', 'cli | mcp | typedoc (auto-detected if omitted)')
+    .option('--source <kind>', 'cli | mcp | typedoc | config (auto-detected if omitted)')
     .option('--program <file#export>', 'commander program entry (cli source)')
+    .option('--config-type <file#export>', 'config type entry (config source)')
     .option('--mcp <path>', 'path to mcp.json or MCP config file')
     .option('--server <name>', 'server name within the config (defaults to first enabled)')
     .option('--overlay <path>', 'path to overlay JSON file (runtime mode only)')

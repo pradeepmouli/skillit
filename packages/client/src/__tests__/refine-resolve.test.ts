@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveModelClientKind, resolveRefineSource } from '../commands/refine.js';
+import {
+  parseConfigTypeSpec,
+  resolveModelClientKind,
+  resolveRefineSource
+} from '../commands/refine.js';
 
 describe('resolveModelClientKind', () => {
   it("defaults to 'api' when --model-client is omitted", () => {
@@ -68,5 +72,50 @@ describe('resolveRefineSource', () => {
   it('errors that detected typedoc is not yet supported', () => {
     const res = resolveRefineSource({}, 'typedoc');
     expect('error' in res && res.error).toMatch(/not yet supported/);
+  });
+
+  it('explicit --source config requires --config-type', () => {
+    const res = resolveRefineSource({ source: 'config' }, 'none');
+    expect('error' in res && res.error).toMatch(/--config-type/);
+  });
+
+  it('explicit --source config with --config-type resolves to config', () => {
+    const res = resolveRefineSource(
+      { source: 'config', configType: './src/config.ts#MyConfig' },
+      'none'
+    );
+    expect(res).toEqual({ kind: 'config' });
+  });
+
+  it('accepts --source config as a valid value (not an invalid-source error)', () => {
+    const res = resolveRefineSource({ source: 'config', configType: 'c.ts#C' }, 'cli');
+    expect('error' in res).toBe(false);
+  });
+});
+
+describe('parseConfigTypeSpec', () => {
+  it('splits a relative file#export and resolves the file against cwd', () => {
+    const res = parseConfigTypeSpec('./src/config.ts#ZodFormsConfig', '/work');
+    expect(res).toEqual({ configFile: '/work/src/config.ts', typeName: 'ZodFormsConfig' });
+  });
+
+  it('keeps an absolute file path as-is', () => {
+    const res = parseConfigTypeSpec('/abs/config.ts#Cfg', '/work');
+    expect(res).toEqual({ configFile: '/abs/config.ts', typeName: 'Cfg' });
+  });
+
+  it('errors when the # separator is missing', () => {
+    const res = parseConfigTypeSpec('./src/config.ts', '/work');
+    expect('error' in res && res.error).toMatch(/<file>#<ExportName>/);
+  });
+
+  it('errors when the export name is empty', () => {
+    const res = parseConfigTypeSpec('./src/config.ts#', '/work');
+    expect('error' in res && res.error).toMatch(/<file>#<ExportName>/);
+  });
+
+  it('errors when the file part is empty', () => {
+    const res = parseConfigTypeSpec('#Cfg', '/work');
+    expect('error' in res && res.error).toMatch(/<file>#<ExportName>/);
   });
 });
