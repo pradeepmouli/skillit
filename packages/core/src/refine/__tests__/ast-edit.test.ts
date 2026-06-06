@@ -145,6 +145,22 @@ describe('upsertPropertyJsDocTag', () => {
     expect(out).toMatch(/\* - three/);
   });
 
+  it('escapes a comment-close sequence in content so the block stays parseable', () => {
+    const src = `export interface Cfg {\n  include?: string[];\n}\n`;
+    const withGlob = upsertPropertyJsDocTag(
+      src,
+      'Cfg',
+      'include',
+      'pitfalls',
+      'avoid the `**/*.ts` glob — too broad'
+    );
+    // The glob's terminator is escaped (`*\/`), so it does not close the block.
+    expect(withGlob).toContain('**\\/*.ts');
+    // The declaration still parses afterward — a corrupted comment would make
+    // this second upsert a no-op (property not found), returning the input.
+    expect(upsertPropertyJsDocTag(withGlob, 'Cfg', 'include', 'useWhen', 'x')).not.toBe(withGlob);
+  });
+
   it('a second tag merges cleanly onto a multi-line-created block (no malformation)', () => {
     const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
     const once = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- a\n- b');

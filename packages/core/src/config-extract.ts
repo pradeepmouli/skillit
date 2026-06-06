@@ -128,6 +128,24 @@ function walkProperties(bodyNode: SgNode, prefix: string): ExtractedConfigOption
 }
 
 /**
+ * Escape the comment-close sequence `*` + `/` in text destined for a JSDoc
+ * block, so model-drafted content containing it — e.g. a `**` + `/*.ts` glob in
+ * an `include`/`exclude` pitfall — cannot terminate the block early and corrupt
+ * the file. A backslash is inserted between the star and the slash, which the
+ * comment scanner does not treat as a close (the star is followed by the
+ * backslash, not the slash). Idempotent: an already-escaped sequence has no bare
+ * star-slash left to match.
+ */
+export function escapeJsDocClose(text: string): string {
+  return text.replace(/\*\//g, '*\\/');
+}
+
+/** Inverse of {@link escapeJsDocClose}, applied when reading tag content back. */
+export function unescapeJsDocClose(text: string): string {
+  return text.replace(/\*\\\//g, '*/');
+}
+
+/**
  * Split a JSDoc tag's content into discrete entries. A markdown bullet list
  * (lines starting with `-` or `*`) becomes one entry per bullet (marker
  * stripped, continuation lines folded in); plain prose stays a single entry.
@@ -195,7 +213,7 @@ function parsePropertyJsDoc(node: SgNode | undefined): PropertyDoc {
   }
 
   const join = (key: string): string | undefined =>
-    tags[key] ? tags[key]!.join('\n').trim() : undefined;
+    tags[key] ? unescapeJsDocClose(tags[key]!.join('\n').trim()) : undefined;
   const description = descriptionLines.join('\n').trim();
   const doc: PropertyDoc = {};
   if (description) doc.description = description;

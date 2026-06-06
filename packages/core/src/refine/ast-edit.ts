@@ -1,7 +1,12 @@
 // packages/core/src/refine/ast-edit.ts
 import { parse, Lang } from '@ast-grep/napi';
 import type { SgNode } from '@ast-grep/napi';
-import { findPropertyByPath, findTypeBody } from '../config-extract.js';
+import {
+  escapeJsDocClose,
+  findPropertyByPath,
+  findTypeBody,
+  unescapeJsDocClose
+} from '../config-extract.js';
 import type { RefineTag } from './types.js';
 
 // `satisfies` ensures every listed value is a valid RefineTag. The
@@ -151,7 +156,10 @@ function upsertTagOnAnchor(
   tag: RefineTag,
   content: string
 ): string {
-  const tagText = `@${tag} ${content}`;
+  // Escape any comment-close sequence in the content so a value containing it
+  // (e.g. a glob like `**/*.ts` in a config pitfall) can't terminate the block
+  // early and corrupt the file. readJsDocTags / config extraction unescape it.
+  const tagText = escapeJsDocClose(`@${tag} ${content}`);
   const jsdocNode = leadingJsDoc(anchorNode);
   const indent = ' '.repeat(anchorNode.range().start.column);
 
@@ -239,7 +247,7 @@ export function readJsDocTags(
   const result: Partial<Record<RefineTag, string>> = {};
   for (const tag of REFINE_TAGS) {
     const lines = collected[tag];
-    if (lines) result[tag] = lines.join('\n').trim();
+    if (lines) result[tag] = unescapeJsDocClose(lines.join('\n').trim());
   }
   return result;
 }
