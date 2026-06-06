@@ -303,6 +303,19 @@ function targetsForMissingTag(
   return [...classTargets, ...fnTargets, ...cliTargets, ...configOptionTargets];
 }
 
+/**
+ * A single example target per `config` surface that lacks usage examples. The
+ * ConfigRefineSource maps it to a sibling `<config>.example.ts` written via a
+ * dedicated example-file path (not JSDoc). `name` is the config type so the
+ * source can correlate, `kind` distinguishes it from per-option targets.
+ */
+function configExampleTargets(skill: ExtractedSkill): ImprovementTarget[] {
+  return (skill.configSurfaces ?? [])
+    .filter((s) => s.sourceType === 'config')
+    .slice(0, 1)
+    .map((s) => ({ file: '', name: s.name, kind: 'config-example' }));
+}
+
 /** Functions with 3+ parameters missing @remarks, sorted by source tree depth. */
 function targetsForRemarks(skill: ExtractedSkill): ImprovementTarget[] {
   return skill.functions
@@ -616,6 +629,25 @@ function buildImprovements(
     if (!seen.has(s.imp.suggestion) && top.length < 3) {
       seen.add(s.imp.suggestion);
       top.push(s.imp);
+    }
+  }
+
+  // Config example: a config skill has no functions to carry @example, so E4
+  // never clears via the usual paths. Always surface a single example work item
+  // when a `config` surface lacks an example — appended OUTSIDE the top-3 cap so
+  // routing-tag improvements (which dominate by gain early on) cannot crowd this
+  // one-shot artifact out across a bounded run. The ConfigRefineSource writes the
+  // drafted example to a sibling `<config>.example.ts` and reads it back into
+  // `skill.examples`.
+  if (skill && !passes(audit, 'E4')) {
+    const exampleTargets = configExampleTargets(skill);
+    if (exampleTargets.length > 0) {
+      top.push({
+        suggestion: 'Add an @example config file (+2 on D2, +2 on D8)',
+        points: 4,
+        dimension: 'D2',
+        targets: exampleTargets
+      });
     }
   }
 

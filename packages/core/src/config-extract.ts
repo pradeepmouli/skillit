@@ -112,9 +112,9 @@ function walkProperties(bodyNode: SgNode, prefix: string): ExtractedConfigOption
       required
     };
     if (doc.defaultValue !== undefined) option.defaultValue = doc.defaultValue;
-    if (doc.useWhen) option.useWhen = [doc.useWhen];
-    if (doc.avoidWhen) option.avoidWhen = [doc.avoidWhen];
-    if (doc.pitfalls) option.pitfalls = [doc.pitfalls];
+    if (doc.useWhen) option.useWhen = splitTagContent(doc.useWhen);
+    if (doc.avoidWhen) option.avoidWhen = splitTagContent(doc.avoidWhen);
+    if (doc.pitfalls) option.pitfalls = splitTagContent(doc.pitfalls);
     if (doc.remarks !== undefined) option.remarks = doc.remarks;
     options.push(option);
 
@@ -125,6 +125,33 @@ function walkProperties(bodyNode: SgNode, prefix: string): ExtractedConfigOption
     }
   }
   return options;
+}
+
+/**
+ * Split a JSDoc tag's content into discrete entries. A markdown bullet list
+ * (lines starting with `-` or `*`) becomes one entry per bullet (marker
+ * stripped, continuation lines folded in); plain prose stays a single entry.
+ * This keeps `useWhen`/`avoidWhen`/`pitfalls` — which are `string[]` — as clean
+ * per-item arrays so the renderer emits one bullet each, instead of wrapping a
+ * whole pre-bulleted blob in another `- ` (the `- - …` double-bullet defect).
+ */
+function splitTagContent(raw: string): string[] {
+  const lines = raw.split('\n');
+  const bulleted = lines.some((line) => /^\s*[-*]\s+/.test(line));
+  if (!bulleted) {
+    const trimmed = raw.trim();
+    return trimmed ? [trimmed] : [];
+  }
+  const items: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^\s*[-*]\s+(.*)$/);
+    if (match) {
+      items.push((match[1] ?? '').trim());
+    } else if (items.length > 0 && line.trim()) {
+      items[items.length - 1] += `\n${line.trim()}`;
+    }
+  }
+  return items.filter((item) => item.length > 0);
 }
 
 interface PropertyDoc {

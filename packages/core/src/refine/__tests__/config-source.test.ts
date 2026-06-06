@@ -91,6 +91,61 @@ describe('ConfigRefineSource.extract', () => {
   });
 });
 
+describe('ConfigRefineSource example file', () => {
+  it('writes an @example fix to a sibling <base>.example.ts, stripping code fences', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`);
+    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
+    await source.applyFixes([
+      {
+        toolName: 'Cfg',
+        tag: 'example',
+        value:
+          '```ts\nimport { defineConfig } from "x";\nexport default defineConfig({ a: "1" });\n```'
+      }
+    ]);
+    const examplePath = join(tmp, 'config.example.ts');
+    const written = readFileSync(examplePath, 'utf8');
+    expect(written).not.toContain('```');
+    expect(written).toContain('export default defineConfig({ a: "1" });');
+    expect(written.endsWith('\n')).toBe(true);
+  });
+
+  it('does not clobber an existing example file', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`);
+    const examplePath = join(tmp, 'config.example.ts');
+    writeFileSync(examplePath, 'export const handAuthored = true;\n', 'utf8');
+    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
+    await source.applyFixes([{ toolName: 'Cfg', tag: 'example', value: 'export default {};' }]);
+    expect(readFileSync(examplePath, 'utf8')).toBe('export const handAuthored = true;\n');
+  });
+
+  it('reads an existing example file into skill.examples (clears E4)', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`);
+    writeFileSync(join(tmp, 'config.example.ts'), 'export default { a: "x" };\n', 'utf8');
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.examples).toEqual(['export default { a: "x" };']);
+  });
+
+  it('extract() leaves examples empty when no example file exists', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`);
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.examples).toEqual([]);
+  });
+});
+
+describe('ConfigRefineSource.guidance', () => {
+  it('scopes drafting to the named option and lists the options with types', async () => {
+    const file = fixture(`export interface Cfg {\n  outDir?: string;\n  mode: 'a' | 'b';\n}`);
+    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
+    await source.extract(); // populates the surface cache guidance() reads
+    const g = source.guidance();
+    expect(g).toMatch(/SPECIFIC to that single option/);
+    expect(g).toMatch(/@example/);
+    expect(g).toContain('`outDir`: string');
+    expect(g).toContain("`mode`: 'a' | 'b'");
+  });
+});
+
 describe('ConfigRefineSource.auditContext', () => {
   it('returns the discovered package + README context after extract()', async () => {
     const file = fixture(`export interface Cfg { a: string; }`, {

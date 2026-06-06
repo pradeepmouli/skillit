@@ -98,6 +98,33 @@ describe('nested option uses its dot-path configKey as the target name', () => {
   });
 });
 
+describe('config example target (E4) is threshold-independent', () => {
+  // E4 absent from `passing` => no example anywhere. The config-example
+  // improvement should appear with a config-example target regardless of
+  // whether D2/D8 are above their 80% thresholds.
+  const audit = makeAuditResult([]);
+  const skill = makeConfigSkill([option({ name: 'outDir' })]);
+  const estimate = estimateSkillJudgeScore(audit, skill);
+
+  it('surfaces an @example config-file improvement targeting the config type', () => {
+    const exampleImp = estimate.improvements.find((imp) =>
+      imp.suggestion.includes('@example config file')
+    );
+    expect(exampleImp).toBeDefined();
+    const target = exampleImp?.targets?.find(
+      (t) => t.name === 'ZodFormsConfig' && t.kind === 'config-example'
+    );
+    expect(target).toBeDefined();
+  });
+
+  it('omits the example improvement once E4 passes', () => {
+    const passing = estimateSkillJudgeScore(makeAuditResult(['E4']), skill);
+    expect(
+      passing.improvements.find((imp) => imp.suggestion.includes('@example config file'))
+    ).toBeUndefined();
+  });
+});
+
 describe('config surfaces do not produce command-kind targets', () => {
   const audit = makeAuditResult([]);
   const skill = makeConfigSkill([option({ name: 'outDir' })]);
