@@ -26,6 +26,6 @@
     "@skillit/cli": "workspace:*",
     "@skillit/core": "workspace:*",
     "@skillit/mcp": "workspace:*",
-    "commander": "^14.0.3"
+    "commander": "^15.0.0"
   }
 }

@@ -54,7 +54,7 @@
     "@skillit/core": "workspace:*",
     "@skillit/target-mcp-protocol": "workspace:*",
     "@types/json-schema": "^7.0.15",
-    "commander": "^14.0.3",
+    "commander": "^15.0.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
