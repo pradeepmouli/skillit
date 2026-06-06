@@ -13,10 +13,14 @@ afterEach(() => {
   }
 });
 
-function fixture(source: string): string {
+function fixture(source: string, extra?: { packageJson?: object; readme?: string }): string {
   tmp = mkdtempSync(join(tmpdir(), 'config-source-'));
   const file = join(tmp, 'config.ts');
   writeFileSync(file, source, 'utf8');
+  if (extra?.packageJson) {
+    writeFileSync(join(tmp, 'package.json'), JSON.stringify(extra.packageJson), 'utf8');
+  }
+  if (extra?.readme) writeFileSync(join(tmp, 'README.md'), extra.readme, 'utf8');
   return file;
 }
 
@@ -54,6 +58,65 @@ describe('ConfigRefineSource.extract', () => {
     const file = fixture(`export interface Other {}`);
     const source = new ConfigRefineSource({ configFile: file, typeName: 'Missing' });
     await expect(source.extract()).rejects.toThrow(/Missing.*not found/);
+  });
+
+  it('enriches name/description/keywords/repository from the nearest package.json', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: {
+        name: '@scope/my-lib',
+        description: 'A configurable widget generator',
+        keywords: ['widget', 'codegen', 'config'],
+        repository: { type: 'git', url: 'https://github.com/me/my-lib.git' }
+      }
+    });
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.name).toBe('my-lib'); // scope stripped
+    expect(skill.description).toBe('A configurable widget generator');
+    expect(skill.keywords).toEqual(['widget', 'codegen', 'config']);
+    expect(skill.repository).toBe('https://github.com/me/my-lib.git');
+  });
+
+  it('explicit name/description override the package.json values', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/my-lib', description: 'pkg desc' }
+    });
+    const skill = await new ConfigRefineSource({
+      configFile: file,
+      typeName: 'Cfg',
+      name: 'override',
+      description: 'override desc'
+    }).extract();
+    expect(skill.name).toBe('override');
+    expect(skill.description).toBe('override desc');
+  });
+});
+
+describe('ConfigRefineSource.auditContext', () => {
+  it('returns the discovered package + README context after extract()', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: {
+        name: 'lib',
+        description: 'desc',
+        keywords: ['k1', 'k2'],
+        repository: 'https://example.com/repo.git'
+      },
+      readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
+    });
+    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
+    await source.extract();
+    const ctx = source.auditContext(await source.extract());
+    expect(ctx.packageDescription).toBe('desc');
+    expect(ctx.keywords).toEqual(['k1', 'k2']);
+    expect(ctx.repository).toBe('https://example.com/repo.git');
+    expect(ctx.readme).toBeDefined();
+  });
+
+  it('is empty when no package.json is discoverable', async () => {
+    // mkdtemp dirs live under the OS tmp root, which has no ancestor package.json.
+    const file = fixture(`export interface Cfg { a: string; }`);
+    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
+    await source.extract();
+    expect(source.auditContext(await source.extract())).toEqual({});
   });
 });
 
