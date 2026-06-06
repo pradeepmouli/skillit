@@ -82,7 +82,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              head: `${context.repo.owner}:changeset-release/master`
+              head: `${context.repo.owner}:changeset-release/${context.ref.replace('refs/heads/', '')}`
             });
             if (pulls.length === 0) return;
             const pr = pulls[0];
