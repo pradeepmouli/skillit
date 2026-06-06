@@ -232,38 +232,59 @@ const REFINE_TAG_SET: ReadonlySet<string> = new Set(REFINE_TAGS);
  * genuine hand-authored docs (e.g. validation notes on a `defineConfig` helper),
  * which are exactly the runtime-behavior grounding we want to keep.
  *
- * Operates textually per JSDoc block. The block-matching regex is non-greedy,
- * and writeback escapes a literal close sequence in content to `*\/`, so an
- * escaped sequence inside a kept line never terminates a block early.
+ * Handles single-line (`/** @tag x *​/`) as well as multi-line blocks: each block
+ * is reduced to its inner content (opener/closer and ` * ` gutter dropped) before
+ * tags are matched, so an inline opener can't hide a tag. The block-matching
+ * regex is non-greedy, and writeback escapes a literal close sequence in content
+ * to `*\/`, so an escaped sequence inside a kept line never terminates early.
  */
 export function stripRefineTags(source: string): string {
-  return source.replace(/\/\*\*[\s\S]*?\*\//g, stripRefineTagsFromBlock);
+  return source.replace(/\/\*\*[\s\S]*?\*\//g, (block: string, offset: number) => {
+    // Indent of the line the block opens on, for a clean re-wrap when we rebuild.
+    const lineStart = source.lastIndexOf('\n', offset) + 1;
+    const indent = source.slice(lineStart, offset).match(/^\s*/)?.[0] ?? '';
+    return stripRefineTagsFromBlock(block, indent);
+  });
 }
 
 /**
- * Drop refine-tag lines (and their continuation lines) from a single JSDoc
- * block, keeping the opener, closer, prose, and non-refine tags. A line holding
- * the block terminator always ends any open span and is kept, so the rebuilt
- * block stays well-formed.
+ * Strip refine-tag spans from one JSDoc block. Returns the block unchanged when
+ * it holds no refine tag (preserving hand-authored formatting), the empty string
+ * when nothing but refine tags remain (the whole block is dropped), or a clean
+ * re-wrapped block at `indent` otherwise. A `@tag` line and the lines following
+ * it (its continuation) form one span; a non-refine `@tag` closes any open span.
  */
-function stripRefineTagsFromBlock(block: string): string {
-  const out: string[] = [];
-  let inRefineSpan = false;
-  for (const line of block.split('\n')) {
-    const tagMatch = line.match(/^\s*\*?\s*@(\w+)\b/);
+function stripRefineTagsFromBlock(block: string, indent: string): string {
+  // Reduce to inner content so tag detection is independent of how the block is
+  // wrapped: drop the `/**` opener and `*/` closer (own-line OR inline, as in a
+  // single-line `/** @tag x */`), then the per-line ` * ` gutter.
+  const inner = block.replace(/^\s*\/\*\*/, '').replace(/\*\/\s*$/, '');
+  const lines = inner.split('\n').map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+
+  const kept: string[] = [];
+  let dropping = false;
+  let droppedAny = false;
+  for (const line of lines) {
+    const tagMatch = line.match(/^@(\w+)\b/);
     if (tagMatch) {
-      inRefineSpan = REFINE_TAG_SET.has(tagMatch[1] ?? '');
-      if (!inRefineSpan) out.push(line);
+      dropping = REFINE_TAG_SET.has(tagMatch[1] ?? '');
+    }
+    if (dropping) {
+      droppedAny = true;
       continue;
     }
-    if (/\*\//.test(line)) {
-      inRefineSpan = false;
-      out.push(line);
-      continue;
-    }
-    if (!inRefineSpan) out.push(line);
+    kept.push(line);
   }
-  return out.join('\n');
+
+  if (!droppedAny) return block; // no refine tag — keep original formatting verbatim
+  while (kept.length > 0 && kept[0] === '') kept.shift();
+  while (kept.length > 0 && kept[kept.length - 1] === '') kept.pop();
+  if (kept.length === 0) return ''; // block was nothing but refine tags
+
+  const body = kept
+    .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+    .join('\n');
+  return `/**\n${body}\n${indent} */`;
 }
 
 /**

@@ -1,6 +1,11 @@
 // packages/core/src/refine/__tests__/ast-edit.test.ts
 import { describe, it, expect } from 'vitest';
-import { upsertJsDocTag, upsertPropertyJsDocTag, readJsDocTags } from '../ast-edit.js';
+import {
+  upsertJsDocTag,
+  upsertPropertyJsDocTag,
+  readJsDocTags,
+  stripRefineTags
+} from '../ast-edit.js';
 import type { RefineTag } from '../types.js';
 
 describe('upsertJsDocTag', () => {
@@ -193,6 +198,42 @@ describe('upsertPropertyJsDocTag', () => {
     expect(twice.match(/\/\*\*/g)).toHaveLength(1);
     expect(twice).not.toMatch(/\n- b/);
     expect(readJsDocTags(twice, 'outDir')).toBeDefined(); // declaration still parses
+  });
+});
+
+describe('stripRefineTags', () => {
+  it('strips a refine tag from a SINGLE-LINE block (inline opener must not hide it)', () => {
+    // The exact feedback-loop case: a same-line refine tag whose line starts with
+    // `/**`, not whitespace/`*` before `@`. A naive line matcher misses it.
+    const src = `export interface Cfg {\n  /** @useWhen including files */ include?: string[];\n}`;
+    const out = stripRefineTags(src);
+    expect(out).not.toContain('@useWhen');
+    expect(out).not.toContain('including files');
+    // The declaration itself survives.
+    expect(out).toContain('include?: string[];');
+  });
+
+  it('preserves a single-line block that has no refine tag, verbatim', () => {
+    const src = `/** Select renders as a controlled component. */\nexport const X = 1;`;
+    expect(stripRefineTags(src)).toBe(src);
+  });
+
+  it('keeps prose and non-refine tags while dropping the refine tag', () => {
+    const src = `/**\n * Output directory.\n * @internal\n * @useWhen emitting build artifacts\n */\nexport const outDir = 'dist';`;
+    const out = stripRefineTags(src);
+    expect(out).toContain('Output directory.');
+    expect(out).toContain('@internal');
+    expect(out).not.toContain('@useWhen');
+    expect(out).not.toContain('emitting build artifacts');
+  });
+
+  it('drops a multi-line tag and its continuation lines', () => {
+    const src = `/**\n * @pitfalls - one\n * - two\n * - three\n */\nexport const y = 2;`;
+    const out = stripRefineTags(src);
+    expect(out).not.toContain('@pitfalls');
+    expect(out).not.toContain('- two');
+    // A block that was nothing but the refine tag is removed entirely.
+    expect(out).not.toContain('/**');
   });
 });
 
