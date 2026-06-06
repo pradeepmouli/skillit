@@ -41,6 +41,14 @@ describe('upsertJsDocTag', () => {
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
   });
 
+  it('does not duplicate a tag on re-run when the content is multi-line', () => {
+    const src = `/** Opts. */\nexport interface O {\n  a: string;\n}\n`;
+    const once = upsertJsDocTag(src, 'O', 'pitfalls', '- one\n- two');
+    const twice = upsertJsDocTag(once, 'O', 'pitfalls', '- one\n- two');
+    expect(twice).toBe(once);
+    expect((once.match(/@pitfalls/g) ?? []).length).toBe(1);
+  });
+
   it('is idempotent for an identical tag', () => {
     const src = `/**\n * @useWhen X\n */\nexport const f = () => {};\n`;
     expect(upsertJsDocTag(src, 'f', 'useWhen', 'X')).toBe(src);
@@ -115,6 +123,11 @@ describe('readJsDocTags', () => {
   it('parses multiple tags', () => {
     const src = `/**\n * @useWhen Foo\n * @pitfalls Bar\n */\nexport function f() {}\n`;
     expect(readJsDocTags(src, 'f')).toEqual({ useWhen: 'Foo', pitfalls: 'Bar' });
+  });
+
+  it('captures multi-line tag content (continuation lines), not just the first line', () => {
+    const src = upsertJsDocTag(`export interface O {}\n`, 'O', 'pitfalls', '- one\n- two\n- three');
+    expect(readJsDocTags(src, 'O')).toEqual({ pitfalls: '- one\n- two\n- three' });
   });
 
   it('reads a tag from a non-exported interface leading JSDoc', () => {
