@@ -134,6 +134,28 @@ describe('upsertPropertyJsDocTag', () => {
     expect(upsertPropertyJsDocTag(src, 'Nope', 'outDir', 'useWhen', 'X')).toBe(src);
     expect(upsertPropertyJsDocTag(src, 'Cfg', 'missing', 'useWhen', 'X')).toBe(src);
   });
+
+  it('prefixes every line when CREATING a block with multi-line content', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- one\n- two\n- three');
+    // No continuation bullet may sit at column 0 — every line carries ` * `.
+    expect(out).not.toMatch(/\n- two/);
+    expect(out).toMatch(/\* @pitfalls - one/);
+    expect(out).toMatch(/\* - two/);
+    expect(out).toMatch(/\* - three/);
+  });
+
+  it('a second tag merges cleanly onto a multi-line-created block (no malformation)', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const once = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- a\n- b');
+    const twice = upsertPropertyJsDocTag(once, 'Cfg', 'outDir', 'useWhen', 'when emitting');
+    // Both tags present, exactly one comment, every body line prefixed.
+    expect(twice).toContain('@pitfalls - a');
+    expect(twice).toContain('@useWhen when emitting');
+    expect(twice.match(/\/\*\*/g)).toHaveLength(1);
+    expect(twice).not.toMatch(/\n- b/);
+    expect(readJsDocTags(twice, 'outDir')).toBeDefined(); // declaration still parses
+  });
 });
 
 describe('readJsDocTags', () => {

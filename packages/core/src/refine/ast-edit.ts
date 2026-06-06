@@ -177,9 +177,17 @@ function upsertTagOnAnchor(
     return root.commitEdits([jsdocNode.replace(merged)]);
   }
 
-  // No existing JSDoc — create one before the anchor node.
+  // No existing JSDoc — create one before the anchor node. Prefix EVERY physical
+  // line of the tag (multi-line content too) with ` * `, mirroring the merge
+  // branch above. Without this, a multi-line first tag left continuation lines
+  // at column 0 — malformed JSDoc that also broke the re-parse for any tag
+  // appended to the same declaration in a later pass.
   const at = anchorNode.range().start.index;
-  const blockText = `/**\n${indent} * ${tagText}\n${indent} */\n${indent}`;
+  const body = tagText
+    .split('\n')
+    .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+    .join('\n');
+  const blockText = `/**\n${body}\n${indent} */\n${indent}`;
   return source.slice(0, at) + blockText + source.slice(at);
 }
 
