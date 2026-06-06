@@ -155,7 +155,9 @@ describe('ConfigRefineSource grounding', () => {
     const file = join(tmp, 'config.ts');
     writeFileSync(
       file,
-      `export interface Cfg {\n  /** A glob. */\n  include?: string[];\n}\n` +
+      `export interface Cfg {\n` +
+        `  /**\n   * A glob.\n   * @useWhen including files.\n   */\n  include?: string[];\n}\n` +
+        `/** Select renders as a controlled component. */\n` +
         `export const PRESET_OVERRIDES = { Select: { controlled: true } };`,
       'utf8'
     );
@@ -178,9 +180,16 @@ describe('ConfigRefineSource grounding', () => {
     // included so the model can be accurate about them.
     expect(g).toContain('PRESET_OVERRIDES');
     expect(g).toContain('Select: { controlled: true }');
-    // ...but its JSDoc is stripped (the routing tags we accumulate are docs, not
-    // implementation, and must not be fed back as grounding).
-    expect(g).not.toContain('A glob.');
+    // Hand-authored prose is PRESERVED — it is the runtime-behavior grounding we
+    // want (both the property description and the const's doc comment).
+    expect(g).toContain('A glob.');
+    expect(g).toContain('Select renders as a controlled component.');
+    // ...but the routing tags THIS source writes back across iterations are
+    // stripped from the grounding, so our own accumulated annotations aren't fed
+    // back as "implementation". (The `@useWhen` token itself can't be the probe:
+    // guidance()'s own directive names the tags it asks the model to write — so
+    // we assert on the stripped tag's CONTENT, which is unique to the grounding.)
+    expect(g).not.toContain('including files.');
   });
 
   it('uses the conservative directive when no grounding is configured', async () => {

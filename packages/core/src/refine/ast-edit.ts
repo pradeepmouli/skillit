@@ -199,6 +199,58 @@ function upsertTagOnAnchor(
   return source.slice(0, at) + blockText + source.slice(at);
 }
 
+// Fast membership set for tag-name lookups (typed as strings so an arbitrary
+// captured `@word` can be tested without a cast). Derived from REFINE_TAGS so
+// it stays in sync with the union automatically.
+const REFINE_TAG_SET: ReadonlySet<string> = new Set(REFINE_TAGS);
+
+/**
+ * Remove the refine-managed tag spans (`@useWhen`, `@avoidWhen`, `@pitfalls`,
+ * `@remarks`, `@example` — see {@link REFINE_TAGS}) from every JSDoc block in
+ * `source`, leaving each block's prose description and any non-refine tags
+ * intact.
+ *
+ * Used to feed an annotated config module back to the model as grounding
+ * without echoing the routing tags this package itself wrote across earlier
+ * refine iterations — those are documentation, not the implementation the model
+ * should ground runtime claims in. Unlike a blanket JSDoc strip, this preserves
+ * genuine hand-authored docs (e.g. validation notes on a `defineConfig` helper),
+ * which are exactly the runtime-behavior grounding we want to keep.
+ *
+ * Operates textually per JSDoc block. The block-matching regex is non-greedy,
+ * and writeback escapes a literal close sequence in content to `*\/`, so an
+ * escaped sequence inside a kept line never terminates a block early.
+ */
+export function stripRefineTags(source: string): string {
+  return source.replace(/\/\*\*[\s\S]*?\*\//g, stripRefineTagsFromBlock);
+}
+
+/**
+ * Drop refine-tag lines (and their continuation lines) from a single JSDoc
+ * block, keeping the opener, closer, prose, and non-refine tags. A line holding
+ * the block terminator always ends any open span and is kept, so the rebuilt
+ * block stays well-formed.
+ */
+function stripRefineTagsFromBlock(block: string): string {
+  const out: string[] = [];
+  let inRefineSpan = false;
+  for (const line of block.split('\n')) {
+    const tagMatch = line.match(/^\s*\*?\s*@(\w+)\b/);
+    if (tagMatch) {
+      inRefineSpan = REFINE_TAG_SET.has(tagMatch[1] ?? '');
+      if (!inRefineSpan) out.push(line);
+      continue;
+    }
+    if (/\*\//.test(line)) {
+      inRefineSpan = false;
+      out.push(line);
+      continue;
+    }
+    if (!inRefineSpan) out.push(line);
+  }
+  return out.join('\n');
+}
+
 /**
  * Parse the leading JSDoc block of a named export declaration and return a
  * map of the RefineTag values found in it.

@@ -8,7 +8,7 @@ import { truncateToTokenBudget } from '../tokens.js';
 import type { AuditContext, ParsedReadme } from '../audit-types.js';
 import type { ExtractedConfigSurface } from '../config-types.js';
 import type { ExtractedSkill } from '../types.js';
-import { upsertPropertyJsDocTag } from './ast-edit.js';
+import { stripRefineTags, upsertPropertyJsDocTag } from './ast-edit.js';
 import type { DraftedFix, RefineSource } from './types.js';
 
 export interface ConfigRefineSourceOptions {
@@ -281,11 +281,12 @@ export class ConfigRefineSource implements RefineSource {
 
     // The config module itself often holds non-type declarations the model
     // needs to be accurate — preset tables, defaults, `defineConfig`/validation
-    // (e.g. z2f's `SHADCN_OVERRIDES`). Include it (JSDoc stripped, so the routing
-    // tags we accumulate across iterations aren't fed back as "implementation"),
-    // not just the external consuming globs.
+    // (e.g. z2f's `SHADCN_OVERRIDES`). Include it, but strip ONLY the routing
+    // tags this source writes back across iterations (so our own accumulated
+    // annotations aren't fed back as "implementation"); hand-authored prose —
+    // the real runtime-behavior grounding — is preserved.
     const configSource = await readFile(this.opts.configFile, 'utf8').catch(() => '');
-    const configDecls = stripJsDocBlocks(configSource).trim();
+    const configDecls = stripRefineTags(configSource).trim();
     if (configDecls)
       parts.push(`// ${this.opts.configFile} (config module declarations)\n${configDecls}`);
 
@@ -322,17 +323,6 @@ export class ConfigRefineSource implements RefineSource {
     }
     return undefined;
   }
-}
-
-/**
- * Remove JSDoc (`/**` … `*​/`) blocks from source. Used to feed the config
- * module as grounding without its doc comments — chiefly the routing tags this
- * source accumulates across iterations, which are documentation, not the
- * implementation the model should ground runtime claims in. Non-greedy, so it
- * stops at the real terminator; our escaped `*\/` inside content is not a match.
- */
-function stripJsDocBlocks(source: string): string {
-  return source.replace(/\/\*\*[\s\S]*?\*\//g, '');
 }
 
 /** Strip a leading `@scope/` from a package name. */
