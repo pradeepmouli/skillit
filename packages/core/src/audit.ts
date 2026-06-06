@@ -612,12 +612,18 @@ function checkW6(
 
 // ---------------------------------------------------------------------------
 // Routing-tag credit: @useWhen/@avoidWhen/@never may live at the top level
-// (MCP/TypeDoc skills) OR on a CLI configSurface (CLI skills correlate them onto
-// `configSurfaces[].useWhen` etc.). Credit guidance found in either place.
+// (MCP/TypeDoc skills) OR on a configSurface — either on the surface itself
+// (CLI skills correlate them onto `configSurfaces[].useWhen` etc.) or on an
+// individual option (config skills carry per-key routing on each option's
+// `useWhen`/`avoidWhen`/`pitfalls`). Credit guidance found in any of those.
 // ---------------------------------------------------------------------------
 function hasRoutingTag(skill: ExtractedSkill, tag: 'useWhen' | 'avoidWhen' | 'pitfalls'): boolean {
   if ((skill[tag] ?? []).length > 0) return true;
-  return (skill.configSurfaces ?? []).some((surface) => (surface[tag] ?? []).length > 0);
+  return (skill.configSurfaces ?? []).some(
+    (surface) =>
+      (surface[tag] ?? []).length > 0 ||
+      surface.options.some((option) => (option[tag] ?? []).length > 0)
+  );
 }
 
 // ---------------------------------------------------------------------------

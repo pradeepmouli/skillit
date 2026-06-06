@@ -1,6 +1,11 @@
 // packages/core/src/refine/__tests__/ast-edit.test.ts
 import { describe, it, expect } from 'vitest';
-import { upsertJsDocTag, readJsDocTags } from '../ast-edit.js';
+import {
+  upsertJsDocTag,
+  upsertPropertyJsDocTag,
+  readJsDocTags,
+  stripRefineTags
+} from '../ast-edit.js';
 import type { RefineTag } from '../types.js';
 
 describe('upsertJsDocTag', () => {
@@ -101,6 +106,134 @@ describe('upsertJsDocTag', () => {
     expect(out).toContain('* Options.');
     expect(out).toContain('@pitfalls NEVER trust input');
     expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+});
+
+describe('upsertPropertyJsDocTag', () => {
+  it('creates a JSDoc block on a config-type property that has none', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'useWhen', 'emitting build artifacts');
+    expect(out).toContain('@useWhen emitting build artifacts');
+    expect(out.indexOf('@useWhen')).toBeLessThan(out.indexOf('outDir'));
+    expect(readJsDocTags(out, 'Cfg')).toEqual({}); // tag is on the property, not the type
+  });
+
+  it('merges into an existing property JSDoc without mangling', () => {
+    const src = `export interface Cfg {\n  /** Output dir. */\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', 'must be writable');
+    expect(out).toContain('* Output dir.');
+    expect(out).toContain('@pitfalls must be writable');
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
+  it('rebuilds a same-line property JSDoc without over-indenting or packing the declaration', () => {
+    // `/** desc */ outDir` — comment and property share a line. The indent must
+    // come from the COMMENT, not the property's (post-comment) column, and the
+    // declaration must drop to its own line rather than trail the closing `*/`.
+    const src = `export interface Cfg {\n  /** Output directory. */ outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'useWhen', 'emitting build artifacts');
+    expect(out).toContain('* Output directory.');
+    expect(out).toContain('@useWhen emitting build artifacts');
+    // Continuation lines align at the comment's indent (2 → ` * ` star at col 3),
+    // not the property's ~27-space column.
+    expect(out).toMatch(/\n {3}\* Output directory\./);
+    expect(out).not.toMatch(/ {6,}\*/); // no runaway indentation
+    // The declaration starts on its own line, not packed after `*/`.
+    expect(out).not.toMatch(/\*\/ *outDir/);
+    expect(out).toMatch(/\*\/\n {2}outDir\?: string;/);
+    // Still exactly one block, and a second upsert round-trips (declaration parses).
+    expect(out.match(/\/\*\*/g)).toHaveLength(1);
+    const twice = upsertPropertyJsDocTag(out, 'Cfg', 'outDir', 'pitfalls', 'must be writable');
+    expect(twice).toContain('@pitfalls must be writable');
+    expect(twice.match(/\/\*\*/g)).toHaveLength(1);
+  });
+
+  it('targets a nested property via dot path', () => {
+    const src = `export interface Cfg {\n  components: { prefix: string };\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'components.prefix', 'useWhen', 'namespacing');
+    expect(out).toContain('@useWhen namespacing');
+    // landed inside the nested object, right before `prefix`
+    expect(out.indexOf('@useWhen')).toBeLessThan(out.indexOf('prefix'));
+  });
+
+  it('returns source unchanged when the type or property is absent', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    expect(upsertPropertyJsDocTag(src, 'Nope', 'outDir', 'useWhen', 'X')).toBe(src);
+    expect(upsertPropertyJsDocTag(src, 'Cfg', 'missing', 'useWhen', 'X')).toBe(src);
+  });
+
+  it('prefixes every line when CREATING a block with multi-line content', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const out = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- one\n- two\n- three');
+    // No continuation bullet may sit at column 0 — every line carries ` * `.
+    expect(out).not.toMatch(/\n- two/);
+    expect(out).toMatch(/\* @pitfalls - one/);
+    expect(out).toMatch(/\* - two/);
+    expect(out).toMatch(/\* - three/);
+  });
+
+  it('escapes a comment-close sequence in content so the block stays parseable', () => {
+    const src = `export interface Cfg {\n  include?: string[];\n}\n`;
+    const withGlob = upsertPropertyJsDocTag(
+      src,
+      'Cfg',
+      'include',
+      'pitfalls',
+      'avoid the `**/*.ts` glob — too broad'
+    );
+    // The glob's terminator is escaped (`*\/`), so it does not close the block.
+    expect(withGlob).toContain('**\\/*.ts');
+    // The declaration still parses afterward — a corrupted comment would make
+    // this second upsert a no-op (property not found), returning the input.
+    expect(upsertPropertyJsDocTag(withGlob, 'Cfg', 'include', 'useWhen', 'x')).not.toBe(withGlob);
+  });
+
+  it('a second tag merges cleanly onto a multi-line-created block (no malformation)', () => {
+    const src = `export interface Cfg {\n  outDir?: string;\n}\n`;
+    const once = upsertPropertyJsDocTag(src, 'Cfg', 'outDir', 'pitfalls', '- a\n- b');
+    const twice = upsertPropertyJsDocTag(once, 'Cfg', 'outDir', 'useWhen', 'when emitting');
+    // Both tags present, exactly one comment, every body line prefixed.
+    expect(twice).toContain('@pitfalls - a');
+    expect(twice).toContain('@useWhen when emitting');
+    expect(twice.match(/\/\*\*/g)).toHaveLength(1);
+    expect(twice).not.toMatch(/\n- b/);
+    expect(readJsDocTags(twice, 'outDir')).toBeDefined(); // declaration still parses
+  });
+});
+
+describe('stripRefineTags', () => {
+  it('strips a refine tag from a SINGLE-LINE block (inline opener must not hide it)', () => {
+    // The exact feedback-loop case: a same-line refine tag whose line starts with
+    // `/**`, not whitespace/`*` before `@`. A naive line matcher misses it.
+    const src = `export interface Cfg {\n  /** @useWhen including files */ include?: string[];\n}`;
+    const out = stripRefineTags(src);
+    expect(out).not.toContain('@useWhen');
+    expect(out).not.toContain('including files');
+    // The declaration itself survives.
+    expect(out).toContain('include?: string[];');
+  });
+
+  it('preserves a single-line block that has no refine tag, verbatim', () => {
+    const src = `/** Select renders as a controlled component. */\nexport const X = 1;`;
+    expect(stripRefineTags(src)).toBe(src);
+  });
+
+  it('keeps prose and non-refine tags while dropping the refine tag', () => {
+    const src = `/**\n * Output directory.\n * @internal\n * @useWhen emitting build artifacts\n */\nexport const outDir = 'dist';`;
+    const out = stripRefineTags(src);
+    expect(out).toContain('Output directory.');
+    expect(out).toContain('@internal');
+    expect(out).not.toContain('@useWhen');
+    expect(out).not.toContain('emitting build artifacts');
+  });
+
+  it('drops a multi-line tag and its continuation lines', () => {
+    const src = `/**\n * @pitfalls - one\n * - two\n * - three\n */\nexport const y = 2;`;
+    const out = stripRefineTags(src);
+    expect(out).not.toContain('@pitfalls');
+    expect(out).not.toContain('- two');
+    // A block that was nothing but the refine tag is removed entirely.
+    expect(out).not.toContain('/**');
   });
 });
 

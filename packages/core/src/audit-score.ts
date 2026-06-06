@@ -249,6 +249,9 @@ function sourceDepth(sourceModule: string | undefined): number {
   return sourceModule.split('/').length;
 }
 
+/** Per-tag cap on config-option targets — high enough that real config surfaces aren't truncated. */
+const MAX_CONFIG_OPTION_TARGETS = 24;
+
 /** Classes and functions missing a given tag, sorted by source tree depth (top-level first). */
 function targetsForMissingTag(
   skill: ExtractedSkill,
@@ -268,22 +271,65 @@ function targetsForMissingTag(
     .slice(0, maxFunctions)
     .map((f) => ({ file: fileForModule(f.sourceModule), name: f.name, kind: 'function' }));
 
-  // CLI command surfaces also carry useWhen / avoidWhen / pitfalls.
-  // Only emit targets for the tags that ExtractedConfigSurface actually holds.
-  const CLI_SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'pitfalls'] as const);
-  type CliTag = 'useWhen' | 'avoidWhen' | 'pitfalls';
+  // CLI command surfaces and config options also carry useWhen / avoidWhen /
+  // pitfalls. Only emit targets for the tags that the surface model holds.
+  const SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'pitfalls'] as const);
+  type SurfaceTag = 'useWhen' | 'avoidWhen' | 'pitfalls';
 
-  const cliTargets: ImprovementTarget[] = CLI_SURFACE_TAGS.has(tag as CliTag)
+  // CLI surfaces are tagged at the surface (command) level: the target is the
+  // command name, which the CliRefineSource maps to its `<Command>Options`
+  // interface.
+  const cliTargets: ImprovementTarget[] = SURFACE_TAGS.has(tag as SurfaceTag)
     ? (skill.configSurfaces ?? [])
         // Empty array = no content = a gap, so treat it the same as a missing tag.
         .filter(
-          (s) => s.sourceType === 'cli' && !(s[tag as CliTag] as string[] | undefined)?.length
+          (s) => s.sourceType === 'cli' && !(s[tag as SurfaceTag] as string[] | undefined)?.length
         )
         .slice(0, maxFunctions)
         .map((s) => ({ file: '', name: s.name, kind: 'command' }))
     : [];
 
+  // Config per-OPTION targets are NOT emitted here: routing-tag dimensions clear
+  // their 80% threshold as soon as a FEW options carry a tag (W7/W8/W9 need only
+  // one), so threshold-gated targeting stops at partial coverage. They are
+  // surfaced threshold-independently in buildImprovements instead, so the loop
+  // drives EVERY option to full coverage. See configOptionTargetsForTag.
+
   return [...classTargets, ...fnTargets, ...cliTargets];
+}
+
+/**
+ * Config options still missing a routing `tag`, as work-item targets. Each maps
+ * to the option's dot-path `configKey`, which the ConfigRefineSource writes via
+ * `upsertPropertyJsDocTag`. Capped well above the class cap (a config commonly
+ * has more documentable options than a module has classes); the loop's
+ * itemsPerIteration paces how many are drafted per pass.
+ */
+function configOptionTargetsForTag(
+  skill: ExtractedSkill,
+  tag: 'useWhen' | 'avoidWhen' | 'pitfalls'
+): ImprovementTarget[] {
+  return (skill.configSurfaces ?? [])
+    .filter((s) => s.sourceType === 'config')
+    .flatMap((s) =>
+      s.options
+        .filter((o) => !(o[tag] as string[] | undefined)?.length)
+        .map((o) => ({ file: '', name: o.configKey ?? o.name, kind: 'config-option' }))
+    )
+    .slice(0, MAX_CONFIG_OPTION_TARGETS);
+}
+
+/**
+ * A single example target per `config` surface that lacks usage examples. The
+ * ConfigRefineSource maps it to a sibling `<config>.example.ts` written via a
+ * dedicated example-file path (not JSDoc). `name` is the config type so the
+ * source can correlate, `kind` distinguishes it from per-option targets.
+ */
+function configExampleTargets(skill: ExtractedSkill): ImprovementTarget[] {
+  return (skill.configSurfaces ?? [])
+    .filter((s) => s.sourceType === 'config')
+    .slice(0, 1)
+    .map((s) => ({ file: '', name: s.name, kind: 'config-example' }));
 }
 
 /** Functions with 3+ parameters missing @remarks, sorted by source tree depth. */
@@ -599,6 +645,49 @@ function buildImprovements(
     if (!seen.has(s.imp.suggestion) && top.length < 3) {
       seen.add(s.imp.suggestion);
       top.push(s.imp);
+    }
+  }
+
+  // Config example: a config skill has no functions to carry @example, so E4
+  // never clears via the usual paths. Always surface a single example work item
+  // when a `config` surface lacks an example — appended OUTSIDE the top-3 cap so
+  // routing-tag improvements (which dominate by gain early on) cannot crowd this
+  // one-shot artifact out across a bounded run. The ConfigRefineSource writes the
+  // drafted example to a sibling `<config>.example.ts` and reads it back into
+  // `skill.examples`.
+  if (skill && !passes(audit, 'E4')) {
+    const exampleTargets = configExampleTargets(skill);
+    if (exampleTargets.length > 0) {
+      top.push({
+        suggestion: 'Add an @example config file (+2 on D2, +2 on D8)',
+        points: 4,
+        dimension: 'D2',
+        targets: exampleTargets
+      });
+    }
+  }
+
+  // Config per-option completeness: routing-tag dimensions saturate once a few
+  // options are tagged (W7/W8/W9 need only one), so the threshold-gated path
+  // above leaves the remaining options bare. Append one improvement per routing
+  // tag — OUTSIDE the top-3 cap — carrying every still-untagged option, so the
+  // loop documents the whole surface, not just enough to clear the rubric.
+  if (skill) {
+    const ROUTING: ReadonlyArray<{ tag: 'pitfalls' | 'useWhen' | 'avoidWhen'; points: number }> = [
+      { tag: 'pitfalls', points: 3 },
+      { tag: 'useWhen', points: 2 },
+      { tag: 'avoidWhen', points: 2 }
+    ];
+    for (const { tag, points } of ROUTING) {
+      const targets = configOptionTargetsForTag(skill, tag);
+      if (targets.length > 0) {
+        top.push({
+          suggestion: `Add @${tag} to every config option for full per-option coverage`,
+          points,
+          dimension: tag === 'pitfalls' ? 'D3' : 'D2',
+          targets
+        });
+      }
     }
   }
 

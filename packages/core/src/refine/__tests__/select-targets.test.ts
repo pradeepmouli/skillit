@@ -43,6 +43,41 @@ describe('selectWorkItems', () => {
     expect(result[0]!.toolName).toBe('tool_b');
   });
 
+  it('round-robins across tags so a target-heavy tag cannot starve lower-points tags', () => {
+    // A wide config surface: @pitfalls (points 3) has many untagged options,
+    // @useWhen / @avoidWhen (points 2) one each. Pure points-descending would
+    // fill the whole limit with pitfalls and never reach useWhen/avoidWhen — the
+    // refine loop would then plateau with those dimensions still failing.
+    const targets = (...names: string[]) =>
+      names.map((name) => ({ file: 'f.ts', name, kind: 'function' as const }));
+    const items: ActionableImprovement[] = [
+      {
+        suggestion: 'Add @pitfalls …',
+        points: 3,
+        dimension: 'D3',
+        targets: targets('a', 'b', 'c', 'd', 'e')
+      },
+      {
+        suggestion: 'Add @useWhen …',
+        points: 2,
+        dimension: 'D2',
+        targets: targets('a', 'b', 'c', 'd', 'e')
+      },
+      {
+        suggestion: 'Add @avoidWhen …',
+        points: 2,
+        dimension: 'D2',
+        targets: targets('a', 'b', 'c', 'd', 'e')
+      }
+    ];
+    const result = selectWorkItems(items, 5);
+    const tags = result.map((r) => r.tag);
+    // Every tag is represented within the bounded slice (not all pitfalls).
+    expect(new Set(tags)).toEqual(new Set(['pitfalls', 'useWhen', 'avoidWhen']));
+    // Higher-points tag still leads each round.
+    expect(tags[0]).toBe('pitfalls');
+  });
+
   it('expands multi-target improvements into one item per target', () => {
     const multi: ActionableImprovement = {
       suggestion: 'Add @useWhen annotation',

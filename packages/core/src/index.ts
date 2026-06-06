@@ -86,6 +86,7 @@ export type {
 } from './config-types.js';
 
 export { renderConfigSurfaceSection, renderConfigReference } from './config-renderer.js';
+export { extractConfigSurface } from './config-extract.js';
 
 export type { ParsedSection, ParsedMarkdownDoc, DocsExtractionOptions } from './markdown-types.js';
 

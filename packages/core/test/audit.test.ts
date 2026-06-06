@@ -1039,6 +1039,35 @@ describe('W7: @useWhen on at least one export', () => {
     );
     expect(issues).toHaveLength(1);
   });
+
+  it('passes when a config surface OPTION carries useWhen (per-option routing)', () => {
+    const passing = getPassing(
+      makeSkill({
+        useWhen: undefined,
+        configSurfaces: [
+          {
+            name: 'ZodFormsConfig',
+            description: 'Config',
+            sourceType: 'config',
+            useWhen: [],
+            options: [
+              {
+                name: 'ssr',
+                configKey: 'ssr',
+                type: 'boolean',
+                description: 'Enable SSR',
+                required: false,
+                useWhen: ['targeting a server runtime']
+              }
+            ]
+          }
+        ]
+      }),
+      makeContext(),
+      'W7'
+    );
+    expect(passing).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------

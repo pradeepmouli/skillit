@@ -1,6 +1,12 @@
 // packages/core/src/refine/ast-edit.ts
 import { parse, Lang } from '@ast-grep/napi';
 import type { SgNode } from '@ast-grep/napi';
+import {
+  escapeJsDocClose,
+  findPropertyByPath,
+  findTypeBody,
+  unescapeJsDocClose
+} from '../config-extract.js';
 import type { RefineTag } from './types.js';
 
 // `satisfies` ensures every listed value is a valid RefineTag. The
@@ -108,25 +114,64 @@ export function upsertJsDocTag(
   const root = parse(Lang.TypeScript, source).root();
   const anchorNode = findDeclaration(root, declName);
   if (!anchorNode) return source;
+  return upsertTagOnAnchor(source, root, anchorNode, tag, content);
+}
 
-  const tagText = `@${tag} ${content}`;
+/**
+ * Insert or update a JSDoc tag on a property of a config type.
+ *
+ * `propertyPath` is a dot path into the interface or object-type alias named
+ * `typeName` (e.g. `outDir` or `components.prefix`). Otherwise behaves like
+ * {@link upsertJsDocTag}. Returns the source unchanged when the type or
+ * property is not found. Used by the config refine source to write routing
+ * tags back onto a config type's property declarations.
+ */
+export function upsertPropertyJsDocTag(
+  source: string,
+  typeName: string,
+  propertyPath: string,
+  tag: RefineTag,
+  content: string
+): string {
+  const root = parse(Lang.TypeScript, source).root();
+  const body = findTypeBody(root, typeName);
+  if (!body) return source;
+  const property = findPropertyByPath(body, propertyPath);
+  if (!property) return source;
+  return upsertTagOnAnchor(source, root, property, tag, content);
+}
+
+/**
+ * Insert or update `@tag content` on the JSDoc block leading `anchorNode`,
+ * creating the block when absent. Idempotent per tag (matches the tag NAME, so
+ * multi-line content never produces duplicates) and rebuilds the block as
+ * well-formed multi-line (handling single-line `/** text *\/` inputs). Shared by
+ * the declaration-level ({@link upsertJsDocTag}) and property-level
+ * ({@link upsertPropertyJsDocTag}) upserts.
+ */
+function upsertTagOnAnchor(
+  source: string,
+  root: SgNode,
+  anchorNode: SgNode,
+  tag: RefineTag,
+  content: string
+): string {
+  // Escape any comment-close sequence in the content so a value containing it
+  // (e.g. a glob like `**/*.ts` in a config pitfall) can't terminate the block
+  // early and corrupt the file. readJsDocTags / config extraction unescape it.
+  const tagText = escapeJsDocClose(`@${tag} ${content}`);
   const jsdocNode = leadingJsDoc(anchorNode);
+  // Indent from the comment when one exists: it may sit on the SAME line as the
+  // declaration (`/** x */ prop`), where the declaration's own column is the
+  // text after the comment, not the line indent — using it over-indented every
+  // rebuilt continuation line. With no comment, indent from the declaration the
+  // new block is prepended to.
+  const indent = ' '.repeat((jsdocNode ?? anchorNode).range().start.column);
 
   if (jsdocNode) {
     const block = jsdocNode.text();
-    // Idempotent per tag: skip if the tag is already present. We check the tag
-    // NAME on a JSDoc line, not the exact `tagText` — multi-line content is
-    // stored with ` * ` line prefixes, so a literal `tagText` with bare
-    // newlines would never match and re-runs would append duplicate tags.
     if (block.match(new RegExp(`(^|\\n)\\s*\\*?\\s*@${tag}\\b`))) return source;
 
-    // Normalize the existing block into its inner content lines, then rebuild
-    // a well-formed multi-line block with the new tag appended. This handles
-    // both multi-line blocks and single-line `/** text */` comments — the old
-    // closing-`*/` indent heuristic mis-fired on single-line blocks (the
-    // "indent" capture swallowed the whole comment body, producing malformed
-    // duplicate `/** ... ` headers with no closing `*/`).
-    const indent = ' '.repeat(anchorNode.range().start.column);
     const innerLines = block
       .replace(/^\/\*\*/, '')
       .replace(/\s*\*\/\s*$/, '')
@@ -142,15 +187,104 @@ export function upsertJsDocTag(
       .join('\n');
     const merged = `/**\n${body}\n${indent} */`;
 
-    return root.commitEdits([jsdocNode.replace(merged)]);
+    // Own-line comment: a clean node replace suffices.
+    if (jsdocNode.range().end.line !== anchorNode.range().start.line) {
+      return root.commitEdits([jsdocNode.replace(merged)]);
+    }
+    // Same-line `/** x */ prop`: a node replace swaps only the comment text and
+    // leaves the declaration packed onto the closing `*/` line. Splice manually
+    // — drop the inline gap and start the declaration on its own indented line.
+    const start = jsdocNode.range().start.index;
+    const end = jsdocNode.range().end.index;
+    const tail = source.slice(end).replace(/^[^\S\n]+/, '');
+    return `${source.slice(0, start)}${merged}\n${indent}${tail}`;
   }
 
-  // No existing JSDoc — create one before the anchor node.
-  const col = anchorNode.range().start.column;
-  const indent = ' '.repeat(col);
+  // No existing JSDoc — create one before the anchor node. Prefix EVERY physical
+  // line of the tag (multi-line content too) with ` * `, mirroring the merge
+  // branch above. Without this, a multi-line first tag left continuation lines
+  // at column 0 — malformed JSDoc that also broke the re-parse for any tag
+  // appended to the same declaration in a later pass.
   const at = anchorNode.range().start.index;
-  const blockText = `/**\n${indent} * ${tagText}\n${indent} */\n${indent}`;
+  const body = tagText
+    .split('\n')
+    .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+    .join('\n');
+  const blockText = `/**\n${body}\n${indent} */\n${indent}`;
   return source.slice(0, at) + blockText + source.slice(at);
+}
+
+// Fast membership set for tag-name lookups (typed as strings so an arbitrary
+// captured `@word` can be tested without a cast). Derived from REFINE_TAGS so
+// it stays in sync with the union automatically.
+const REFINE_TAG_SET: ReadonlySet<string> = new Set(REFINE_TAGS);
+
+/**
+ * Remove the refine-managed tag spans (`@useWhen`, `@avoidWhen`, `@pitfalls`,
+ * `@remarks`, `@example` — see {@link REFINE_TAGS}) from every JSDoc block in
+ * `source`, leaving each block's prose description and any non-refine tags
+ * intact.
+ *
+ * Used to feed an annotated config module back to the model as grounding
+ * without echoing the routing tags this package itself wrote across earlier
+ * refine iterations — those are documentation, not the implementation the model
+ * should ground runtime claims in. Unlike a blanket JSDoc strip, this preserves
+ * genuine hand-authored docs (e.g. validation notes on a `defineConfig` helper),
+ * which are exactly the runtime-behavior grounding we want to keep.
+ *
+ * Handles single-line (`/** @tag x *​/`) as well as multi-line blocks: each block
+ * is reduced to its inner content (opener/closer and ` * ` gutter dropped) before
+ * tags are matched, so an inline opener can't hide a tag. The block-matching
+ * regex is non-greedy, and writeback escapes a literal close sequence in content
+ * to `*\/`, so an escaped sequence inside a kept line never terminates early.
+ */
+export function stripRefineTags(source: string): string {
+  return source.replace(/\/\*\*[\s\S]*?\*\//g, (block: string, offset: number) => {
+    // Indent of the line the block opens on, for a clean re-wrap when we rebuild.
+    const lineStart = source.lastIndexOf('\n', offset) + 1;
+    const indent = source.slice(lineStart, offset).match(/^\s*/)?.[0] ?? '';
+    return stripRefineTagsFromBlock(block, indent);
+  });
+}
+
+/**
+ * Strip refine-tag spans from one JSDoc block. Returns the block unchanged when
+ * it holds no refine tag (preserving hand-authored formatting), the empty string
+ * when nothing but refine tags remain (the whole block is dropped), or a clean
+ * re-wrapped block at `indent` otherwise. A `@tag` line and the lines following
+ * it (its continuation) form one span; a non-refine `@tag` closes any open span.
+ */
+function stripRefineTagsFromBlock(block: string, indent: string): string {
+  // Reduce to inner content so tag detection is independent of how the block is
+  // wrapped: drop the `/**` opener and `*/` closer (own-line OR inline, as in a
+  // single-line `/** @tag x */`), then the per-line ` * ` gutter.
+  const inner = block.replace(/^\s*\/\*\*/, '').replace(/\*\/\s*$/, '');
+  const lines = inner.split('\n').map((line) => line.replace(/^\s*\*? ?/, '').trimEnd());
+
+  const kept: string[] = [];
+  let dropping = false;
+  let droppedAny = false;
+  for (const line of lines) {
+    const tagMatch = line.match(/^@(\w+)\b/);
+    if (tagMatch) {
+      dropping = REFINE_TAG_SET.has(tagMatch[1] ?? '');
+    }
+    if (dropping) {
+      droppedAny = true;
+      continue;
+    }
+    kept.push(line);
+  }
+
+  if (!droppedAny) return block; // no refine tag — keep original formatting verbatim
+  while (kept.length > 0 && kept[0] === '') kept.shift();
+  while (kept.length > 0 && kept[kept.length - 1] === '') kept.pop();
+  if (kept.length === 0) return ''; // block was nothing but refine tags
+
+  const body = kept
+    .map((line) => (line.length > 0 ? `${indent} * ${line}` : `${indent} *`))
+    .join('\n');
+  return `/**\n${body}\n${indent} */`;
 }
 
 /**
@@ -201,7 +335,7 @@ export function readJsDocTags(
   const result: Partial<Record<RefineTag, string>> = {};
   for (const tag of REFINE_TAGS) {
     const lines = collected[tag];
-    if (lines) result[tag] = lines.join('\n').trim();
+    if (lines) result[tag] = unescapeJsDocClose(lines.join('\n').trim());
   }
   return result;
 }
