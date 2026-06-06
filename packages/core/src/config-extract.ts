@@ -90,9 +90,15 @@ function walkProperties(bodyNode: SgNode, prefix: string): ExtractedConfigOption
     const name = nameNode.text();
     const configKey = prefix ? `${prefix}.${name}` : name;
 
-    // type_annotation text is `: <type>`; strip the leading colon/space.
+    // type_annotation text is `: <type>`; strip the leading colon/space and
+    // collapse internal whitespace so a multi-line type (e.g. a mapped type
+    // spanning several lines) renders as one line — a literal newline in the
+    // captured text would otherwise corrupt the markdown options table.
     const typeNode = child.field('type');
-    const typeText = (typeNode?.text() ?? '').replace(/^\s*:\s*/, '').trim();
+    const typeText = (typeNode?.text() ?? '')
+      .replace(/^\s*:\s*/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     // Optional when a `?` precedes the `:` (type-level `?` comes after the colon).
     const required = !/^[^:]*\?/.test(child.text());

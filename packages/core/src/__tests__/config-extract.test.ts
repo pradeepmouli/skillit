@@ -62,6 +62,29 @@ describe('extractConfigSurface', () => {
     expect(surface!.options.find((o) => o.name === 'flag')?.type).toBe('boolean');
   });
 
+  it('collapses a multi-line property type to one line (no table-breaking newlines)', () => {
+    const src = `export type Cfg = {
+  schemas?: {
+    [K in keyof T & string]?: ZodTypeConfig<
+      T[K],
+      C
+    >;
+  };
+};`;
+    const schemas = extractConfigSurface(src, 'Cfg')!.options.find((o) => o.name === 'schemas')!;
+    expect(schemas.type).not.toContain('\n');
+    expect(schemas.type).toBe('{ [K in keyof T & string]?: ZodTypeConfig< T[K], C >; }');
+  });
+
+  it('matches a generic object-type alias by its bare name', () => {
+    const src = `export type Cfg<T = unknown> = {
+  /** A flag. */
+  flag: boolean;
+};`;
+    const surface = extractConfigSurface(src, 'Cfg');
+    expect(surface?.options.find((o) => o.name === 'flag')?.type).toBe('boolean');
+  });
+
   it('returns undefined when the type is not found', () => {
     expect(extractConfigSurface(`export interface Other {}`, 'Missing')).toBeUndefined();
   });
