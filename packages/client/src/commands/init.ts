@@ -140,9 +140,14 @@ async function defaultGenerateConfigSkill(opts: GenerateConfigSkillOpts): Promis
   const skill = await new ConfigRefineSource({
     configFile: opts.configFile,
     typeName: opts.typeName,
-    name: opts.name
+    name: opts.name,
+    // A config-specific description so the rendered skill describes the config
+    // surface, not the package blurb (which is about the whole package).
+    description: `Configuration options for ${opts.typeName}.`
   }).extract();
-  const rendered = renderSkills([skill], { outDir: opts.outDir });
+  // Config skills are content-rich (per-option routing + example); raise the
+  // per-reference token budget so a multi-option surface isn't truncated.
+  const rendered = renderSkills([skill], { outDir: opts.outDir, maxTokens: 16000 });
   writeSkills(rendered, { outDir: opts.outDir });
 }
 

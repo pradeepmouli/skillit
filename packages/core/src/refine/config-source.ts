@@ -69,9 +69,15 @@ export class ConfigRefineSource implements RefineSource {
 
     const meta = await this.loadMetadata();
 
+    // An explicit description wins for BOTH fields: the renderer uses
+    // packageDescription for the body, so without this a config skill would show
+    // the package blurb (which describes the package, not the config surface)
+    // even when the caller supplied a config-specific description. The audit's
+    // F1 check still reads the real package description from auditContext().
+    const description = this.opts.description ?? meta.packageDescription ?? '';
     const skill: ExtractedSkill = {
       name: this.opts.name ?? meta.packageName ?? this.opts.typeName,
-      description: this.opts.description ?? meta.packageDescription ?? '',
+      description,
       functions: [],
       classes: [],
       types: [],
@@ -82,7 +88,7 @@ export class ConfigRefineSource implements RefineSource {
     };
     if (meta.keywords?.length) skill.keywords = meta.keywords;
     if (meta.repository) skill.repository = meta.repository;
-    if (meta.packageDescription) skill.packageDescription = meta.packageDescription;
+    if (description) skill.packageDescription = description;
 
     // A sibling `<config>.example.ts` (if present) is the skill's usage example
     // — clears E4 and feeds the rendered Examples section. The refine loop
