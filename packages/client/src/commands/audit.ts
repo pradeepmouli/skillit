@@ -71,6 +71,19 @@ export interface AuditCommandOpts {
 
 export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
   const cwd = process.cwd();
+
+  // audit supports cli + config in Phase 0. Short-circuit an explicitly
+  // requested mcp/typedoc source with a clear message BEFORE routing through
+  // refine's resolver — that resolver applies refine-specific validation (e.g.
+  // requiring --mcp) and emits refine-flavored errors that would mislead here.
+  if (opts.source === 'mcp' || opts.source === 'typedoc') {
+    console.error(
+      `skillit audit does not yet support the ${opts.source} source; cli and config are supported in this release.`
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   const candidates = await detectInstalledSources(cwd);
   const detected = classifyRefineSources(candidates);
   const resolution = resolveRefineSource(opts as RefineCommandOpts, detected, candidates);
@@ -98,7 +111,7 @@ export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
     });
   } else {
     console.error(
-      `audit for the ${resolution.kind} source is not yet supported; use --source cli|config.`
+      `skillit audit does not yet support the ${resolution.kind} source; cli and config are supported in this release.`
     );
     process.exitCode = 1;
     return;

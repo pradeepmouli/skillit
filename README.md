@@ -96,12 +96,16 @@ npx skillit gen --source config --config-type ./src/config.ts#MyConfig
 npx skillit gen --out docs/skills
 ```
 
-| Flag                                   | Default  | Description                              |
-| -------------------------------------- | -------- | ---------------------------------------- |
-| `--source <cli\|mcp\|typedoc\|config>` | auto     | Override project-nature detection        |
-| `--program <file#export>`              | —        | Commander program entry (cli source)     |
-| `--config-type <file#export>`          | —        | Config type entry (config source)        |
-| `--out <dir>`                          | `skills` | Output directory for the generated skill |
+This release implements `gen` for the **cli** and **config** sources; `mcp` and
+`typedoc` generation land in a later phase (use `skillit mcp extract` for MCP
+servers meanwhile).
+
+| Flag                          | Default  | Description                              |
+| ----------------------------- | -------- | ---------------------------------------- |
+| `--source <cli\|config>`      | auto     | Source kind (cli/config this release)    |
+| `--program <file#export>`     | —        | Commander program entry (cli source)     |
+| `--config-type <file#export>` | —        | Config type entry (config source)        |
+| `--out <dir>`                 | `skills` | Output directory for the generated skill |
 
 ### Audit: score + findings as JSON
 
@@ -118,12 +122,15 @@ npx skillit audit --source cli
 npx skillit audit --source config --config-type ./src/config.ts#MyConfig --json
 ```
 
-| Flag                                   | Default | Description                            |
-| -------------------------------------- | ------- | -------------------------------------- |
-| `--source <cli\|mcp\|typedoc\|config>` | auto    | Override project-nature detection      |
-| `--program <file#export>`              | —       | Commander program entry (cli source)   |
-| `--config-type <file#export>`          | —       | Config type entry (config source)      |
-| `--json`                               | off     | Emit the full audit + estimate as JSON |
+Like `gen`, `audit` supports the **cli** and **config** sources this release;
+`mcp` / `typedoc` land in a later phase.
+
+| Flag                          | Default | Description                            |
+| ----------------------------- | ------- | -------------------------------------- |
+| `--source <cli\|config>`      | auto    | Source kind (cli/config this release)  |
+| `--program <file#export>`     | —       | Commander program entry (cli source)   |
+| `--config-type <file#export>` | —       | Config type entry (config source)      |
+| `--json`                      | off     | Emit the full audit + estimate as JSON |
 
 ### Refine: autonomous annotation loop
 

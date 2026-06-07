@@ -6,7 +6,7 @@ import type {
   RefineSource,
   TargetLocation
 } from '@skillit/core';
-import { buildAuditReport } from '../commands/audit.js';
+import { buildAuditReport, runAuditCommand } from '../commands/audit.js';
 
 /** A minimal skill that will fail several audit checks (no keywords, no JSDoc tags). */
 function minimalSkill(): ExtractedSkill {
@@ -82,5 +82,24 @@ describe('buildAuditReport', () => {
         expect(loc).toBeNull();
       }
     }
+  });
+});
+
+describe('runAuditCommand unsupported sources', () => {
+  it('rejects an explicit mcp source with a clear message and exit 1 (no refine error)', async () => {
+    const errors: string[] = [];
+    const originalError = console.error;
+    const originalExitCode = process.exitCode;
+    console.error = (...args: unknown[]): void => {
+      errors.push(String(args[0]));
+    };
+    try {
+      await runAuditCommand({ source: 'mcp' });
+    } finally {
+      console.error = originalError;
+    }
+    expect(process.exitCode).toBe(1);
+    expect(errors.join('\n')).toMatch(/skillit audit does not yet support the mcp source/);
+    process.exitCode = originalExitCode;
   });
 });

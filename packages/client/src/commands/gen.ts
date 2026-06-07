@@ -5,7 +5,6 @@ import { Command } from 'commander';
 import {
   classifyRefineSources,
   detectInstalledSources,
-  detectProjectNature,
   type RefineSourceKind
 } from '../detect-source.js';
 import {
@@ -80,7 +79,19 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         return;
       }
 
-      // Resolve a cli/mcp/typedoc source the same way refine does.
+      // gen supports cli + config in Phase 0. Short-circuit an explicitly
+      // requested mcp/typedoc source with a clear, gen-specific message BEFORE
+      // routing through refine's resolver — that resolver applies refine-specific
+      // validation (e.g. requiring --mcp) and emits refine-flavored errors that
+      // would be misleading here.
+      if (opts.source === 'mcp' || opts.source === 'typedoc') {
+        throw new Error(
+          `skillit gen does not yet support the ${opts.source} source; cli and config are supported in this release.`
+        );
+      }
+
+      // Resolve the cli source the same way refine does (handles auto-detection
+      // and the ambiguous/none guidance).
       const candidates = await detectInstalledSources(cwd);
       const detected = classifyRefineSources(candidates);
       const resolution = resolveRefineSource(opts, detected, candidates);
@@ -99,12 +110,9 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         return;
       }
 
-      // mcp/typedoc generation is not wired in Phase 0; surface a clear message
-      // rather than silently no-op. (detectProjectNature kept imported for parity
-      // with init's detection and to avoid an unused-import lint when extended.)
-      void detectProjectNature;
+      // Auto-detection resolved to a source gen can't generate yet (e.g. mcp).
       throw new Error(
-        `gen for the ${resolution.kind} source is not yet implemented; cli and config are supported in this release.`
+        `skillit gen does not yet support the ${resolution.kind} source; cli and config are supported in this release.`
       );
     });
 }

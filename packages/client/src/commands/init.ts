@@ -104,6 +104,20 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
         throw new Error(`Install failed (${reason}). Run it manually:\n  ${command}`);
       }
 
-      console.log(`Installed ${pkg}. Generate the skill with:\n  skillit gen --source ${nature}`);
+      // Source-aware next step: `skillit gen` generates the cli source today;
+      // mcp uses `skillit mcp extract` and typedoc the TypeDoc plugin (gen
+      // support for those lands in a later phase). Don't point users at a
+      // command that would immediately error for their source.
+      if (nature === 'cli') {
+        console.log(`Installed ${pkg}. Generate the skill with:\n  skillit gen --source cli`);
+      } else if (nature === 'mcp') {
+        console.log(
+          `Installed ${pkg}. Generate the skill with:\n  skillit mcp extract\n(skillit gen support for the mcp source lands in a later phase.)`
+        );
+      } else {
+        console.log(
+          `Installed ${pkg}. Generate the skill by running TypeDoc with the plugin enabled.\n(skillit gen support for the typedoc source lands in a later phase.)`
+        );
+      }
     });
 }

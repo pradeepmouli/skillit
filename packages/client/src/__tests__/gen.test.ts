@@ -99,4 +99,22 @@ describe('buildGenCommand', () => {
     const { deps } = makeStubs();
     await expect(run(deps, ['--source', 'config'])).rejects.toThrow(/--config-type/);
   });
+
+  it('rejects an explicit mcp source with a clear gen-specific message (not a refine error)', async () => {
+    await writeCliFixture();
+    const { deps } = makeStubs();
+    // Must NOT surface refine's "requires --mcp" error; must say gen doesn't
+    // support mcp yet.
+    await expect(run(deps, ['--source', 'mcp'])).rejects.toThrow(
+      /skillit gen does not yet support the mcp source/
+    );
+  });
+
+  it('rejects an explicit typedoc source with a clear gen-specific message', async () => {
+    await writeCliFixture();
+    const { deps } = makeStubs();
+    await expect(run(deps, ['--source', 'typedoc'])).rejects.toThrow(
+      /skillit gen does not yet support the typedoc source/
+    );
+  });
 });

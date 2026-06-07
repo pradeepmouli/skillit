@@ -107,7 +107,7 @@ describe('buildInitCommand (install/wire only)', () => {
     expect(out).toMatch(/skillit gen/);
   });
 
-  it('installs @skillit/mcp and points at skillit gen for an mcp project', async () => {
+  it('installs @skillit/mcp and points at skillit mcp extract (not gen) for an mcp project', async () => {
     await writeMcpFixture();
     const { deps, installCalls } = makeStubs();
     const { logged, restore } = captureLog();
@@ -116,8 +116,12 @@ describe('buildInitCommand (install/wire only)', () => {
     } finally {
       restore();
     }
+    const out = logged.join('\n');
     expect(installCalls[0]!.pkg).toBe('@skillit/mcp');
-    expect(logged.join('\n')).toMatch(/skillit gen/);
+    // mcp generation is via `skillit mcp extract`, not `skillit gen` (which does
+    // not support mcp this release) — init must point at the command that works.
+    expect(out).toMatch(/skillit mcp extract/);
+    expect(out).not.toMatch(/skillit gen --source mcp/);
   });
 
   it('does not install for the config source (built in) and points at skillit gen', async () => {
