@@ -70,10 +70,12 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         }
         const parsed = parseConfigTypeSpec(opts.configType, cwd);
         if ('error' in parsed) throw new Error(parsed.error);
+        // No explicit name: ConfigRefineSource derives it from the package
+        // nearest the config file (→ typeName), which is more correct in a
+        // monorepo than this command's cwd.
         await generateConfigSkill({
           configFile: parsed.configFile,
           typeName: parsed.typeName,
-          name: skillNameFrom(await readPackageName(cwd)),
           outDir
         });
         return;

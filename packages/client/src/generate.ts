@@ -23,8 +23,12 @@ export interface GenerateConfigSkillOpts {
   configFile: string;
   /** Exported interface / type-alias name to document. */
   typeName: string;
-  /** Skill name (consumer package name, scope stripped). */
-  name: string;
+  /**
+   * Explicit skill name. Optional — when omitted, `ConfigRefineSource` derives
+   * it from the package nearest the config file (scope-stripped), falling back
+   * to `typeName`. Pass this only to override that (e.g. a forced skill name).
+   */
+  name?: string;
   /** Absolute output directory (`<cwd>/<out>`). */
   outDir: string;
 }
@@ -41,7 +45,9 @@ export async function generateConfigSkill(opts: GenerateConfigSkillOpts): Promis
   const skill = await new ConfigRefineSource({
     configFile: opts.configFile,
     typeName: opts.typeName,
-    name: opts.name,
+    // Only pass an explicit name when provided; otherwise let ConfigRefineSource
+    // derive it (package nearest the config file → typeName).
+    ...(opts.name !== undefined ? { name: opts.name } : {}),
     // A config-specific description so the rendered skill describes the config
     // surface, not the package blurb (which is about the whole package).
     description: `Configuration options for ${opts.typeName}.`

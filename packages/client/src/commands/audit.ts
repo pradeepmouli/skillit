@@ -104,10 +104,12 @@ export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    // No explicit name: ConfigRefineSource derives it from the package nearest
+    // the config file (→ typeName), matching what `skillit gen` writes for the
+    // same source.
     source = new ConfigRefineSource({
       configFile: isAbsolute(parsed.configFile) ? parsed.configFile : join(cwd, parsed.configFile),
-      typeName: parsed.typeName,
-      name: parsed.typeName
+      typeName: parsed.typeName
     });
   } else {
     console.error(
