@@ -9,7 +9,7 @@ import type { AuditContext, ParsedReadme } from '../audit-types.js';
 import type { ExtractedConfigSurface } from '../config-types.js';
 import type { ExtractedSkill } from '../types.js';
 import { stripRefineTags, upsertPropertyJsDocTag } from './ast-edit.js';
-import type { DraftedFix, RefineSource } from './types.js';
+import type { DraftedFix, RefineSource, TargetLocation } from './types.js';
 
 export interface ConfigRefineSourceOptions {
   /** Path to the TypeScript file declaring the config type. */
@@ -119,6 +119,27 @@ export class ConfigRefineSource implements RefineSource {
       // No/unreadable example — leave examples empty (E4 stays a gap).
     }
     return skill;
+  }
+
+  /**
+   * Map an improvement target to its on-disk location. Config targets carry the
+   * option's dot-path `configKey` as `name` (kind `config-option`); the config
+   * type holds them, so the file is always the config file and the declName is
+   * the type. A `config-example` target points at the same file with no path.
+   */
+  resolveTargetLocation(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): TargetLocation | undefined {
+    if (target.kind === 'config-example') {
+      return { file: this.opts.configFile, declName: this.opts.typeName };
+    }
+    return {
+      file: this.opts.configFile,
+      declName: this.opts.typeName,
+      propertyPath: target.name
+    };
   }
 
   /**
