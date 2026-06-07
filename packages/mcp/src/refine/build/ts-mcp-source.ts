@@ -1,6 +1,12 @@
 import { glob } from 'node:fs/promises';
 import { readFile, writeFile } from 'node:fs/promises';
-import type { AuditContext, DraftedFix, ExtractedSkill, RefineSource } from '@skillit/core';
+import type {
+  AuditContext,
+  DraftedFix,
+  ExtractedSkill,
+  RefineSource,
+  TargetLocation
+} from '@skillit/core';
 import { extractMcpSkill } from '../../extract.js';
 import type { McpExtractOptions } from '../../types.js';
 import { applyMetaEdit } from './meta-edit.js';
@@ -22,6 +28,24 @@ export class TypeScriptMcpRefineSource implements RefineSource {
 
   auditContext(_skill: ExtractedSkill): AuditContext {
     return {};
+  }
+
+  async resolveTargetLocation(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): Promise<TargetLocation | undefined> {
+    const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.cache']);
+    for await (const file of glob(this.opts.sourceGlob, {
+      exclude: (f) => f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_DIRS.has(seg))
+    })) {
+      const source = await readFile(file, 'utf8');
+      const { tools } = discoverTools(file, source);
+      if (tools.has(target.name)) {
+        return { file, declName: target.name };
+      }
+    }
+    return undefined;
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {
