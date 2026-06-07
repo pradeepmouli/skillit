@@ -1,0 +1,110 @@
+// packages/client/src/commands/gen.ts
+import { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { Command } from 'commander';
+import {
+  classifyRefineSources,
+  detectInstalledSources,
+  detectProjectNature,
+  type RefineSourceKind
+} from '../detect-source.js';
+import {
+  generateCliSkill as defaultGenerateCliSkill,
+  generateConfigSkill as defaultGenerateConfigSkill,
+  type GenerateConfigSkillOpts,
+  type GenerateSkillOpts
+} from '../generate.js';
+import { parseConfigTypeSpec, resolveRefineSource } from './refine.js';
+
+/** Injectable generators (test seam, mirrors InitDeps). */
+export interface GenDeps {
+  generateCliSkill?(opts: GenerateSkillOpts): Promise<void>;
+  generateConfigSkill?(opts: GenerateConfigSkillOpts): Promise<void>;
+}
+
+/** Parsed options for the `gen` action. */
+export interface GenCommandOpts {
+  source?: string;
+  program?: string;
+  configType?: string;
+  out: string;
+}
+
+/** Strip a leading `@scope/` from a package name for a skill dir name. */
+function skillNameFrom(packageName: string): string {
+  const slash = packageName.indexOf('/');
+  if (packageName.startsWith('@') && slash !== -1) return packageName.slice(slash + 1);
+  return packageName;
+}
+
+async function readPackageName(cwd: string): Promise<string> {
+  try {
+    const raw = await readFile(join(cwd, 'package.json'), 'utf8');
+    const pkg = JSON.parse(raw) as { name?: string };
+    return pkg.name ?? 'skill';
+  } catch {
+    return 'skill';
+  }
+}
+
+export function buildGenCommand(deps: GenDeps = {}): Command {
+  const generateCliSkill = deps.generateCliSkill ?? defaultGenerateCliSkill;
+  const generateConfigSkill = deps.generateConfigSkill ?? defaultGenerateConfigSkill;
+
+  return new Command('gen')
+    .description(
+      'Deterministically (re)generate the skill from current source — no model, no install'
+    )
+    .option('--source <kind>', 'cli | mcp | typedoc | config (auto-detected if omitted)')
+    .option('--program <file#export>', 'commander program entry (cli source)')
+    .option('--config-type <file#export>', 'config type entry (config source)')
+    .option('--out <dir>', 'output directory for the generated skill', 'skills')
+    .action(async (opts: GenCommandOpts) => {
+      const cwd = process.cwd();
+      const outDir = join(cwd, opts.out);
+
+      if (opts.source === 'config') {
+        if (opts.configType === undefined) {
+          throw new Error(
+            'The config source requires --config-type <file#export> (e.g. ./src/config.ts#MyConfig).'
+          );
+        }
+        const parsed = parseConfigTypeSpec(opts.configType, cwd);
+        if ('error' in parsed) throw new Error(parsed.error);
+        await generateConfigSkill({
+          configFile: parsed.configFile,
+          typeName: parsed.typeName,
+          name: skillNameFrom(await readPackageName(cwd)),
+          outDir
+        });
+        return;
+      }
+
+      // Resolve a cli/mcp/typedoc source the same way refine does.
+      const candidates = await detectInstalledSources(cwd);
+      const detected = classifyRefineSources(candidates);
+      const resolution = resolveRefineSource(opts, detected, candidates);
+      if ('error' in resolution) throw new Error(resolution.error);
+
+      if (resolution.kind === 'cli') {
+        const name = skillNameFrom(await readPackageName(cwd));
+        const nature: RefineSourceKind = 'cli';
+        await generateCliSkill({
+          cwd,
+          nature,
+          name,
+          outDir,
+          ...(opts.program !== undefined ? { program: opts.program } : {})
+        });
+        return;
+      }
+
+      // mcp/typedoc generation is not wired in Phase 0; surface a clear message
+      // rather than silently no-op. (detectProjectNature kept imported for parity
+      // with init's detection and to avoid an unused-import lint when extended.)
+      void detectProjectNature;
+      throw new Error(
+        `gen for the ${resolution.kind} source is not yet implemented; cli and config are supported in this release.`
+      );
+    });
+}
