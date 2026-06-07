@@ -30,17 +30,31 @@ export class TypeScriptMcpRefineSource implements RefineSource {
     return {};
   }
 
-  async resolveTargetLocation(target: {
-    name: string;
-    kind: string;
-    file?: string;
-  }): Promise<TargetLocation | undefined> {
+  /**
+   * Iterate the project's TypeScript source files (excluding declaration files
+   * and build output), yielding each file's path alongside its discovered MCP
+   * tools and warnings. Shared by {@link applyFixes} (which aggregates tools
+   * across all files) and {@link resolveTargetLocation} (which short-circuits on
+   * the first file declaring the target tool).
+   */
+  private async *iterDiscoveredTools(): AsyncGenerator<
+    { file: string } & ReturnType<typeof discoverTools>
+  > {
     const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.cache']);
     for await (const file of glob(this.opts.sourceGlob, {
       exclude: (f) => f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_DIRS.has(seg))
     })) {
       const source = await readFile(file, 'utf8');
-      const { tools } = discoverTools(file, source);
+      yield { file, ...discoverTools(file, source) };
+    }
+  }
+
+  async resolveTargetLocation(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): Promise<TargetLocation | undefined> {
+    for await (const { file, tools } of this.iterDiscoveredTools()) {
       if (tools.has(target.name)) {
         return { file, declName: target.name };
       }
@@ -49,21 +63,11 @@ export class TypeScriptMcpRefineSource implements RefineSource {
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {
-    const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.cache']);
-    const sourceFiles: string[] = [];
-    for await (const file of glob(this.opts.sourceGlob, {
-      exclude: (f) => f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_DIRS.has(seg))
-    })) {
-      sourceFiles.push(file);
-    }
-
     const allTools = new Map<string, { file: string; line: number }>();
     const seenNames = new Set<string>();
     const allWarnings: string[] = [];
 
-    for (const file of sourceFiles) {
-      const source = await readFile(file, 'utf8');
-      const { tools, warnings } = discoverTools(file, source);
+    for await (const { tools, warnings } of this.iterDiscoveredTools()) {
       for (const [name, loc] of tools) {
         if (seenNames.has(name)) {
           allWarnings.push(
