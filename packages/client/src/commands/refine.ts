@@ -1,11 +1,6 @@
 // packages/client/src/commands/refine.ts
 import { Command } from 'commander';
-import {
-  McpRefineSource,
-  TypeScriptMcpRefineSource,
-  extractMcpSkill,
-  readMcpConfigFile
-} from '@skillit/mcp';
+import { createMcpRefineSource } from '@skillit/mcp';
 import { CliRefineSource, loadProgram } from '@skillit/cli';
 import {
   ConfigRefineSource,
@@ -247,28 +242,15 @@ Use --mode build  (TypeScript MCP server you own)
       console.log('Refining in runtime mode (overlay)');
     }
 
-    const entries = await readMcpConfigFile(mcpPath);
-    const entry = opts.server
-      ? entries.find((e) => e.name === opts.server)
-      : entries.find((e) => !e.disabled);
-    if (!entry) {
-      const name = opts.server ? `"${opts.server}"` : 'any enabled server';
-      throw new Error(`Could not find ${name} in ${mcpPath}`);
-    }
-
-    if (mode === 'build') {
-      const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
-      source = new TypeScriptMcpRefineSource({
-        transport: entry.transport,
-        sourceGlob
-      });
-      reportInPlace = true;
-    } else {
-      source = new McpRefineSource({
-        overlayPath,
-        extract: () => extractMcpSkill({ transport: entry.transport })
-      });
-    }
+    const sourceGlob = opts.sourceGlob ?? join(cwd, '**', '*.ts');
+    source = await createMcpRefineSource({
+      mcpPath,
+      mode,
+      serverName: opts.server,
+      overlayPath,
+      sourceGlob
+    });
+    reportInPlace = mode === 'build';
 
     const result = await runRefine(source, model, maxIterations, itemsPerIteration);
     reportResult(result, { reportInPlace, overlayPath });
