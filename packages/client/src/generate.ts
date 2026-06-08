@@ -1,6 +1,7 @@
 // packages/client/src/generate.ts
 import { extractCliSkill, loadProgram, writeCliSkill } from '@skillit/cli';
 import { ConfigRefineSource, renderSkills, writeSkills } from '@skillit/core';
+import { generateTypeDocSkills } from '@skillit/typedoc';
 import type { RefineSourceKind } from './detect-source.js';
 
 /** Options for CLI-path skill generation. */
@@ -31,6 +32,28 @@ export interface GenerateConfigSkillOpts {
   name?: string;
   /** Absolute output directory (`<cwd>/<out>`). */
   outDir: string;
+}
+
+/** Options for typedoc-path skill generation. */
+export interface GenerateTypeDocSkillOpts {
+  /** Package root. */
+  cwd: string;
+  /** Entry-point source files (absolute). */
+  entryPoints: string[];
+  /** Path to tsconfig.json. */
+  tsconfig: string;
+  /** Absolute output directory. */
+  outDir: string;
+}
+
+/** TypeDoc-path skill generation — delegates to the plugin pipeline. */
+export async function generateTypeDocSkill(opts: GenerateTypeDocSkillOpts): Promise<void> {
+  await generateTypeDocSkills({
+    entryPoints: opts.entryPoints,
+    tsconfig: opts.tsconfig,
+    cwd: opts.cwd,
+    outDir: opts.outDir
+  });
 }
 
 /** CLI-path skill generation: loadProgram → extractCliSkill → writeCliSkill. */
