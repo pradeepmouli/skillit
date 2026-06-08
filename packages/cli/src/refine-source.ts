@@ -118,7 +118,7 @@ export class CliRefineSource implements RefineSource {
     }
 
     const meta = this.cachedMetadata;
-    return extractCliSkill({
+    const skill = await extractCliSkill({
       program: this.opts.program,
       configSurfaces,
       metadata: {
@@ -128,6 +128,8 @@ export class CliRefineSource implements RefineSource {
         ...(meta.repository !== undefined ? { repository: meta.repository } : {})
       }
     });
+    if (meta.readme !== undefined) skill.readme = meta.readme;
+    return skill;
   }
 
   guidance(): string {

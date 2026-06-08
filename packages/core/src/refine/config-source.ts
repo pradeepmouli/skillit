@@ -106,6 +106,7 @@ export class ConfigRefineSource implements RefineSource {
     if (meta.keywords?.length) skill.keywords = meta.keywords;
     if (meta.repository) skill.repository = meta.repository;
     if (description) skill.packageDescription = description;
+    if (meta.readme !== undefined) skill.readme = meta.readme;
 
     // A sibling `<config>.example.ts` (if present) is the skill's usage example
     // — clears E4 and feeds the rendered Examples section. The refine loop

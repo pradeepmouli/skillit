@@ -89,6 +89,16 @@ describe('ConfigRefineSource.extract', () => {
     expect(skill.name).toBe('override');
     expect(skill.description).toBe('override desc');
   });
+
+  it('populates skill.readme on the IR from the sibling README', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/my-lib', description: 'desc' },
+      readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
+    });
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.readme).toBeDefined();
+    expect(skill.readme?.blockquote ?? skill.readme?.firstParagraph ?? '').toMatch(/summary/);
+  });
 });
 
 describe('ConfigRefineSource example file', () => {

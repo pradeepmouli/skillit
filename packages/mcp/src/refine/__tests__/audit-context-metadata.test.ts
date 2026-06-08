@@ -69,7 +69,8 @@ describe('TypeScriptMcpRefineSource auditContext', () => {
         sourceGlob: join(dir, '**', '*.ts'),
         cwd: dir
       });
-      await source.extract();
+      const skill = await source.extract();
+      expect(skill.readme).toBeDefined();
       const ctx = source.auditContext(minimalSkill);
       expect(ctx.packageDescription).toBe('Widget MCP server for acme.');
       expect(ctx.keywords).toEqual(['mcp', 'widget']);
@@ -99,7 +100,8 @@ describe('McpRefineSource auditContext', () => {
         extract: async () => minimalSkill,
         cwd: dir
       });
-      await source.extract();
+      const skill = await source.extract();
+      expect(skill.readme).toBeDefined();
       const ctx = source.auditContext(minimalSkill);
       expect(ctx.packageDescription).toBe('Widget MCP server for acme.');
       expect(ctx.keywords).toEqual(['mcp', 'widget']);

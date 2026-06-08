@@ -31,6 +31,10 @@ describe('CliRefineSource.auditContext reads package metadata', () => {
       cwd: tmpDir
     });
     const skill = await source.extract();
+    expect(skill.readme).toBeDefined();
+    expect(skill.readme?.blockquote ?? skill.readme?.firstParagraph ?? '').toMatch(
+      /blockquote describing/
+    );
     const ctx = source.auditContext(skill);
     expect(ctx.packageDescription).toMatch(/meaningful description/);
     expect(ctx.keywords).toContain('skillit');

@@ -142,18 +142,18 @@ export function createTypeDocRefineSource(opts: TypeDocRunOptions): RefineSource
         ...(meta.readme !== undefined ? { readme: meta.readme } : {})
       };
 
-      return (
-        skills[0] ?? {
-          name: '',
-          description: '',
-          functions: [],
-          classes: [],
-          types: [],
-          enums: [],
-          variables: [],
-          examples: []
-        }
-      );
+      const skill = skills[0] ?? {
+        name: '',
+        description: '',
+        functions: [],
+        classes: [],
+        types: [],
+        enums: [],
+        variables: [],
+        examples: []
+      };
+      if (meta.readme !== undefined) skill.readme = meta.readme;
+      return skill;
     },
 
     auditContext(_skill: ExtractedSkill): AuditContext {

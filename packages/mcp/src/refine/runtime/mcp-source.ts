@@ -33,6 +33,7 @@ export class McpRefineSource implements RefineSource {
     // auditContext() can return it synchronously — mirroring CliRefineSource.
     const pkgDir = await findNearestPackageDir(this.opts.cwd);
     this.cachedMetadata = pkgDir ? await readPackageMetadata(pkgDir) : {};
+    if (this.cachedMetadata.readme !== undefined) skill.readme = this.cachedMetadata.readme;
 
     return skill;
   }
