@@ -2,11 +2,14 @@ import { readFileSync } from 'node:fs';
 import { glob, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import {
+  findNearestPackageDir,
+  readPackageMetadata,
   upsertJsDocTag,
   type AuditContext,
   type DraftedFix,
   type ExtractedConfigSurface,
   type ExtractedSkill,
+  type PackageMetadata,
   type RefineSource,
   type RefineTag,
   type TargetLocation
@@ -35,6 +38,9 @@ export interface CliRefineSourceOptions {
  * onto the correlated `<Command>Options` interface.
  */
 export class CliRefineSource implements RefineSource {
+  /** Cached metadata loaded during {@link extract} (always called first in the audit/refine loop). */
+  private cachedMetadata: PackageMetadata = {};
+
   constructor(private readonly opts: CliRefineSourceOptions) {}
 
   /**
@@ -60,6 +66,11 @@ export class CliRefineSource implements RefineSource {
   async extract(): Promise<ExtractedSkill> {
     const surfaces = introspectCommander(this.opts.program);
     const sources = await this.readSources();
+
+    // Load package metadata (package.json + README) from cwd and cache it so
+    // auditContext() can return it synchronously — mirroring ConfigRefineSource.
+    const pkgDir = await findNearestPackageDir(this.opts.cwd);
+    this.cachedMetadata = pkgDir ? await readPackageMetadata(pkgDir) : {};
 
     const configSurfaces: ExtractedConfigSurface[] = [];
     for (const surface of surfaces) {
@@ -106,7 +117,17 @@ export class CliRefineSource implements RefineSource {
       }
     }
 
-    return extractCliSkill({ program: this.opts.program, configSurfaces });
+    const meta = this.cachedMetadata;
+    return extractCliSkill({
+      program: this.opts.program,
+      configSurfaces,
+      metadata: {
+        ...(meta.packageName !== undefined ? { name: meta.packageName } : {}),
+        ...(meta.packageDescription !== undefined ? { description: meta.packageDescription } : {}),
+        ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
+        ...(meta.repository !== undefined ? { repository: meta.repository } : {})
+      }
+    });
   }
 
   guidance(): string {
@@ -117,7 +138,15 @@ export class CliRefineSource implements RefineSource {
   }
 
   auditContext(_skill: ExtractedSkill): AuditContext {
-    return {};
+    const meta = this.cachedMetadata;
+    return {
+      ...(meta.packageDescription !== undefined
+        ? { packageDescription: meta.packageDescription }
+        : {}),
+      ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
+      ...(meta.repository !== undefined ? { repository: meta.repository } : {}),
+      ...(meta.readme !== undefined ? { readme: meta.readme } : {})
+    };
   }
 
   async resolveTargetLocation(target: {

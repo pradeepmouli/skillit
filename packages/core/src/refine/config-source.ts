@@ -3,12 +3,12 @@ import { existsSync } from 'node:fs';
 import { glob, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { extractConfigSurface } from '../config-extract.js';
-import { parseReadme } from '../readme-parser.js';
 import { truncateToTokenBudget } from '../tokens.js';
 import type { AuditContext, ParsedReadme } from '../audit-types.js';
 import type { ExtractedConfigSurface } from '../config-types.js';
 import type { ExtractedSkill } from '../types.js';
 import { stripRefineTags, upsertPropertyJsDocTag } from './ast-edit.js';
+import { readPackageMetadata } from './package-metadata.js';
 import type { DraftedFix, RefineSource, TargetLocation } from './types.js';
 
 export interface ConfigRefineSourceOptions {
@@ -241,27 +241,7 @@ export class ConfigRefineSource implements RefineSource {
     const pkgDir = this.findPackageDir();
     if (!pkgDir) return this.metadata;
 
-    const meta: ConfigMetadata & { packageName?: string } = {};
-    try {
-      const pkg = JSON.parse(await readFile(join(pkgDir, 'package.json'), 'utf8')) as {
-        name?: string;
-        description?: string;
-        keywords?: string[];
-        repository?: string | { url?: string };
-      };
-      if (pkg.name) meta.packageName = stripScope(pkg.name);
-      if (pkg.description) meta.packageDescription = pkg.description;
-      if (Array.isArray(pkg.keywords)) meta.keywords = pkg.keywords;
-      const repo = typeof pkg.repository === 'string' ? pkg.repository : pkg.repository?.url;
-      if (repo) meta.repository = repo;
-    } catch {
-      // No/invalid package.json — leave metadata fields unset.
-    }
-    try {
-      meta.readme = parseReadme(await readFile(join(pkgDir, 'README.md'), 'utf8'));
-    } catch {
-      // No README — metadata checks that need it will report the gap.
-    }
+    const meta = await readPackageMetadata(pkgDir);
 
     this.metadata = {
       ...(meta.packageDescription !== undefined
@@ -346,12 +326,6 @@ export class ConfigRefineSource implements RefineSource {
     }
     return undefined;
   }
-}
-
-/** Strip a leading `@scope/` from a package name. */
-function stripScope(name: string): string {
-  const slash = name.indexOf('/');
-  return name.startsWith('@') && slash !== -1 ? name.slice(slash + 1) : name;
 }
 
 /**
