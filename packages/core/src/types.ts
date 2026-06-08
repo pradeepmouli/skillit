@@ -1,5 +1,21 @@
 import type { ExtractedConfigSurface } from './config-types.js';
 
+/**
+ * Structured representation of key sections extracted from a package README.
+ */
+export interface ParsedReadme {
+  /** Leading blockquote, often used as a one-liner summary */
+  blockquote?: string;
+  /** First prose paragraph after any heading or blockquote */
+  firstParagraph?: string;
+  /** Quick-start or getting-started section content */
+  quickStart?: string;
+  /** Features or capabilities section content */
+  features?: string;
+  /** Troubleshooting, common issues, or FAQ section content */
+  troubleshooting?: string;
+}
+
 /** Extracted API surface for a single package/module */
 export interface ExtractedSkill {
   /** Package or module name */
@@ -58,6 +74,12 @@ export interface ExtractedSkill {
   readmeFeatures?: string;
   /** Troubleshooting section from README — rendered inline in SKILL.md */
   readmeTroubleshooting?: string;
+  /**
+   * Parsed README sections (blockquote, first paragraph, features,
+   * troubleshooting, quick-start). The single source of project narrative
+   * metadata — the audit reads this directly; no separate AuditContext.
+   */
+  readme?: ParsedReadme;
   /** MCP resources (empty/absent for non-MCP extractors). */
   resources?: ExtractedResource[];
   /** MCP prompts (empty/absent for non-MCP extractors). */
