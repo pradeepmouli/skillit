@@ -139,6 +139,9 @@ export function scanDocs(options: DocsExtractionOptions): ParsedMarkdownDoc[] {
 /**
  * Convert parsed markdown documents to the generic `ExtractedDocument` shape.
  *
+ * @param docs - Parsed markdown documents (from `scanDocs()`) to convert; each
+ *   contributes its `title` and `rawContent`.
+ * @returns One `ExtractedDocument` per input doc, in the same order.
  * @category Parsing
  * @useWhen
  * - You have ParsedMarkdownDoc objects from scanDocs() and need to attach them to an ExtractedSkill

@@ -110,6 +110,8 @@ export function formatAuditText(result: AuditResult): string {
  * Returns the full result object serialized with 2-space indentation so it
  * can be parsed by downstream tooling without any further transformation.
  *
+ * @param result - The audit result to serialize.
+ * @returns The audit result as 2-space-indented JSON text.
  * @category Audit
  */
 export function formatAuditJson(result: AuditResult): string {

@@ -81,18 +81,82 @@ No runtime-behavior claims were written this run (the enrichments were metadata
   the absolute location. Use relative `--out`, or harden `gen` to honor absolute
   paths (`isAbsolute` check). Non-blocking.
 
-## typedoc smoke
+## typedoc dogfood — `@skillit/core`
 
-Command (run from `packages/core`):
+Once `gen`/`audit --source typedoc` were wired (plugin pipeline for `gen`,
+`extractSkills` for `audit`), the second dogfood ran the same loop against the
+`@skillit/core` library via `--source typedoc` (run from `packages/core`).
+Kind-aware grade target for typedoc = **A**.
 
-```
-cd packages/core && node ../client/dist/bin.js audit --source typedoc --json 2>&1 | head -30
-```
-
-Result: **errored** — no JSON produced, no grade.
-
-```
-skillit audit does not yet support the typedoc source; cli and config are supported in this release.
+```bash
+cd packages/core && node ../client/dist/bin.js audit --source typedoc --json
 ```
 
-Follow-up: the typedoc audit path is not yet wired in `@skillit/client`; tracked for Phase 2.
+### Determinism
+
+`skillit gen --source typedoc` run twice into separate dirs → `diff -r` reports
+**byte-identical** output (`skillit-core/SKILL.md` + `references/{classes,config,
+types}.md` + `references/functions/`). `DETERMINISTIC ✓`, including after the
+enrichment below.
+
+### Baseline → enriched
+
+| Stage                | Grade | Total /120 | D1  | D8  | Note                           |
+| -------------------- | ----- | ---------- | --- | --- | ------------------------------ |
+| Baseline             | B     | 100 (83%)  | 12  | 7   | pkg "core", per-symbol targets |
+| After bounded enrich | **B** | **103**    | 15  | 7   | D1 maxed via `@remarks`        |
+
+Enrichment performed (real `@skillit/core` source edits, never a `SKILL.md`),
+driven by the audit's `improvements[].targets`:
+
+- **`@remarks` on the 3+-param JSDoc helpers** (`insertJsDocTag`,
+  `upsertJsDocTag`, `upsertPropertyJsDocTag`) — cleared the D1 "complex
+  functions" finding. **D1 12 → 15 (maxed).**
+- **`@param` / `@returns`** on the cited sample functions (`estimateTokens`,
+  `extractConfigSurface`, `findNearestPackageDir`, `docsToExtractedDocuments`,
+  `auditSkill`, `formatAuditJson`). All 720 core tests + type-check stay green.
+
+### Why A was not reached in a bounded run (the real finding)
+
+D8 did **not** move despite the `@param`/`@returns` edits, and the loop made
+the reason precise. The audit's `improvements[].targets[]` list is a **sample**
+(top-N symbols), but the underlying checks that feed D8 are **all-or-nothing
+coverage gates**:
+
+- `checkE1` (`@param`, +3) sets `allGood = false` on the **first** undocumented
+  parameter across the _entire_ public surface.
+- `checkE2` (`@returns`, +3) and `checkE3` (property JSDoc, +2) work the same way.
+
+So closing the 9 sampled targets cannot flip E1/E2 from fail → pass. The
+remaining gap is **37 `@param` + 26 `@returns` + 78 interface-property** members
+(`audit ... --json` issue counts) — documenting ~141 API members across all of
+`@skillit/core` to gain the final +8 (→ 111, grade A). That is a full-package
+documentation sweep, not a bounded enrich/regenerate pass, and much of it would
+be low-value prose on internal helpers — exactly the "drafting content to game a
+gate" anti-pattern the agent-bootstrap architecture exists to avoid. Per the
+plan, the **best grade reached (B, 103/120) is recorded with this rationale.**
+
+This is itself the dogfood's headline result: audit improvements come in two
+shapes the orchestrating agent must distinguish —
+
+1. **Finite / complexity-gated** (D1 `@remarks` on 3+-param functions): a small,
+   enumerable target set. Closing it moves the grade immediately. ✅ done here.
+2. **Coverage-gated / all-or-nothing** (D8 E1/E2/E3): the cited targets are a
+   sample; the dimension only rises at ~100% coverage of the whole surface.
+
+The skill's convergence step ("distinguish legitimately complete from stuck
+re-drafting") must recognize shape (2) and either commit to the full sweep or
+stop and report — which is what this run did.
+
+## Follow-ups surfaced
+
+- **Minor:** `skillit gen --out <abs-path>` joins the path onto cwd
+  (`join(cwd, opts.out)`), so an absolute `--out` lands under cwd rather than at
+  the absolute location. Use relative `--out`, or harden `gen` to honor absolute
+  paths (`isAbsolute` check). Non-blocking. (Same finding as the cli dogfood.)
+- **Audit UX:** a coverage-gated improvement (D8 `@param`/`@returns`/property
+  JSDoc) shows only its top-N sample targets, which **undersells** the work —
+  "Add @param descriptions to all parameters (+3 on D8)" reads like 5 edits but
+  needs all 37. The audit could report the full remaining count, or mark
+  coverage-gated findings distinctly from finite ones, so the orchestrating
+  agent can size the work before starting. Tracked for a future audit pass.

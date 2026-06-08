@@ -32,6 +32,24 @@ artifact when it is the better home for missing content — e.g.:
 Hard constraint: the new artifact must be a type an existing skillit parser
 already consumes — **no new parser**, and never a `SKILL.md`.
 
+## Finite vs. coverage-gated findings (size the work before you start)
+
+Audit improvements come in two shapes — tell them apart before deciding how far
+a finding can move the grade:
+
+- **Finite / complexity-gated** (e.g. `@remarks` on functions with 3+ params,
+  `@category` grouping): the target set is small and enumerable. The
+  `targets[]` list **is** the whole job — close it and the dimension moves.
+- **Coverage-gated / all-or-nothing** (the D8 `@param` / `@returns` / property
+  JSDoc checks E1/E2/E3): the check fails on the **first** undocumented member
+  across the _entire_ public surface, so the points only land at ~100%
+  coverage. Here `targets[]` is only a **sample** — closing the listed symbols
+  does **not** flip the gate. Before committing, get the true remaining count
+  (`audit … --json` issue list, grouped by code) and decide: either do the full
+  sweep, or stop and report the gap. Do **not** write filler prose on internal
+  helpers just to chase the gate — that is the anti-pattern this skill exists to
+  prevent.
+
 ## Grounding runtime claims
 
 Before writing any pitfall or `@never`/`@avoidWhen` rule that asserts _runtime

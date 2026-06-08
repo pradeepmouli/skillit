@@ -24,6 +24,11 @@ export function stripScope(name: string): string {
 /**
  * Walk up from `startDir` (inclusive) up to `maxDepth` parents looking for a
  * directory containing a `package.json`. Returns the dir, or undefined.
+ *
+ * @param startDir - Directory to start the upward search from (searched first).
+ * @param maxDepth - Maximum number of parent directories to ascend (default 5).
+ * @returns The nearest directory containing a `package.json`, or `undefined`
+ *   when none is found within `maxDepth` levels (or the filesystem root is hit).
  */
 export async function findNearestPackageDir(
   startDir: string,

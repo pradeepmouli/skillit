@@ -104,6 +104,12 @@ function leadingJsDoc(anchorNode: SgNode): SgNode | undefined {
  * - If a JSDoc block exists without the tag, the tag is appended before the
  *   closing `*\/`.
  * - If the declaration is not found, the source is returned unchanged.
+ *
+ * @remarks
+ * Parses `source` with ast-grep (core carries no `typescript` dependency) and
+ * edits the text in place, so formatting outside the touched JSDoc block is
+ * preserved. Tag matching is by name, so re-running with the same tag is a
+ * no-op rather than a duplicate.
  */
 export function upsertJsDocTag(
   source: string,
@@ -125,6 +131,11 @@ export function upsertJsDocTag(
  * {@link upsertJsDocTag}. Returns the source unchanged when the type or
  * property is not found. Used by the config refine source to write routing
  * tags back onto a config type's property declarations.
+ *
+ * @remarks
+ * Resolves `propertyPath` against the body of `typeName` via ast-grep, recursing
+ * into nested object-type members for dotted paths. Like {@link upsertJsDocTag},
+ * the edit is text-level and idempotent per tag name.
  */
 export function upsertPropertyJsDocTag(
   source: string,
