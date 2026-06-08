@@ -1,7 +1,7 @@
 {
   "name": "@skillit/client",
   "version": "0.2.0",
-  "description": "Anthropic model client + skillit CLI (refine command)",
+  "description": "The skillit CLI — generate, audit, and refine AI-agent skills from a TypeScript codebase, plus the Anthropic model client for the headless refine loop.",
   "license": "MIT",
   "author": "Pradeep Mouli",
   "bin": {
