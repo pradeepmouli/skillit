@@ -5,20 +5,25 @@ import { Command } from 'commander';
 import {
   classifyRefineSources,
   detectInstalledSources,
+  detectProjectNature,
   type RefineSourceKind
 } from '../detect-source.js';
 import {
   generateCliSkill as defaultGenerateCliSkill,
   generateConfigSkill as defaultGenerateConfigSkill,
+  generateTypeDocSkill as defaultGenerateTypeDocSkill,
   type GenerateConfigSkillOpts,
-  type GenerateSkillOpts
+  type GenerateSkillOpts,
+  type GenerateTypeDocSkillOpts
 } from '../generate.js';
 import { parseConfigTypeSpec, resolveRefineSource } from './refine.js';
+import { resolveTypeDocEntry } from '../typedoc-entry.js';
 
 /** Injectable generators (test seam, mirrors InitDeps). */
 export interface GenDeps {
   generateCliSkill?(opts: GenerateSkillOpts): Promise<void>;
   generateConfigSkill?(opts: GenerateConfigSkillOpts): Promise<void>;
+  generateTypeDocSkill?(opts: GenerateTypeDocSkillOpts): Promise<void>;
 }
 
 /** Parsed options for the `gen` action. */
@@ -49,6 +54,7 @@ async function readPackageName(cwd: string): Promise<string> {
 export function buildGenCommand(deps: GenDeps = {}): Command {
   const generateCliSkill = deps.generateCliSkill ?? defaultGenerateCliSkill;
   const generateConfigSkill = deps.generateConfigSkill ?? defaultGenerateConfigSkill;
+  const generateTypeDocSkill = deps.generateTypeDocSkill ?? defaultGenerateTypeDocSkill;
 
   return new Command('gen')
     .description(
@@ -81,15 +87,24 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         return;
       }
 
-      // gen supports cli + config in Phase 0. Short-circuit an explicitly
-      // requested mcp/typedoc source with a clear, gen-specific message BEFORE
-      // routing through refine's resolver — that resolver applies refine-specific
+      // Short-circuit mcp with a clear, gen-specific message BEFORE routing
+      // through refine's resolver — that resolver applies refine-specific
       // validation (e.g. requiring --mcp) and emits refine-flavored errors that
       // would be misleading here.
-      if (opts.source === 'mcp' || opts.source === 'typedoc') {
+      if (opts.source === 'mcp') {
         throw new Error(
-          `skillit gen does not yet support the ${opts.source} source; cli and config are supported in this release.`
+          `skillit gen does not yet support the mcp source; cli, config, and typedoc are supported in this release.`
         );
+      }
+
+      // typedoc: explicit, or auto-detected as a plain TS library.
+      const isTypedoc =
+        opts.source === 'typedoc' ||
+        (opts.source === undefined && (await detectProjectNature(cwd)) === 'typedoc');
+      if (isTypedoc) {
+        const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
+        await generateTypeDocSkill({ cwd, entryPoints, tsconfig, outDir });
+        return;
       }
 
       // Resolve the cli source the same way refine does (handles auto-detection

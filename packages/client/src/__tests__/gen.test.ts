@@ -3,7 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildGenCommand, type GenDeps } from '../commands/gen.js';
-import type { GenerateConfigSkillOpts, GenerateSkillOpts } from '../generate.js';
+import type {
+  GenerateConfigSkillOpts,
+  GenerateSkillOpts,
+  GenerateTypeDocSkillOpts
+} from '../generate.js';
 
 let tmpDir: string;
 let prevCwd: string;
@@ -30,6 +34,22 @@ async function writeCliFixture(): Promise<string> {
   return process.cwd();
 }
 
+async function writeTypedocFixture(): Promise<string> {
+  tmpDir = await mkdtemp(join(tmpdir(), 'gen-'));
+  await writeFile(
+    join(tmpDir, 'package.json'),
+    // No commander/yargs dep — detectProjectNature resolves to 'typedoc'
+    JSON.stringify({ name: '@scope/my-lib', dependencies: {} })
+  );
+  await writeFile(join(tmpDir, 'tsconfig.json'), JSON.stringify({ compilerOptions: {} }));
+  const srcDir = join(tmpDir, 'src');
+  const { mkdir } = await import('node:fs/promises');
+  await mkdir(srcDir, { recursive: true });
+  await writeFile(join(srcDir, 'index.ts'), `export const version = '0.0.1';\n`);
+  process.chdir(tmpDir);
+  return process.cwd();
+}
+
 async function writeConfigFixture(): Promise<string> {
   tmpDir = await mkdtemp(join(tmpdir(), 'gen-'));
   await writeFile(
@@ -48,18 +68,23 @@ function makeStubs(): {
   deps: GenDeps;
   cliCalls: GenerateSkillOpts[];
   configCalls: GenerateConfigSkillOpts[];
+  typedocCalls: GenerateTypeDocSkillOpts[];
 } {
   const cliCalls: GenerateSkillOpts[] = [];
   const configCalls: GenerateConfigSkillOpts[] = [];
+  const typedocCalls: GenerateTypeDocSkillOpts[] = [];
   const deps: GenDeps = {
     generateCliSkill: async (opts) => {
       cliCalls.push(opts);
     },
     generateConfigSkill: async (opts) => {
       configCalls.push(opts);
+    },
+    generateTypeDocSkill: async (opts) => {
+      typedocCalls.push(opts);
     }
   };
-  return { deps, cliCalls, configCalls };
+  return { deps, cliCalls, configCalls, typedocCalls };
 }
 
 async function run(deps: GenDeps, argv: string[]): Promise<void> {
@@ -110,11 +135,12 @@ describe('buildGenCommand', () => {
     );
   });
 
-  it('rejects an explicit typedoc source with a clear gen-specific message', async () => {
-    await writeCliFixture();
-    const { deps } = makeStubs();
-    await expect(run(deps, ['--source', 'typedoc'])).rejects.toThrow(
-      /skillit gen does not yet support the typedoc source/
-    );
+  it('generates the typedoc skill for a typedoc source', async () => {
+    const dir = await writeTypedocFixture();
+    const { deps, typedocCalls } = makeStubs();
+    await run(deps, ['--source', 'typedoc']);
+    expect(typedocCalls).toHaveLength(1);
+    expect(typedocCalls[0]!.outDir).toBe(join(dir, 'skills'));
+    expect(typedocCalls[0]!.cwd).toBe(dir);
   });
 });

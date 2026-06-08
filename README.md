@@ -41,6 +41,28 @@ See [`packages/mcp/README.md`](packages/mcp/README.md) for install, extract,
 bundle, config-file batch mode (`mcp.json` / `claude_desktop_config.json`), and
 programmatic API details.
 
+### Bootstrap (recommended): `/skillit-bootstrap`
+
+The primary way to create or improve a skill is the **`/skillit-bootstrap`**
+Claude Code skill (bundled with `@skillit/client`). It runs the deterministic
+generate → audit loop and lets the agent enrich your repo's source (JSDoc,
+README, examples, package.json) until the skill hits its grade target — you
+never hand-edit a `SKILL.md`.
+
+```bash
+# Install the bundled skill into your project (one time)
+cp -R node_modules/@skillit/client/skills/skillit-bootstrap .claude/skills/
+
+# Then, in Claude Code:
+/skillit-bootstrap --source cli --program ./dist/cli.js#program
+/skillit-bootstrap --source typedoc
+```
+
+Supported sources this release: **cli** and **typedoc**. For `config` / `mcp`,
+use `skillit refine` (below); slash-command support for those lands in a later
+phase. The CLI commands (`skillit gen`, `skillit audit --json`, `skillit
+refine`) remain for headless/CI use.
+
 ### Init: detect → install
 
 `skillit init` wires a project up. It detects the project's nature and installs

@@ -33,6 +33,35 @@ export interface GenerateConfigSkillOpts {
   outDir: string;
 }
 
+/** Options for typedoc-path skill generation. */
+export interface GenerateTypeDocSkillOpts {
+  /** Package root. */
+  cwd: string;
+  /** Entry-point source files (absolute). */
+  entryPoints: string[];
+  /** Path to tsconfig.json. */
+  tsconfig: string;
+  /** Absolute output directory. */
+  outDir: string;
+}
+
+/**
+ * TypeDoc-path skill generation — delegates to the plugin pipeline.
+ *
+ * `@skillit/typedoc` (and its `typedoc` peer) is imported lazily so the CLI
+ * does not load TypeDoc at startup: only the typedoc source path pays that
+ * cost, and cli/config/mcp consumers need not install the `typedoc` peer.
+ */
+export async function generateTypeDocSkill(opts: GenerateTypeDocSkillOpts): Promise<void> {
+  const { generateTypeDocSkills } = await import('@skillit/typedoc');
+  await generateTypeDocSkills({
+    entryPoints: opts.entryPoints,
+    tsconfig: opts.tsconfig,
+    cwd: opts.cwd,
+    outDir: opts.outDir
+  });
+}
+
 /** CLI-path skill generation: loadProgram → extractCliSkill → writeCliSkill. */
 export async function generateCliSkill(opts: GenerateSkillOpts): Promise<void> {
   const program = await loadProgram({ program: opts.program, cwd: opts.cwd });

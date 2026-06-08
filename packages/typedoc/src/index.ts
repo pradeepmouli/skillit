@@ -16,3 +16,9 @@
 export { load } from './plugin.js';
 export type { SkillsPluginOptions } from './plugin.js';
 export * from './refine/index.js';
+export {
+  generateTypeDocSkills,
+  extractTypeDocSkills,
+  createTypeDocRefineSource
+} from './extract-standalone.js';
+export type { TypeDocRunOptions } from './extract-standalone.js';

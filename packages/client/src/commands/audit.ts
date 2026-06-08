@@ -16,9 +16,11 @@ import { CliRefineSource, loadProgram } from '@skillit/cli';
 import {
   classifyRefineSources,
   detectInstalledSources,
+  detectProjectNature,
   type RefineSourceKind
 } from '../detect-source.js';
 import { parseConfigTypeSpec, resolveRefineSource, type RefineCommandOpts } from './refine.js';
+import { resolveTypeDocEntry } from '../typedoc-entry.js';
 
 /** An improvement with each of its targets resolved to a concrete location (or null). */
 export interface AuditReportImprovement extends ActionableImprovement {
@@ -72,51 +74,66 @@ export interface AuditCommandOpts {
 export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
   const cwd = process.cwd();
 
-  // audit supports cli + config in Phase 0. Short-circuit an explicitly
-  // requested mcp/typedoc source with a clear message BEFORE routing through
-  // refine's resolver — that resolver applies refine-specific validation (e.g.
-  // requiring --mcp) and emits refine-flavored errors that would mislead here.
-  if (opts.source === 'mcp' || opts.source === 'typedoc') {
+  // Short-circuit an explicitly requested mcp source with a clear message
+  // BEFORE routing through refine's resolver — that resolver applies
+  // refine-specific validation (e.g. requiring --mcp) and emits refine-flavored
+  // errors that would mislead here.
+  if (opts.source === 'mcp') {
     console.error(
-      `skillit audit does not yet support the ${opts.source} source; cli and config are supported in this release.`
+      `skillit audit does not yet support the mcp source; cli, config, and typedoc are supported in this release.`
     );
     process.exitCode = 1;
     return;
   }
 
-  const candidates = await detectInstalledSources(cwd);
-  const detected = classifyRefineSources(candidates);
-  const resolution = resolveRefineSource(opts as RefineCommandOpts, detected, candidates);
-  if ('error' in resolution) {
-    console.error(resolution.error);
-    process.exitCode = 1;
-    return;
-  }
+  // typedoc: explicit, or auto-detected as a plain TS library.
+  const isTypedoc =
+    opts.source === 'typedoc' ||
+    (opts.source === undefined && (await detectProjectNature(cwd)) === 'typedoc');
 
   let source: RefineSource;
-  if (resolution.kind === 'cli') {
-    const program = await loadProgram({ program: opts.program, cwd });
-    source = new CliRefineSource({ program, sourceGlob: join(cwd, '**', '*.ts'), cwd });
-  } else if (resolution.kind === 'config') {
-    const parsed = parseConfigTypeSpec(opts.configType!, cwd);
-    if ('error' in parsed) {
-      console.error(parsed.error);
+  if (isTypedoc) {
+    // Lazy import: keeps `@skillit/typedoc` (and its `typedoc` peer) off the CLI
+    // startup path so non-typedoc commands run without TypeDoc installed.
+    const { createTypeDocRefineSource } = await import('@skillit/typedoc');
+    const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
+    source = createTypeDocRefineSource({ entryPoints, tsconfig, cwd });
+  } else {
+    const candidates = await detectInstalledSources(cwd);
+    const detected = classifyRefineSources(candidates);
+    const resolution = resolveRefineSource(opts as RefineCommandOpts, detected, candidates);
+    if ('error' in resolution) {
+      console.error(resolution.error);
       process.exitCode = 1;
       return;
     }
-    // No explicit name: ConfigRefineSource derives it from the package nearest
-    // the config file (→ typeName), matching what `skillit gen` writes for the
-    // same source.
-    source = new ConfigRefineSource({
-      configFile: isAbsolute(parsed.configFile) ? parsed.configFile : join(cwd, parsed.configFile),
-      typeName: parsed.typeName
-    });
-  } else {
-    console.error(
-      `skillit audit does not yet support the ${resolution.kind} source; cli and config are supported in this release.`
-    );
-    process.exitCode = 1;
-    return;
+
+    if (resolution.kind === 'cli') {
+      const program = await loadProgram({ program: opts.program, cwd });
+      source = new CliRefineSource({ program, sourceGlob: join(cwd, '**', '*.ts'), cwd });
+    } else if (resolution.kind === 'config') {
+      const parsed = parseConfigTypeSpec(opts.configType!, cwd);
+      if ('error' in parsed) {
+        console.error(parsed.error);
+        process.exitCode = 1;
+        return;
+      }
+      // No explicit name: ConfigRefineSource derives it from the package nearest
+      // the config file (→ typeName), matching what `skillit gen` writes for the
+      // same source.
+      source = new ConfigRefineSource({
+        configFile: isAbsolute(parsed.configFile)
+          ? parsed.configFile
+          : join(cwd, parsed.configFile),
+        typeName: parsed.typeName
+      });
+    } else {
+      console.error(
+        `skillit audit does not yet support the ${resolution.kind} source; cli, config, and typedoc are supported in this release.`
+      );
+      process.exitCode = 1;
+      return;
+    }
   }
 
   const skill = await source.extract();

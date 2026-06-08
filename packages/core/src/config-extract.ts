@@ -15,7 +15,10 @@ import type { ExtractedConfigOption, ExtractedConfigSurface } from './config-typ
  * `@default` value, and the `@useWhen` / `@avoidWhen` / `@pitfalls` / `@remarks`
  * routing tags.
  *
- * Returns `undefined` when no matching type declaration is found.
+ * @param source - TypeScript source text containing the config type declaration.
+ * @param typeName - Name of the interface or object-type alias to extract.
+ * @returns The extracted config surface, or `undefined` when no matching type
+ *   declaration is found in `source`.
  */
 export function extractConfigSurface(
   source: string,

@@ -961,6 +961,10 @@ function checkA4(
  * Executes 20+ checks across fatal/error/warning/alert severity levels and returns
  * a structured result with issues, passing checks, and summary counts.
  *
+ * @param skill - The extracted skill whose exports/JSDoc are checked.
+ * @param context - Package-level context (description, README, keywords) the
+ *   fatal checks read.
+ * @returns The audit result: collected issues, passing checks, and summary counts.
  * @category Audit
  * @useWhen
  * - You want programmatic quality feedback on JSDoc coverage before publishing skills
