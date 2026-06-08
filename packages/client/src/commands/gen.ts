@@ -1,5 +1,4 @@
 // packages/client/src/commands/gen.ts
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { Command } from 'commander';
@@ -18,6 +17,7 @@ import {
   type GenerateTypeDocSkillOpts
 } from '../generate.js';
 import { parseConfigTypeSpec, resolveRefineSource } from './refine.js';
+import { resolveTypeDocEntry } from '../typedoc-entry.js';
 
 /** Injectable generators (test seam, mirrors InitDeps). */
 export interface GenDeps {
@@ -49,17 +49,6 @@ async function readPackageName(cwd: string): Promise<string> {
   } catch {
     return 'skill';
   }
-}
-
-/** Resolve tsconfig and entry point for a TypeDoc project at `cwd`. */
-function resolveTypeDocEntry(cwd: string): { entryPoints: string[]; tsconfig: string } {
-  const tsconfig = existsSync(join(cwd, 'tsconfig.json'))
-    ? join(cwd, 'tsconfig.json')
-    : existsSync(join(cwd, 'tsconfig.build.json'))
-      ? join(cwd, 'tsconfig.build.json')
-      : join(cwd, 'tsconfig.json'); // default even if absent — TypeDoc will error clearly
-  const entryPoints = [join(cwd, 'src', 'index.ts')];
-  return { entryPoints, tsconfig };
 }
 
 export function buildGenCommand(deps: GenDeps = {}): Command {
