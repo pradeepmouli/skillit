@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import type { RefineSource } from '@skillit/core';
+import { renderAndWriteMcpSkill } from '../bundle.js';
 import { readMcpConfigFile } from '../config/file-reader.js';
 import { extractMcpSkill } from '../extract.js';
 import type { ConfigEntry } from '../types.js';
@@ -88,4 +89,39 @@ export async function createMcpRefineSource(
     overlayPath: opts.overlayPath ?? join(process.cwd(), '.skillit-overlay.json'),
     extract: () => extractMcpSkill({ transport: entry.transport })
   });
+}
+
+/** Options for {@link generateMcpSkill}. */
+export interface GenerateMcpSkillOptions {
+  /** Path to an `mcp.json` / `claude_desktop_config.json` file. */
+  mcpPath: string;
+  /** Server name within the config (defaults to first enabled entry). */
+  serverName?: string;
+  /** Absolute output directory. */
+  outDir: string;
+}
+
+/**
+ * GEN primitive for the mcp source: select the server, extract via the live
+ * transport, then render + write deterministically.
+ *
+ * Mode-independent — extraction is identical for build and runtime; mode only
+ * affects writeback (refine/audit), which `gen` does not perform. The render +
+ * write is delegated to {@link renderAndWriteMcpSkill} so `gen` and `bundle`
+ * emit byte-identical output for the no-adapter case.
+ *
+ * @param opts — mcp config path, optional server name, and output directory.
+ * @throws {import('../errors.js').McpError} when the config file cannot be read,
+ *   parsed, or validated (propagated from {@link readMcpConfigFile}).
+ * @throws {Error} when no matching/enabled server entry exists (propagated from
+ *   {@link selectServerEntry}).
+ *
+ * @public
+ */
+export async function generateMcpSkill(opts: GenerateMcpSkillOptions): Promise<void> {
+  const entries = await readMcpConfigFile(opts.mcpPath);
+  const entry = selectServerEntry(entries, opts.serverName);
+  const skill = await extractMcpSkill({ transport: entry.transport });
+  // renderAndWriteMcpSkill is synchronous (writeSkills is sync), so no await.
+  renderAndWriteMcpSkill(skill, opts.outDir);
 }

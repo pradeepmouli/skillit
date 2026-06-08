@@ -88,6 +88,8 @@ export type { ExtractedSkill, ExtractedResource, ExtractedPrompt, SkillSetup } f
 export * from './refine/index.js';
 export {
   createMcpRefineSource,
+  generateMcpSkill,
   selectServerEntry,
-  type CreateMcpRefineSourceOptions
+  type CreateMcpRefineSourceOptions,
+  type GenerateMcpSkillOptions
 } from './refine/factory.js';
