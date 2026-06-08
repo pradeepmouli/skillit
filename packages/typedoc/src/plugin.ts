@@ -430,12 +430,15 @@ export function load(app: Application): void {
         }
 
         // Write the audit-read project metadata onto the IR (the audit is a
-        // pure function of the skill — no separate context channel). README is
-        // resolved per-skill, same as the enrichment above.
+        // pure function of the skill — no separate context channel). Use the
+        // PER-PACKAGE metadata (`perPkgJson`), matching what `extractSkills`
+        // baked in above — not root `pkg`, which would clobber per-package
+        // values under entryPointStrategy: "packages". README is resolved
+        // per-skill, same as the enrichment above.
         const auditReadme = resolveReadmeForSkill(skill.name);
-        if (pkg.description !== undefined) skill.packageDescription = pkg.description;
-        if (pkg.keywords !== undefined) skill.keywords = pkg.keywords;
-        const auditRepo = normalizeRepoUrl(pkg.repository);
+        if (perPkgJson.description !== undefined) skill.packageDescription = perPkgJson.description;
+        if (perPkgJson.keywords !== undefined) skill.keywords = perPkgJson.keywords;
+        const auditRepo = normalizeRepoUrl(perPkgJson.repository);
         if (auditRepo !== undefined) skill.repository = auditRepo;
         if (auditReadme !== undefined) skill.readme = auditReadme;
 

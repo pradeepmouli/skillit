@@ -1,5 +1,5 @@
 ---
-'@skillit/core': minor
+'@skillit/core': major
 '@skillit/cli': patch
 '@skillit/typedoc': patch
 '@skillit/mcp': patch

@@ -239,6 +239,25 @@ describe('ConfigRefineSource metadata on the IR', () => {
     expect(skill.repository).toBeUndefined();
     expect(skill.readme).toBeUndefined();
   });
+
+  it('packageDescription is the literal package.json value, not a config override (F1 integrity)', async () => {
+    // A config-specific description override goes to the render headline
+    // (skill.description), NOT skill.packageDescription — otherwise the audit's
+    // F1 check would treat the override as the package.json description and stop
+    // reporting a missing/short one.
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/lib', description: 'short' } // <10 chars → F1 should still flag
+    });
+    const skill = await new ConfigRefineSource({
+      configFile: file,
+      typeName: 'Cfg',
+      description: 'A long, config-specific description that would otherwise mask F1'
+    }).extract();
+    expect(skill.description).toBe(
+      'A long, config-specific description that would otherwise mask F1'
+    );
+    expect(skill.packageDescription).toBe('short'); // the real (too-short) package.json value
+  });
 });
 
 describe('ConfigRefineSource.applyFixes', () => {
