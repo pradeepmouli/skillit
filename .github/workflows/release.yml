@@ -89,7 +89,7 @@ jobs:
             try {
               await github.graphql(`
                 mutation($id: ID!) {
-                  enablePullRequestAutoMerge(input: { pullRequestId: $id, mergeMethod: SQUASH }) {
+                  enablePullRequestAutoMerge(input: { pullRequestId: $id, mergeMethod: MERGE }) {
                     pullRequest { number }
                   }
                 }
