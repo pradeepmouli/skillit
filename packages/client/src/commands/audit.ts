@@ -82,10 +82,16 @@ export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
   // reuse it for both the typedoc and mcp branches below.
   const nature = opts.source === undefined ? await detectProjectNature(cwd) : undefined;
 
-  // typedoc: explicit, or auto-detected as a plain TS library.
-  const isTypedoc = opts.source === 'typedoc' || nature === 'typedoc';
-  // mcp: explicit, or auto-detected via @modelcontextprotocol/sdk.
-  const isMcp = opts.source === 'mcp' || nature === 'mcp';
+  // mcp: explicit --source, an explicit --mcp path (which only the mcp source
+  // consumes), or auto-detected via @modelcontextprotocol/sdk.
+  const isMcp =
+    opts.source === 'mcp' ||
+    (opts.source === undefined && (opts.mcp !== undefined || nature === 'mcp'));
+  // typedoc: explicit, or auto-detected as a plain TS library — but never when
+  // an explicit --mcp path was given (that routes to mcp above).
+  const isTypedoc =
+    opts.source === 'typedoc' ||
+    (opts.source === undefined && opts.mcp === undefined && nature === 'typedoc');
 
   let source: RefineSource;
   if (isTypedoc) {

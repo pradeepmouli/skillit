@@ -325,7 +325,7 @@ function writeBundledSkill(
     return writeSkills(skills, options);
   } catch (error) {
     throw new McpError(
-      `Failed to write bundled output: ${messageOf(error)}`,
+      `Failed to write skill output: ${messageOf(error)}`,
       'LOCAL_IO_FAILED',
       error
     );

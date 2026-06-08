@@ -76,6 +76,10 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
       const cwd = process.cwd();
       const outDir = join(cwd, opts.out);
 
+      // Detect the project nature at most once (it can spawn the project's CLI
+      // bin). Only needed to auto-route when --source is omitted.
+      const nature = opts.source === undefined ? await detectProjectNature(cwd) : undefined;
+
       if (opts.source === 'config') {
         if (opts.configType === undefined) {
           throw new Error(
@@ -95,10 +99,11 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         return;
       }
 
-      // mcp: explicit, or auto-detected via @modelcontextprotocol/sdk.
+      // mcp: explicit --source, an explicit --mcp path (which only the mcp
+      // source consumes), or auto-detected via @modelcontextprotocol/sdk.
       const isMcp =
         opts.source === 'mcp' ||
-        (opts.source === undefined && (await detectProjectNature(cwd)) === 'mcp');
+        (opts.source === undefined && (opts.mcp !== undefined || nature === 'mcp'));
       if (isMcp) {
         if (opts.mcp === undefined) {
           throw new Error(
@@ -115,9 +120,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
       }
 
       // typedoc: explicit, or auto-detected as a plain TS library.
-      const isTypedoc =
-        opts.source === 'typedoc' ||
-        (opts.source === undefined && (await detectProjectNature(cwd)) === 'typedoc');
+      const isTypedoc = opts.source === 'typedoc' || nature === 'typedoc';
       if (isTypedoc) {
         const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
         await generateTypeDocSkill({ cwd, entryPoints, tsconfig, outDir });
