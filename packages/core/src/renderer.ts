@@ -367,7 +367,7 @@ function renderRouterSkill(
     return {
       short: s.name.replace(/^@[^/]+\//, ''),
       peerName: toSkillName(s.name),
-      desc: s.packageDescription || s.description || '',
+      desc: s.description || s.packageDescription || '',
       remarks: s.remarks || '',
       useWhens: s.useWhen ?? [],
       avoidWhens: s.avoidWhen ?? [],
@@ -526,11 +526,14 @@ function renderSkillMd(
 
   sections.push(`# ${skill.name}`);
 
-  // Package description as body intro
-  if (skill.packageDescription) {
-    sections.push(skill.packageDescription);
-  } else if (skill.description) {
+  // Surface description as body intro. `description` is the skill's render
+  // headline (a config source puts its config-specific blurb here); the literal
+  // package.json `packageDescription` is audit-only metadata, used here only as
+  // a last-resort fallback.
+  if (skill.description) {
     sections.push(skill.description);
+  } else if (skill.packageDescription) {
+    sections.push(skill.packageDescription);
   }
 
   // @remarks from @packageDocumentation — architectural context, trade-offs, mental models
@@ -1049,8 +1052,10 @@ function buildRefManifest(basePath: string, references: RenderedFile[]): RefMani
 }
 
 function buildDescription(skill: ExtractedSkill): string {
-  // Description = package.json tagline + short WHEN clause + domain keywords.
-  const desc = skill.packageDescription || skill.description || `API reference for ${skill.name}`;
+  // Description = surface tagline + short WHEN clause + domain keywords. Prefer
+  // the render headline (`description`); `packageDescription` is audit-only and
+  // serves only as a fallback.
+  const desc = skill.description || skill.packageDescription || `API reference for ${skill.name}`;
   const parts: string[] = [desc];
 
   // Add a short scenario-based WHEN from @useWhen (first item only, truncated to 80 chars)
