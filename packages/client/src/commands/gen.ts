@@ -93,7 +93,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
       // would be misleading here.
       if (opts.source === 'mcp') {
         throw new Error(
-          `skillit gen does not yet support the mcp source; cli and config are supported in this release.`
+          `skillit gen does not yet support the mcp source; cli, config, and typedoc are supported in this release.`
         );
       }
 

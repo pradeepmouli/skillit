@@ -1,5 +1,5 @@
 import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -68,10 +68,9 @@ describe('generateTypeDocSkills (gen path, plugin-driven write)', () => {
       outDir
     });
     // The plugin writes skills/<name>/SKILL.md — assert SOME SKILL.md exists under outDir.
-    const { readdirSync } = await import('node:fs');
     const found =
       existsSync(outDir) &&
-      readdirSync(outDir, { recursive: true } as any).some((p) => String(p).endsWith('SKILL.md'));
+      readdirSync(outDir, { recursive: true }).some((p) => String(p).endsWith('SKILL.md'));
     expect(found).toBe(true);
   });
 });

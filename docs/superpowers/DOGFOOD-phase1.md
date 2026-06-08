@@ -71,8 +71,7 @@ source is the real change; the skill is a pure function of it.
   deferred. A future pass could add it for +2.
 
 No runtime-behavior claims were written this run (the enrichments were metadata
-
-- README prose), so the §8.2 impl-grounded spot-check was not triggered.
+and README prose), so the §8.2 impl-grounded spot-check was not triggered.
 
 ## Follow-ups surfaced
 
