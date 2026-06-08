@@ -246,6 +246,7 @@ Use --mode build  (TypeScript MCP server you own)
     source = await createMcpRefineSource({
       mcpPath,
       mode,
+      cwd,
       serverName: opts.server,
       overlayPath,
       sourceGlob

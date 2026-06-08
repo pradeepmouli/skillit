@@ -152,6 +152,7 @@ describe('mcp source is constructible for the audit tail (hermetic, build mode)'
       const source = await createMcpRefineSource({
         mcpPath,
         mode: 'build',
+        cwd: dir,
         sourceGlob: join(dir, '**', '*.ts'),
         overlayPath: join(dir, '.skillit-overlay.json')
       });

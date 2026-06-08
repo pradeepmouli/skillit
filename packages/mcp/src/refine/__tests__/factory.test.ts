@@ -39,6 +39,7 @@ describe('createMcpRefineSource', () => {
     const source = await createMcpRefineSource({
       mcpPath,
       mode: 'build',
+      cwd: dir,
       sourceGlob: join(dir, '**', '*.ts')
     });
     expect(typeof source.extract).toBe('function');
@@ -50,6 +51,7 @@ describe('createMcpRefineSource', () => {
     const source = await createMcpRefineSource({
       mcpPath,
       mode: 'runtime',
+      cwd: dir,
       overlayPath: join(dir, '.skillit-overlay.json')
     });
     expect(typeof source.extract).toBe('function');

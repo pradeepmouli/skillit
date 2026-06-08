@@ -57,6 +57,11 @@ export interface CreateMcpRefineSourceOptions {
   overlayPath?: string;
   /** Glob of TypeScript source files to edit (build mode only; defaults to `<cwd>/**\/*.ts`). */
   sourceGlob?: string;
+  /**
+   * Working directory — used to locate the consumer's `package.json` + `README.md`
+   * for audit metadata, and as the default base for `overlayPath`/`sourceGlob`.
+   */
+  cwd: string;
 }
 
 /**
@@ -82,12 +87,14 @@ export async function createMcpRefineSource(
   if (opts.mode === 'build') {
     return new TypeScriptMcpRefineSource({
       transport: entry.transport,
-      sourceGlob: opts.sourceGlob ?? join(process.cwd(), '**', '*.ts')
+      sourceGlob: opts.sourceGlob ?? join(opts.cwd, '**', '*.ts'),
+      cwd: opts.cwd
     });
   }
   return new McpRefineSource({
-    overlayPath: opts.overlayPath ?? join(process.cwd(), '.skillit-overlay.json'),
-    extract: () => extractMcpSkill({ transport: entry.transport })
+    overlayPath: opts.overlayPath ?? join(opts.cwd, '.skillit-overlay.json'),
+    extract: () => extractMcpSkill({ transport: entry.transport }),
+    cwd: opts.cwd
   });
 }
 

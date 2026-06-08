@@ -112,6 +112,7 @@ export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
     source = await createMcpRefineSource({
       mcpPath: isAbsolute(opts.mcp) ? opts.mcp : join(cwd, opts.mcp),
       mode: resolved.mode,
+      cwd,
       ...(opts.server !== undefined ? { serverName: opts.server } : {}),
       overlayPath: opts.overlay
         ? isAbsolute(opts.overlay)

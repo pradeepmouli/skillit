@@ -1,9 +1,12 @@
-import type {
-  ExtractedSkill,
-  AuditContext,
-  DraftedFix,
-  RefineSource,
-  TargetLocation
+import {
+  findNearestPackageDir,
+  readPackageMetadata,
+  type ExtractedSkill,
+  type AuditContext,
+  type DraftedFix,
+  type PackageMetadata,
+  type RefineSource,
+  type TargetLocation
 } from '@skillit/core';
 import { readOverlay, writeOverlay, applyFixToOverlay } from './overlay.js';
 import { mergeOverlay } from './merge-overlay.js';
@@ -11,19 +14,39 @@ import { mergeOverlay } from './merge-overlay.js';
 interface McpRefineSourceOptions {
   overlayPath: string;
   extract: () => Promise<ExtractedSkill>;
+  /** Working directory used to locate package.json + README for audit metadata. */
+  cwd: string;
 }
 
 export class McpRefineSource implements RefineSource {
+  /** Cached metadata loaded during {@link extract} (always called first in the audit/refine loop). */
+  private cachedMetadata: PackageMetadata = {};
+
   constructor(private readonly opts: McpRefineSourceOptions) {}
 
   async extract(): Promise<ExtractedSkill> {
     const raw = await this.opts.extract();
     const overlay = readOverlay(this.opts.overlayPath);
-    return mergeOverlay(raw, overlay);
+    const skill = mergeOverlay(raw, overlay);
+
+    // Load package metadata (package.json + README) from cwd and cache it so
+    // auditContext() can return it synchronously — mirroring CliRefineSource.
+    const pkgDir = await findNearestPackageDir(this.opts.cwd);
+    this.cachedMetadata = pkgDir ? await readPackageMetadata(pkgDir) : {};
+
+    return skill;
   }
 
   auditContext(_skill: ExtractedSkill): AuditContext {
-    return {};
+    const meta = this.cachedMetadata;
+    return {
+      ...(meta.packageDescription !== undefined
+        ? { packageDescription: meta.packageDescription }
+        : {}),
+      ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
+      ...(meta.repository !== undefined ? { repository: meta.repository } : {}),
+      ...(meta.readme !== undefined ? { readme: meta.readme } : {})
+    };
   }
 
   resolveTargetLocation(_target: {
