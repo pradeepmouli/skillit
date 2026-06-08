@@ -86,3 +86,8 @@ export type {
 export type { ExtractedSkill, ExtractedResource, ExtractedPrompt, SkillSetup } from '@skillit/core';
 
 export * from './refine/index.js';
+export {
+  createMcpRefineSource,
+  selectServerEntry,
+  type CreateMcpRefineSourceOptions
+} from './refine/factory.js';
