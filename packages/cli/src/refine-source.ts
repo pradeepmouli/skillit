@@ -8,7 +8,8 @@ import {
   type ExtractedConfigSurface,
   type ExtractedSkill,
   type RefineSource,
-  type RefineTag
+  type RefineTag,
+  type TargetLocation
 } from '@skillit/core';
 import { Command } from 'commander';
 import { extractCliSkill } from './extract.js';
@@ -117,6 +118,20 @@ export class CliRefineSource implements RefineSource {
 
   auditContext(_skill: ExtractedSkill): AuditContext {
     return {};
+  }
+
+  async resolveTargetLocation(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): Promise<TargetLocation | undefined> {
+    const sources = await this.readSources();
+    const candidates = this.interfaceNameCandidates(target.name);
+    for (const iface of candidates) {
+      const file = this.findInterfaceFile(iface, sources);
+      if (file) return { file, declName: iface };
+    }
+    return undefined;
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {

@@ -1,4 +1,10 @@
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
+import type {
+  ExtractedSkill,
+  AuditContext,
+  DraftedFix,
+  RefineSource,
+  TargetLocation
+} from '@skillit/core';
 import { readOverlay, writeOverlay, applyFixToOverlay } from './overlay.js';
 import { mergeOverlay } from './merge-overlay.js';
 
@@ -18,6 +24,16 @@ export class McpRefineSource implements RefineSource {
 
   auditContext(_skill: ExtractedSkill): AuditContext {
     return {};
+  }
+
+  resolveTargetLocation(_target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): TargetLocation | undefined {
+    // Runtime mode edits an overlay JSON, not source declarations — there is no
+    // on-disk symbol to jump to.
+    return undefined;
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {

@@ -11,10 +11,10 @@ describe('buildProgram', () => {
     expect(buildProgram().version()).toBe(pkg.version);
   });
 
-  it('registers the refine, init, and mcp subcommands', () => {
+  it('registers the audit, gen, init, mcp, and refine subcommands', () => {
     const names = buildProgram()
       .commands.map((c) => c.name())
       .sort();
-    expect(names).toEqual(['init', 'mcp', 'refine']);
+    expect(names).toEqual(['audit', 'gen', 'init', 'mcp', 'refine']);
   });
 });

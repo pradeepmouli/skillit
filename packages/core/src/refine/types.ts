@@ -44,11 +44,40 @@ export interface ModelClient {
   review(req: ReviewRequest): Promise<ReviewResult>;
 }
 
+/**
+ * Where an audit/judge target's enrichment surface lives on disk, so a caller
+ * (e.g. the agent-bootstrap slash command) can jump straight to the declaration
+ * instead of re-deriving the file from `sourceModule`.
+ */
+export interface TargetLocation {
+  /** Absolute or repo-relative path to the file holding the declaration. */
+  file: string;
+  /** The declaration name to anchor the edit on (export name, interface, or option key). */
+  declName: string;
+  /** Dot-path into a config type when the target is a single option (e.g. `components.prefix`). */
+  propertyPath?: string;
+}
+
 export interface RefineSource {
   extract(): Promise<ExtractedSkill>;
   auditContext(skill: ExtractedSkill): AuditContext;
   applyFixes(fixes: readonly DraftedFix[]): Promise<void>;
   guidance?(): string | Promise<string>;
+  /**
+   * Resolve an improvement target (`{file, name, kind}` from `ActionableImprovement.targets`)
+   * to a concrete on-disk location. Optional — a source that cannot resolve a
+   * given target returns `undefined`. Used by `skillit audit --json` and the
+   * agent-bootstrap loop.
+   *
+   * The return is a union of sync and async: config/typedoc resolve synchronously,
+   * but cli and mcp(build) must read source files, so they return a `Promise`.
+   * Callers `await` the result (awaiting a non-Promise is a no-op).
+   */
+  resolveTargetLocation?(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): TargetLocation | undefined | Promise<TargetLocation | undefined>;
 }
 
 export interface RefineWorkItem {

@@ -41,21 +41,22 @@ See [`packages/mcp/README.md`](packages/mcp/README.md) for install, extract,
 bundle, config-file batch mode (`mcp.json` / `claude_desktop_config.json`), and
 programmatic API details.
 
-### Init: detect → install → generate → refine
+### Init: detect → install
 
-`skillit init` bootstraps a project in one step. It detects the project's
-nature, installs the matching `@skillit/*` package with your package manager,
-generates an initial skill into `skills/`, then runs `refine` on it.
+`skillit init` wires a project up. It detects the project's nature and installs
+the matching `@skillit/*` package with your package manager, then points you at
+`skillit gen` to produce the skill. It does **not** generate or refine — those
+are separate, explicit commands (`skillit gen`, `skillit refine`).
 
 ```bash
-# Auto-detects nature and package manager
+# Auto-detects nature and package manager, installs the right @skillit package
 npx skillit init
 
-# Force the source kind, or point at a specific program entry
-npx skillit init --source cli --program ./dist/cli.js#program
+# Force the source kind
+npx skillit init --source mcp
 
-# Generate into a custom directory (default: skills)
-npx skillit init --out docs/skills
+# Config source is built in (no install) — init just points at `skillit gen`
+npx skillit init --source config --config-type ./src/config.ts#MyConfig
 ```
 
 Detection:
@@ -63,18 +64,73 @@ Detection:
 - **Nature** — `commander` / `yargs` dep → `cli`; `@modelcontextprotocol/sdk` →
   `mcp`; otherwise a plain TS library → `typedoc`. Override with `--source`.
 - **Package** — `cli` → `@skillit/cli`, `mcp` → `@skillit/mcp`, `typedoc` →
-  `typedoc-plugin-skillit`.
+  `typedoc-plugin-skillit`. The `config` source is built into the CLI (no
+  install).
 - **Package manager** — `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, else npm.
 
-The initial generate step is implemented for the **cli** source this pass; for
-`mcp` / `typedoc` it is skipped (refine extracts live for mcp). If the install
-step fails, `init` prints the exact add command and stops before generate/refine.
+If the install step fails, `init` prints the exact add command and stops.
 
-| Flag                           | Default  | Description                              |
-| ------------------------------ | -------- | ---------------------------------------- |
-| `--source <cli\|mcp\|typedoc>` | auto     | Override project-nature detection        |
-| `--program <file#export>`      | —        | Commander program entry (cli source)     |
-| `--out <dir>`                  | `skills` | Output directory for the generated skill |
+| Flag                           | Default | Description                       |
+| ------------------------------ | ------- | --------------------------------- |
+| `--source <cli\|mcp\|typedoc>` | auto    | Override project-nature detection |
+| `--config-type <file#export>`  | —       | Config type entry (config source) |
+
+### Gen: deterministic skill generation
+
+`skillit gen` (re)generates the skill from the current source — no install, no
+model, no network. It is the deterministic, side-effect-free generate primitive:
+the same source always yields the same skill. Run it after `init`, and again
+whenever you change the documented source (JSDoc, config type, README).
+
+```bash
+# Generate from the auto-detected source into skills/
+npx skillit gen
+
+# CLI source with an explicit commander program entry
+npx skillit gen --source cli --program ./dist/cli.js#program
+
+# Config source
+npx skillit gen --source config --config-type ./src/config.ts#MyConfig
+
+# Generate into a custom directory (default: skills)
+npx skillit gen --out docs/skills
+```
+
+This release implements `gen` for the **cli** and **config** sources; `mcp` and
+`typedoc` generation land in a later phase (use `skillit mcp extract` for MCP
+servers meanwhile).
+
+| Flag                          | Default  | Description                              |
+| ----------------------------- | -------- | ---------------------------------------- |
+| `--source <cli\|config>`      | auto     | Source kind (cli/config this release)    |
+| `--program <file#export>`     | —        | Commander program entry (cli source)     |
+| `--config-type <file#export>` | —        | Config type entry (config source)        |
+| `--out <dir>`                 | `skills` | Output directory for the generated skill |
+
+### Audit: score + findings as JSON
+
+`skillit audit` runs the same audit + judge the refine loop uses and prints the
+result. With `--json` it emits the full `AuditResult` + score estimate, plus a
+resolved on-disk location for each improvement target — the machine-readable
+read-surface an agent (or CI) can act on without re-deriving anything.
+
+```bash
+# Human summary (grade + severity counts)
+npx skillit audit --source cli
+
+# Full machine-readable report
+npx skillit audit --source config --config-type ./src/config.ts#MyConfig --json
+```
+
+Like `gen`, `audit` supports the **cli** and **config** sources this release;
+`mcp` / `typedoc` land in a later phase.
+
+| Flag                          | Default | Description                            |
+| ----------------------------- | ------- | -------------------------------------- |
+| `--source <cli\|config>`      | auto    | Source kind (cli/config this release)  |
+| `--program <file#export>`     | —       | Commander program entry (cli source)   |
+| `--config-type <file#export>` | —       | Config type entry (config source)      |
+| `--json`                      | off     | Emit the full audit + estimate as JSON |
 
 ### Refine: autonomous annotation loop
 
