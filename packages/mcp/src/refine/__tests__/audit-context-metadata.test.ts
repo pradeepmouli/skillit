@@ -1,12 +1,12 @@
-// Tests that the MCP RefineSources populate `auditContext` with package.json +
-// README metadata after `extract()`, mirroring the CliRefineSource fix.
+// Tests that the MCP RefineSources write package.json + README metadata onto
+// the skill IR during `extract()`, mirroring the other sources. The audit reads
+// this metadata directly from the skill — there is no separate auditContext.
 //
 // Strategy: vi.mock `../../extract.js` so `extract()` never spawns a real MCP
 // server (the build source calls `extractMcpSkill`; the runtime source is
 // driven by an injected `extract` thunk). Both sources are pointed at a temp
 // package dir containing a `package.json` (with a description) and a
-// `README.md`; after `extract()` their `auditContext()` must surface that
-// metadata synchronously.
+// `README.md`; after `extract()` the returned skill must carry that metadata.
 
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -60,8 +60,8 @@ async function makePkgDir(): Promise<string> {
   return dir;
 }
 
-describe('TypeScriptMcpRefineSource auditContext', () => {
-  it('returns package.json + README metadata after extract()', async () => {
+describe('TypeScriptMcpRefineSource metadata on the IR', () => {
+  it('writes package.json + README metadata onto the skill after extract()', async () => {
     const dir = await makePkgDir();
     try {
       const source = new TypeScriptMcpRefineSource({
@@ -70,29 +70,29 @@ describe('TypeScriptMcpRefineSource auditContext', () => {
         cwd: dir
       });
       const skill = await source.extract();
+      expect(skill.packageDescription).toBe('Widget MCP server for acme.');
+      expect(skill.keywords).toEqual(['mcp', 'widget']);
+      expect(skill.repository).toBe('https://github.com/acme/widget');
       expect(skill.readme).toBeDefined();
-      const ctx = source.auditContext(minimalSkill);
-      expect(ctx.packageDescription).toBe('Widget MCP server for acme.');
-      expect(ctx.keywords).toEqual(['mcp', 'widget']);
-      expect(ctx.repository).toBe('https://github.com/acme/widget');
-      expect(ctx.readme).toBeDefined();
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
   });
 
-  it('returns an empty context before extract()', () => {
+  it('leaves metadata unset when no package.json is discoverable', async () => {
     const source = new TypeScriptMcpRefineSource({
       transport: { type: 'stdio', command: 'node', args: ['server.js'] },
       sourceGlob: '/nonexistent/**/*.ts',
       cwd: '/nonexistent'
     });
-    expect(source.auditContext(minimalSkill)).toEqual({});
+    const skill = await source.extract();
+    expect(skill.packageDescription).toBeUndefined();
+    expect(skill.readme).toBeUndefined();
   });
 });
 
-describe('McpRefineSource auditContext', () => {
-  it('returns package.json + README metadata after extract()', async () => {
+describe('McpRefineSource metadata on the IR', () => {
+  it('writes package.json + README metadata onto the skill after extract()', async () => {
     const dir = await makePkgDir();
     try {
       const source = new McpRefineSource({
@@ -101,12 +101,10 @@ describe('McpRefineSource auditContext', () => {
         cwd: dir
       });
       const skill = await source.extract();
+      expect(skill.packageDescription).toBe('Widget MCP server for acme.');
+      expect(skill.keywords).toEqual(['mcp', 'widget']);
+      expect(skill.repository).toBe('https://github.com/acme/widget');
       expect(skill.readme).toBeDefined();
-      const ctx = source.auditContext(minimalSkill);
-      expect(ctx.packageDescription).toBe('Widget MCP server for acme.');
-      expect(ctx.keywords).toEqual(['mcp', 'widget']);
-      expect(ctx.repository).toBe('https://github.com/acme/widget');
-      expect(ctx.readme).toBeDefined();
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

@@ -212,8 +212,8 @@ describe('ConfigRefineSource grounding', () => {
   });
 });
 
-describe('ConfigRefineSource.auditContext', () => {
-  it('returns the discovered package + README context after extract()', async () => {
+describe('ConfigRefineSource metadata on the IR', () => {
+  it('writes the discovered package + README metadata onto the skill', async () => {
     const file = fixture(`export interface Cfg { a: string; }`, {
       packageJson: {
         name: 'lib',
@@ -223,21 +223,21 @@ describe('ConfigRefineSource.auditContext', () => {
       },
       readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
     });
-    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
-    await source.extract();
-    const ctx = source.auditContext(await source.extract());
-    expect(ctx.packageDescription).toBe('desc');
-    expect(ctx.keywords).toEqual(['k1', 'k2']);
-    expect(ctx.repository).toBe('https://example.com/repo.git');
-    expect(ctx.readme).toBeDefined();
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    // An explicit/config description wins for packageDescription; keywords +
+    // repository + readme come straight from the discovered package.
+    expect(skill.keywords).toEqual(['k1', 'k2']);
+    expect(skill.repository).toBe('https://example.com/repo.git');
+    expect(skill.readme).toBeDefined();
   });
 
-  it('is empty when no package.json is discoverable', async () => {
+  it('leaves metadata unset when no package.json is discoverable', async () => {
     // mkdtemp dirs live under the OS tmp root, which has no ancestor package.json.
     const file = fixture(`export interface Cfg { a: string; }`);
-    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
-    await source.extract();
-    expect(source.auditContext(await source.extract())).toEqual({});
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.keywords).toBeUndefined();
+    expect(skill.repository).toBeUndefined();
+    expect(skill.readme).toBeUndefined();
   });
 });
 

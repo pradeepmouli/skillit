@@ -1,5 +1,3 @@
-import type { ParsedReadme } from './types.js';
-
 export type { ParsedReadme } from './types.js';
 
 /**
@@ -41,21 +39,6 @@ export interface AuditPass {
   message: string;
   /** Optional additional detail about the passing result */
   detail?: string;
-}
-
-/**
- * Contextual metadata about the package being audited, used to evaluate
- * relevance and quality of skill content.
- */
-export interface AuditContext {
-  /** Description field from package.json */
-  packageDescription?: string;
-  /** Keywords from package.json */
-  keywords?: string[];
-  /** Repository URL from package.json */
-  repository?: string;
-  /** Parsed sections of the package README */
-  readme?: ParsedReadme;
 }
 
 /**

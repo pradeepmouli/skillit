@@ -1,10 +1,5 @@
 // packages/core/src/refine/types.ts
-import type {
-  ExtractedSkill,
-  SkillJudgeEstimate,
-  ActionableImprovement,
-  AuditContext
-} from '../index.js';
+import type { ExtractedSkill, SkillJudgeEstimate, ActionableImprovement } from '../index.js';
 
 export type RefineTag = 'useWhen' | 'avoidWhen' | 'pitfalls' | 'remarks' | 'example';
 
@@ -60,7 +55,6 @@ export interface TargetLocation {
 
 export interface RefineSource {
   extract(): Promise<ExtractedSkill>;
-  auditContext(skill: ExtractedSkill): AuditContext;
   applyFixes(fixes: readonly DraftedFix[]): Promise<void>;
   guidance?(): string | Promise<string>;
   /**

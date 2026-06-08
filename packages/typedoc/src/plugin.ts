@@ -16,7 +16,6 @@ import {
   estimateSkillJudgeScore,
   formatScoreEstimate
 } from '@skillit/core';
-import type { AuditContext } from '@skillit/core';
 import { extractSkills } from './extractor.js';
 
 /**
@@ -430,16 +429,17 @@ export function load(app: Application): void {
           continue;
         }
 
-        // Resolve README per-skill for audit context (same as enrichment above)
+        // Write the audit-read project metadata onto the IR (the audit is a
+        // pure function of the skill — no separate context channel). README is
+        // resolved per-skill, same as the enrichment above.
         const auditReadme = resolveReadmeForSkill(skill.name);
-        const auditContext: AuditContext = {
-          packageDescription: pkg.description,
-          keywords: pkg.keywords,
-          repository: normalizeRepoUrl(pkg.repository),
-          readme: auditReadme
-        };
+        if (pkg.description !== undefined) skill.packageDescription = pkg.description;
+        if (pkg.keywords !== undefined) skill.keywords = pkg.keywords;
+        const auditRepo = normalizeRepoUrl(pkg.repository);
+        if (auditRepo !== undefined) skill.repository = auditRepo;
+        if (auditReadme !== undefined) skill.readme = auditReadme;
 
-        const auditResult = auditSkill(skill, auditContext);
+        const auditResult = auditSkill(skill);
         const text = formatAuditText(auditResult);
 
         // Log each line with appropriate severity

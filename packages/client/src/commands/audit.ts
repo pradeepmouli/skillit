@@ -44,7 +44,7 @@ export async function buildAuditReport(
   source: RefineSource,
   skill: ExtractedSkill
 ): Promise<AuditReport> {
-  const audit = auditSkill(skill, source.auditContext(skill));
+  const audit = auditSkill(skill);
   const estimate = estimateSkillJudgeScore(audit, skill);
 
   const improvements: AuditReportImprovement[] = [];

@@ -3,10 +3,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import {
   findNearestPackageDir,
   readPackageMetadata,
-  type AuditContext,
   type DraftedFix,
   type ExtractedSkill,
-  type PackageMetadata,
   type RefineSource,
   type TargetLocation
 } from '@skillit/core';
@@ -25,33 +23,22 @@ interface TypeScriptMcpRefineSourceOptions {
 }
 
 export class TypeScriptMcpRefineSource implements RefineSource {
-  /** Cached metadata loaded during {@link extract} (always called first in the audit/refine loop). */
-  private cachedMetadata: PackageMetadata = {};
-
   constructor(private readonly opts: TypeScriptMcpRefineSourceOptions) {}
 
   async extract(): Promise<ExtractedSkill> {
     const skill = await extractMcpSkill({ transport: this.opts.transport });
 
-    // Load package metadata (package.json + README) from cwd and cache it so
-    // auditContext() can return it synchronously — mirroring CliRefineSource.
+    // Load package metadata (package.json + README) from cwd and write the
+    // audit-read fields onto the IR (the audit reads them directly from the
+    // skill — no separate context channel).
     const pkgDir = await findNearestPackageDir(this.opts.cwd);
-    this.cachedMetadata = pkgDir ? await readPackageMetadata(pkgDir) : {};
-    if (this.cachedMetadata.readme !== undefined) skill.readme = this.cachedMetadata.readme;
+    const meta = pkgDir ? await readPackageMetadata(pkgDir) : {};
+    if (meta.packageDescription !== undefined) skill.packageDescription = meta.packageDescription;
+    if (meta.keywords !== undefined) skill.keywords = meta.keywords;
+    if (meta.repository !== undefined) skill.repository = meta.repository;
+    if (meta.readme !== undefined) skill.readme = meta.readme;
 
     return skill;
-  }
-
-  auditContext(_skill: ExtractedSkill): AuditContext {
-    const meta = this.cachedMetadata;
-    return {
-      ...(meta.packageDescription !== undefined
-        ? { packageDescription: meta.packageDescription }
-        : {}),
-      ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
-      ...(meta.repository !== undefined ? { repository: meta.repository } : {}),
-      ...(meta.readme !== undefined ? { readme: meta.readme } : {})
-    };
   }
 
   /**
