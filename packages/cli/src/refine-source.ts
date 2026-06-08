@@ -5,7 +5,6 @@ import {
   findNearestPackageDir,
   readPackageMetadata,
   upsertJsDocTag,
-  type AuditContext,
   type DraftedFix,
   type ExtractedConfigSurface,
   type ExtractedSkill,
@@ -67,8 +66,8 @@ export class CliRefineSource implements RefineSource {
     const surfaces = introspectCommander(this.opts.program);
     const sources = await this.readSources();
 
-    // Load package metadata (package.json + README) from cwd and cache it so
-    // auditContext() can return it synchronously — mirroring ConfigRefineSource.
+    // Load package metadata (package.json + README) from cwd; its fields are
+    // written onto the IR below so the audit reads them directly from the skill.
     const pkgDir = await findNearestPackageDir(this.opts.cwd);
     this.cachedMetadata = pkgDir ? await readPackageMetadata(pkgDir) : {};
 
@@ -118,7 +117,7 @@ export class CliRefineSource implements RefineSource {
     }
 
     const meta = this.cachedMetadata;
-    return extractCliSkill({
+    const skill = await extractCliSkill({
       program: this.opts.program,
       configSurfaces,
       metadata: {
@@ -128,6 +127,14 @@ export class CliRefineSource implements RefineSource {
         ...(meta.repository !== undefined ? { repository: meta.repository } : {})
       }
     });
+    // Write the audit-read project metadata onto the IR (the audit reads it
+    // directly from the skill — no separate context channel). extractCliSkill
+    // maps `description` onto the skill body but not these audit fields.
+    if (meta.packageDescription !== undefined) skill.packageDescription = meta.packageDescription;
+    if (meta.keywords !== undefined) skill.keywords = meta.keywords;
+    if (meta.repository !== undefined) skill.repository = meta.repository;
+    if (meta.readme !== undefined) skill.readme = meta.readme;
+    return skill;
   }
 
   guidance(): string {
@@ -135,18 +142,6 @@ export class CliRefineSource implements RefineSource {
       new URL('../skills/skillit-cli-docs/SKILL.md', import.meta.url)
     );
     return readFileSync(skillPath, 'utf8');
-  }
-
-  auditContext(_skill: ExtractedSkill): AuditContext {
-    const meta = this.cachedMetadata;
-    return {
-      ...(meta.packageDescription !== undefined
-        ? { packageDescription: meta.packageDescription }
-        : {}),
-      ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
-      ...(meta.repository !== undefined ? { repository: meta.repository } : {}),
-      ...(meta.readme !== undefined ? { readme: meta.readme } : {})
-    };
   }
 
   async resolveTargetLocation(target: {

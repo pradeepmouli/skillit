@@ -10,7 +10,7 @@ afterEach(async () => {
   if (tmpDir) await rm(tmpDir, { recursive: true, force: true });
 });
 
-describe('CliRefineSource.auditContext reads package metadata', () => {
+describe('CliRefineSource writes package metadata onto the IR', () => {
   it('populates packageDescription, keywords, and readme from cwd', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'cli-ctx-'));
     await writeFile(
@@ -31,23 +31,23 @@ describe('CliRefineSource.auditContext reads package metadata', () => {
       cwd: tmpDir
     });
     const skill = await source.extract();
-    const ctx = source.auditContext(skill);
-    expect(ctx.packageDescription).toMatch(/meaningful description/);
-    expect(ctx.keywords).toContain('skillit');
-    expect(ctx.readme?.blockquote ?? ctx.readme?.firstParagraph ?? '').toMatch(
+    expect(skill.packageDescription).toMatch(/meaningful description/);
+    expect(skill.keywords).toContain('skillit');
+    expect(skill.readme).toBeDefined();
+    expect(skill.readme?.blockquote ?? skill.readme?.firstParagraph ?? '').toMatch(
       /blockquote describing/
     );
   });
 
-  it('returns an empty-ish context when no package.json/README exist', async () => {
+  it('leaves metadata unset when no package.json/README exist', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'cli-ctx-'));
     const source = new CliRefineSource({
       program: new Command('bare'),
       sourceGlob: join(tmpDir, '**', '*.ts'),
       cwd: tmpDir
     });
-    const ctx = source.auditContext(await source.extract());
-    expect(ctx.packageDescription).toBeUndefined();
-    expect(ctx.readme).toBeUndefined();
+    const skill = await source.extract();
+    expect(skill.packageDescription).toBeUndefined();
+    expect(skill.readme).toBeUndefined();
   });
 });

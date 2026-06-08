@@ -2,13 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type {
-  AuditContext,
-  DraftedFix,
-  ExtractedSkill,
-  RefineSource,
-  TargetLocation
-} from '@skillit/core';
+import type { DraftedFix, ExtractedSkill, RefineSource, TargetLocation } from '@skillit/core';
 import { createMcpRefineSource } from '@skillit/mcp';
 import { buildAuditReport, runAuditCommand } from '../commands/audit.js';
 
@@ -42,9 +36,6 @@ class StubSource implements RefineSource {
   extract(): Promise<ExtractedSkill> {
     return Promise.resolve(this.skill);
   }
-  auditContext(): AuditContext {
-    return {};
-  }
   async applyFixes(_fixes: readonly DraftedFix[]): Promise<void> {}
   resolveTargetLocation(target: { name: string; kind: string }): TargetLocation | undefined {
     return { file: `src/${target.name}.ts`, declName: target.name };
@@ -76,7 +67,6 @@ describe('buildAuditReport', () => {
     const skill = minimalSkill();
     const source: RefineSource = {
       extract: () => Promise.resolve(skill),
-      auditContext: () => ({}),
       applyFixes: async () => {}
     };
 
@@ -157,7 +147,7 @@ describe('mcp source is constructible for the audit tail (hermetic, build mode)'
         overlayPath: join(dir, '.skillit-overlay.json')
       });
       expect(typeof source.extract).toBe('function');
-      expect(typeof source.auditContext).toBe('function');
+      expect(typeof source.applyFixes).toBe('function');
       expect(typeof source.resolveTargetLocation).toBe('function');
     } finally {
       await rm(dir, { recursive: true, force: true });

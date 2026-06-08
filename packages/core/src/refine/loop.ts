@@ -18,9 +18,9 @@ const DEFAULT_PASSING_GRADES: ReadonlyArray<SkillJudgeEstimate['grade']> = ['A']
 const DEFAULT_MAX_ITERATIONS = 5;
 const DEFAULT_ITEMS_PER_ITERATION = 5;
 
-function defaultScore(source: RefineOptions['source']): ScoreSkill {
+function defaultScore(): ScoreSkill {
   return (skill) => {
-    const audit = auditSkill(skill, source.auditContext(skill));
+    const audit = auditSkill(skill);
     return estimateSkillJudgeScore(audit, skill);
   };
 }
@@ -46,7 +46,7 @@ export async function refineSkill(
     maxIterations = DEFAULT_MAX_ITERATIONS,
     itemsPerIteration = DEFAULT_ITEMS_PER_ITERATION,
     onIteration,
-    scoreSkill = defaultScore(source)
+    scoreSkill = defaultScore()
   } = opts;
 
   const passingSet = new Set(passingGrades);

@@ -1,12 +1,6 @@
 import { Application, TSConfigReader, type ProjectReflection } from 'typedoc';
 import { readPackageMetadata, findNearestPackageDir } from '@skillit/core';
-import type {
-  ExtractedSkill,
-  RefineSource,
-  AuditContext,
-  DraftedFix,
-  TargetLocation
-} from '@skillit/core';
+import type { ExtractedSkill, RefineSource, DraftedFix, TargetLocation } from '@skillit/core';
 import { load } from './plugin.js';
 import { extractSkills } from './extractor.js';
 
@@ -125,39 +119,29 @@ export async function extractTypeDocSkills(opts: TypeDocRunOptions): Promise<Ext
  * @category Programmatic
  */
 export function createTypeDocRefineSource(opts: TypeDocRunOptions): RefineSource {
-  let cachedCtx: AuditContext = {};
-
   return {
     async extract(): Promise<ExtractedSkill> {
       const skills = await extractTypeDocSkills(opts);
       const pkgDir = (await findNearestPackageDir(opts.cwd)) ?? opts.cwd;
       const meta = await readPackageMetadata(pkgDir);
 
-      cachedCtx = {
-        ...(meta.packageDescription !== undefined
-          ? { packageDescription: meta.packageDescription }
-          : {}),
-        ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
-        ...(meta.repository !== undefined ? { repository: meta.repository } : {}),
-        ...(meta.readme !== undefined ? { readme: meta.readme } : {})
+      const skill = skills[0] ?? {
+        name: '',
+        description: '',
+        functions: [],
+        classes: [],
+        types: [],
+        enums: [],
+        variables: [],
+        examples: []
       };
-
-      return (
-        skills[0] ?? {
-          name: '',
-          description: '',
-          functions: [],
-          classes: [],
-          types: [],
-          enums: [],
-          variables: [],
-          examples: []
-        }
-      );
-    },
-
-    auditContext(_skill: ExtractedSkill): AuditContext {
-      return cachedCtx;
+      // Write the audit-read project metadata onto the IR (the audit is a pure
+      // function of the skill — no separate context channel).
+      if (meta.packageDescription !== undefined) skill.packageDescription = meta.packageDescription;
+      if (meta.keywords !== undefined) skill.keywords = meta.keywords;
+      if (meta.repository !== undefined) skill.repository = meta.repository;
+      if (meta.readme !== undefined) skill.readme = meta.readme;
+      return skill;
     },
 
     async applyFixes(_fixes: readonly DraftedFix[]): Promise<void> {

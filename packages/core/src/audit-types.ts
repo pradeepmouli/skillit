@@ -1,3 +1,5 @@
+export type { ParsedReadme } from './types.js';
+
 /**
  * Severity levels for audit issues, ordered from most to least severe.
  * - `fatal`: Disqualifying problems that prevent the skill from being used safely
@@ -37,37 +39,6 @@ export interface AuditPass {
   message: string;
   /** Optional additional detail about the passing result */
   detail?: string;
-}
-
-/**
- * Contextual metadata about the package being audited, used to evaluate
- * relevance and quality of skill content.
- */
-export interface AuditContext {
-  /** Description field from package.json */
-  packageDescription?: string;
-  /** Keywords from package.json */
-  keywords?: string[];
-  /** Repository URL from package.json */
-  repository?: string;
-  /** Parsed sections of the package README */
-  readme?: ParsedReadme;
-}
-
-/**
- * Structured representation of key sections extracted from a package README.
- */
-export interface ParsedReadme {
-  /** Leading blockquote, often used as a one-liner summary */
-  blockquote?: string;
-  /** First prose paragraph after any heading or blockquote */
-  firstParagraph?: string;
-  /** Quick-start or getting-started section content */
-  quickStart?: string;
-  /** Features or capabilities section content */
-  features?: string;
-  /** Troubleshooting, common issues, or FAQ section content */
-  troubleshooting?: string;
 }
 
 /**

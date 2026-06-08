@@ -34,7 +34,6 @@ function makeSource(skills: ExtractedSkill[]): RefineSource {
   let call = 0;
   return {
     extract: vi.fn(async () => skills[call++] ?? skills.at(-1)!),
-    auditContext: vi.fn(() => ({}) as any),
     applyFixes: vi.fn(async () => {})
   };
 }

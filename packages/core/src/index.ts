@@ -64,7 +64,6 @@ export type {
   AuditSeverity,
   AuditIssue,
   AuditPass,
-  AuditContext,
   ParsedReadme,
   AuditResult
 } from './audit-types.js';

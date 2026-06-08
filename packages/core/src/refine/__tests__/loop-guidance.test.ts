@@ -40,7 +40,6 @@ function makeSourceWithGuidance(): RefineSource {
   // We capture requests via a recording model; the source itself just provides guidance.
   return {
     extract: async () => baseSkill(),
-    auditContext: () => ({}) as ReturnType<RefineSource['auditContext']>,
     applyFixes: async () => {},
     guidance: async () => 'RUBRIC-XYZ'
   };
@@ -50,7 +49,6 @@ function makeSourceWithGuidance(): RefineSource {
 function makeSourceWithoutGuidance(): RefineSource {
   return {
     extract: async () => baseSkill(),
-    auditContext: () => ({}) as ReturnType<RefineSource['auditContext']>,
     applyFixes: async () => {}
   };
 }

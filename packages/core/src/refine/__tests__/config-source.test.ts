@@ -89,6 +89,16 @@ describe('ConfigRefineSource.extract', () => {
     expect(skill.name).toBe('override');
     expect(skill.description).toBe('override desc');
   });
+
+  it('populates skill.readme on the IR from the sibling README', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/my-lib', description: 'desc' },
+      readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
+    });
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.readme).toBeDefined();
+    expect(skill.readme?.blockquote ?? skill.readme?.firstParagraph ?? '').toMatch(/summary/);
+  });
 });
 
 describe('ConfigRefineSource example file', () => {
@@ -202,8 +212,8 @@ describe('ConfigRefineSource grounding', () => {
   });
 });
 
-describe('ConfigRefineSource.auditContext', () => {
-  it('returns the discovered package + README context after extract()', async () => {
+describe('ConfigRefineSource metadata on the IR', () => {
+  it('writes the discovered package + README metadata onto the skill', async () => {
     const file = fixture(`export interface Cfg { a: string; }`, {
       packageJson: {
         name: 'lib',
@@ -213,21 +223,40 @@ describe('ConfigRefineSource.auditContext', () => {
       },
       readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
     });
-    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
-    await source.extract();
-    const ctx = source.auditContext(await source.extract());
-    expect(ctx.packageDescription).toBe('desc');
-    expect(ctx.keywords).toEqual(['k1', 'k2']);
-    expect(ctx.repository).toBe('https://example.com/repo.git');
-    expect(ctx.readme).toBeDefined();
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    // An explicit/config description wins for packageDescription; keywords +
+    // repository + readme come straight from the discovered package.
+    expect(skill.keywords).toEqual(['k1', 'k2']);
+    expect(skill.repository).toBe('https://example.com/repo.git');
+    expect(skill.readme).toBeDefined();
   });
 
-  it('is empty when no package.json is discoverable', async () => {
+  it('leaves metadata unset when no package.json is discoverable', async () => {
     // mkdtemp dirs live under the OS tmp root, which has no ancestor package.json.
     const file = fixture(`export interface Cfg { a: string; }`);
-    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
-    await source.extract();
-    expect(source.auditContext(await source.extract())).toEqual({});
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.keywords).toBeUndefined();
+    expect(skill.repository).toBeUndefined();
+    expect(skill.readme).toBeUndefined();
+  });
+
+  it('packageDescription is the literal package.json value, not a config override (F1 integrity)', async () => {
+    // A config-specific description override goes to the render headline
+    // (skill.description), NOT skill.packageDescription — otherwise the audit's
+    // F1 check would treat the override as the package.json description and stop
+    // reporting a missing/short one.
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/lib', description: 'short' } // <10 chars → F1 should still flag
+    });
+    const skill = await new ConfigRefineSource({
+      configFile: file,
+      typeName: 'Cfg',
+      description: 'A long, config-specific description that would otherwise mask F1'
+    }).extract();
+    expect(skill.description).toBe(
+      'A long, config-specific description that would otherwise mask F1'
+    );
+    expect(skill.packageDescription).toBe('short'); // the real (too-short) package.json value
   });
 });
 
