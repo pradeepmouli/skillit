@@ -69,10 +69,14 @@ _headline judgment_ of the skill lives in a kind-specific surface:
   adapter-model CLI (no static command tree), enrich the stable exported symbols
   together with `@packageDocumentation` instead.
 - **config** — **per-property** JSDoc on the config type's properties:
-  `@useWhen`/`@avoidWhen`/`@never`/`@remarks` on each option, plus a sibling
+  `@useWhen`/`@avoidWhen`/`@pitfalls`/`@remarks` on each option, plus a sibling
   `<config>.example.ts` (written only if absent — never clobbered) for the
   example finding. Findings carry a dot-path `configKey`; `resolveTargetLocation`
   returns `{ file, declName, propertyPath }`. Writeback: `upsertPropertyJsDocTag`.
+  - **Tag note:** the config surface authors pitfalls as **`@pitfalls`** (what
+    `config-extract` reads), NOT `@never` (the typedoc/JSDoc surface's tag — see
+    spec §4.2 naming note). On a config option, `@never` is silently ignored.
+    `@category` is likewise not scored on config options — don't chase it there.
 - **mcp (build mode)** — JSDoc on the tool-handler symbols **plus**
   `_meta.toSkills.{useWhen,avoidWhen,pitfalls}` annotations in your TS server
   source. `resolveTargetLocation` resolves a tool to its `{ file, declName }`.

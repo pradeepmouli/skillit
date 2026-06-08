@@ -40,16 +40,27 @@ import { extractSkills } from './extractor.js';
 export interface SkillsPluginOptions {
   /** Output directory for generated skill files
    * @defaultValue "skills"
+   * @category Output
+   * @pitfalls
+   * - NEVER point this inside a tracked source directory (e.g. `src/`) — `skillit gen` rewrites the whole output tree every build and would clobber hand-written files
    */
   skillsOutDir?: string;
 
   /** Agent discovery directories to install generated skills into
    * @defaultValue []
+   * @category Output
+   * @useWhen
+   * - You want generated skills copied into an agent's discovery path (e.g. `.claude/skills`) so they load without a manual copy step
+   * @avoidWhen
+   * - You only consume the canonical `skillsOutDir` copy — install targets duplicate every skill into each listed directory
+   * @pitfalls
+   * - A non-existent or unwritable target directory fails the build mid-generation — ensure each path exists and is writable in CI
    */
   skillsInstallTargets?: string[];
 
   /** Emit one skill per package in a monorepo
    * @defaultValue true
+   * @category Output
    * @useWhen
    * - Your project is a monorepo with multiple packages
    * @avoidWhen
@@ -59,16 +70,23 @@ export interface SkillsPluginOptions {
 
   /** Include usage examples from @example tags
    * @defaultValue true
+   * @category Content
+   * @avoidWhen
+   * - Reference files are blowing the token budget and worked examples are the least essential content to keep
    */
   skillsIncludeExamples?: boolean;
 
   /** Include type signatures in skill output
    * @defaultValue true
+   * @category Content
+   * @avoidWhen
+   * - The token budget is tight — signatures are typically the largest contributor to reference-file size, so drop them before lowering `skillsMaxTokens`
    */
   skillsIncludeSignatures?: boolean;
 
   /** Maximum approximate token budget per skill file
    * @defaultValue 4000
+   * @category Budget
    * @never
    * - NEVER set below 500 — reference files become truncated mid-signature, producing broken code blocks
    */
@@ -76,16 +94,25 @@ export interface SkillsPluginOptions {
 
   /** Custom prefix for skill names
    * @defaultValue ""
+   * @category Output
+   * @useWhen
+   * - Several packages would otherwise generate same-named skills that collide in a shared install target
+   * @pitfalls
+   * - NEVER include path separators or spaces — the prefix becomes part of the skill's directory name
    */
   skillsNamePrefix?: string;
 
   /** License for generated skills (reads from package.json if empty)
    * @defaultValue ""
+   * @category Output
+   * @useWhen
+   * - The generated skill's license must differ from the package's own `license` field
    */
   skillsLicense?: string;
 
   /** Generate llms.txt and llms-full.txt alongside skills
    * @defaultValue false
+   * @category llms.txt
    * @useWhen
    * - You want LLM-friendly API documentation following the llmstxt.org spec
    */
@@ -93,11 +120,17 @@ export interface SkillsPluginOptions {
 
   /** Output directory for llms.txt files
    * @defaultValue "."
+   * @category llms.txt
+   * @useWhen
+   * - You want llms.txt written somewhere other than the project root (e.g. a published `public/` directory)
+   * @avoidWhen
+   * - `llmsTxt` is false — this option has no effect unless llms.txt generation is enabled
    */
   llmsTxtOutDir?: string;
 
   /** Run documentation audit during skill generation
    * @defaultValue true
+   * @category Audit
    * @useWhen
    * - You want feedback on JSDoc quality during typedoc build
    * @avoidWhen
@@ -107,6 +140,7 @@ export interface SkillsPluginOptions {
 
   /** Fail build on fatal or error severity audit issues
    * @defaultValue false
+   * @category Audit
    * @useWhen
    * - CI enforcement — block PRs with undocumented exports
    * @avoidWhen
@@ -116,11 +150,15 @@ export interface SkillsPluginOptions {
 
   /** Path to write JSON audit report (empty = don't write)
    * @defaultValue ""
+   * @category Audit
+   * @useWhen
+   * - CI needs a machine-readable audit artifact to gate or track skill quality over time
    */
   skillsAuditJson?: string;
 
   /** Include prose docs from docs/ directory alongside API skills
    * @defaultValue false
+   * @category Docs
    * @useWhen
    * - You have hand-written docs in a docs/ directory (tutorials, guides, architecture)
    */
@@ -128,6 +166,11 @@ export interface SkillsPluginOptions {
 
   /** Directory containing prose documentation
    * @defaultValue "docs"
+   * @category Docs
+   * @useWhen
+   * - Your prose docs live somewhere other than `docs/` (e.g. `documentation/`)
+   * @avoidWhen
+   * - `skillsIncludeDocs` is false — this option has no effect unless docs inclusion is enabled
    */
   skillsDocsDir?: string;
 }
