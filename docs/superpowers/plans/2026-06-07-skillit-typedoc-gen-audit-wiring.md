@@ -4,7 +4,11 @@
 
 **Goal:** Make `skillit gen --source typedoc` and `skillit audit --source typedoc` actually work — by adding a programmatic TypeDoc-extraction entry to `@skillit/typedoc` and wiring it into the two client commands — so the bundled `/skillit-bootstrap` skill's existing "cli **or typedoc**" claim becomes true.
 
-**Architecture:** The reusable core already exists: `extractSkills(project: ProjectReflection, perPackage, metadata?) → ExtractedSkill[]` (`packages/typedoc/src/extractor.ts:62`). Today a `ProjectReflection` is only produced when TypeDoc invokes the plugin's `Converter.EVENT_RESOLVE_END` hook (`plugin.ts:280`). This plan adds a standalone runner — `extractTypeDocSkills(opts)` — that bootstraps a TypeDoc `Application` programmatically, calls `app.convert()`, and feeds the project to `extractSkills`. A `createTypeDocRefineSource(opts)` factory then wraps that (plus package metadata + a source-file resolver) as a `RefineSource` so `audit` can build its report. `gen` calls the runner directly (extract → `renderSkills` → `writeSkills`); `audit` constructs the source and calls `buildAuditReport`. The currently-emitted "typedoc not supported" short-circuits in `gen.ts`/`audit.ts` are replaced with real branches (only `mcp` remains short-circuited).
+**Architecture (REUSE THE PLUGIN PIPELINE — decided):** Two existing pieces are reused, NOT re-implemented: (1) the TypeDoc plugin `load(app)` (`plugin.ts:135`) which on `convert()` does the **whole** extract→render→write pipeline and is exported from `@skillit/typedoc`; (2) `extractSkills(project)` (`extractor.ts:62`) the extractor. The only new code is the bit that produces a `ProjectReflection` from a package dir (bootstrap a TypeDoc `Application` + `convert()`), which lives in `@skillit/typedoc` (it owns the `typedoc` dep) so the client never imports `typedoc`.
+
+- **`gen --source typedoc`** → `generateTypeDocSkills(opts)`: bootstrap an `Application`, call the exported `load(app)`, set `skillsOutDir = outDir`, `await app.convert()`. The plugin writes the skill. The client does **no** `extractSkills`/`renderSkills`/`writeSkills` itself — it reuses the plugin pipeline end-to-end.
+- **`audit --source typedoc`** → `createTypeDocRefineSource(opts)` whose `extract()` bootstraps + `convert()`s and calls the existing `extractSkills(project, …)` (reusing the extractor), with `auditContext` from the shared `readPackageMetadata`. `audit` then calls `buildAuditReport`.
+- Shared internal `convertProject(opts)` (bootstrap + convert) backs both. The "typedoc not supported" short-circuits in `gen.ts`/`audit.ts` become real branches (only `mcp` stays short-circuited).
 
 **Tech Stack:** TypeScript 5 / Node ≥20, `typedoc` (already a dep of `@skillit/typedoc`), Vitest, oxlint/oxfmt, pnpm workspaces, changesets. The TypeDoc programmatic API: `Application.bootstrapWithPlugins()` / `app.convert()` (see existing `plugin.ts` imports: `Application, Converter, Context` from `typedoc`).
 
@@ -118,7 +122,7 @@ Expected: FAIL with `Cannot find module '../src/extract-standalone.js'`.
 Create `packages/typedoc/src/extract-standalone.ts`. READ `packages/typedoc/src/plugin.ts` first to copy the exact TypeDoc bootstrap pattern + the `extractSkills` call shape, and `packages/typedoc/src/extractor.ts` for the `PackageMetadata` type it expects. Implement:
 
 ```typescript
-import { Application, type TypeDocOptions } from 'typedoc';
+import { Application } from 'typedoc';
 import { readPackageMetadata, findNearestPackageDir } from '@skillit/core';
 import type {
   ExtractedSkill,
@@ -127,42 +131,53 @@ import type {
   DraftedFix,
   TargetLocation
 } from '@skillit/core';
+import { load } from './plugin.js';
 import { extractSkills } from './extractor.js';
 
-/** Options for {@link extractTypeDocSkills}. */
-export interface ExtractTypeDocOptions {
+/** Options shared by the typedoc generate/extract helpers. */
+export interface TypeDocRunOptions {
   /** Entry-point source files (e.g. `['src/index.ts']`, absolute). */
   entryPoints: string[];
   /** Path to the package tsconfig.json. */
   tsconfig: string;
   /** Package root (for package.json metadata). */
   cwd: string;
-  /** One skill per package (monorepo). Default false (single package). */
-  perPackage?: boolean;
 }
 
-/**
- * Run TypeDoc programmatically against a package and extract skills from its
- * reflection tree — the standalone counterpart to the plugin's converter hook.
- */
-export async function extractTypeDocSkills(opts: ExtractTypeDocOptions): Promise<ExtractedSkill[]> {
-  const app = await Application.bootstrapWithPlugins({
+/** Bootstrap a TypeDoc Application for `opts` and convert. `register` lets the
+ *  caller add the skills plugin (gen) or skip it (audit). */
+async function convertProject(opts: TypeDocRunOptions, register?: (app: Application) => void) {
+  const app = await Application.bootstrap({
     entryPoints: opts.entryPoints,
     tsconfig: opts.tsconfig,
-    // Quiet: we only want the reflection tree, not TypeDoc's own output.
-    logLevel: 'Error',
-    skipErrorChecking: true
-  } as Partial<TypeDocOptions>);
+    skipErrorChecking: true,
+    logLevel: 'Error'
+  });
+  register?.(app);
   const project = await app.convert();
-  if (!project)
-    throw new Error(`TypeDoc could not convert entry points: ${opts.entryPoints.join(', ')}`);
+  if (!project) throw new Error(`TypeDoc could not convert: ${opts.entryPoints.join(', ')}`);
+  return { app, project };
+}
 
+/** GEN: run the skills plugin pipeline (extract→render→write) end-to-end. The
+ *  plugin writes to `outDir` on convert — the client adds NO render/write code. */
+export async function generateTypeDocSkills(
+  opts: TypeDocRunOptions & { outDir: string }
+): Promise<void> {
+  await convertProject(opts, (app) => {
+    load(app); // registers skillsOutDir etc. + the write-on-resolve hook
+    app.options.setValue('skillsOutDir', opts.outDir);
+  });
+  // The plugin's EVENT_RESOLVE_END handler has already written the skill(s).
+}
+
+/** AUDIT: convert + reuse the existing extractor; no render/write. */
+export async function extractTypeDocSkills(opts: TypeDocRunOptions): Promise<ExtractedSkill[]> {
+  const { project } = await convertProject(opts);
   const pkgDir = (await findNearestPackageDir(opts.cwd)) ?? opts.cwd;
   const meta = await readPackageMetadata(pkgDir);
-  // extractSkills expects its own PackageMetadata shape (name/description/keywords/...).
-  // Map from readPackageMetadata's fields (verify the exact extractor PackageMetadata
-  // field names when implementing — name vs packageName, etc.).
-  return extractSkills(project, opts.perPackage ?? false, {
+  return extractSkills(project, false, {
+    // map readPackageMetadata fields → extractSkills metadata shape (verify names)
     name: meta.packageName,
     description: meta.packageDescription,
     keywords: meta.keywords,
@@ -171,7 +186,12 @@ export async function extractTypeDocSkills(opts: ExtractTypeDocOptions): Promise
 }
 ```
 
-> IMPLEMENTER NOTE: `extractSkills`'s `PackageMetadata` (from `extractor.ts`) may use different field names than `@skillit/core`'s `readPackageMetadata` return. Read both and map correctly (e.g. `name` from `meta.packageName`). Verify `Application.bootstrapWithPlugins` is the correct API in the installed `typedoc` version (it's imported in `plugin.ts` — confirm). If `bootstrapWithPlugins` requires plugin registration that pulls in the writeback plugin, use plain `Application.bootstrap(...)` instead — you only need `app.convert()` → a `ProjectReflection`; you do NOT want the plugin to write files. Match whatever produces a clean project.
+> IMPLEMENTER NOTES — resolve against the real APIs (TDD catches mistakes):
+>
+> - **gen reuses the plugin pipeline** (`load(app)` → `convert()` writes). Do NOT call `renderSkills`/`writeSkills` in the client or here — the plugin does it. Confirm the option-registration ordering: `load(app)` must run before `setValue('skillsOutDir', …)`, and the plugin reads options inside its convert hook.
+> - **audit reuses `extractSkills`** on the converted project (no render/write).
+> - Confirm `Application.bootstrap` vs `bootstrapWithPlugins` for the installed `typedoc` version — we register OUR `load` directly, so we do NOT want auto-loaded external plugins.
+> - `extractSkills`'s metadata field names may differ from `readPackageMetadata`'s (`name` vs `packageName`). Read both; map correctly.
 
 - [ ] **Step 4: Run test to verify it passes**
 
