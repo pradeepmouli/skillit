@@ -57,10 +57,37 @@ behavior_, read the implementation (the `--ground` globs, or the function body).
 A fluent, well-structured claim that is factually wrong is invisible to the
 deterministic audit — the safeguard is that you actually read the code.
 
-## Scope this release (Phase 1)
+## Per-kind headline surface
 
-- **Supported:** `cli` (Commander) and `typedoc` (TS library) sources.
-- **Not yet orchestrated here:** `config` and `mcp`. For those, use `skillit
-refine` directly (the headless loop). They arrive in a later phase.
-- Kind-aware grade targets: typedoc → A; cli → B (a non-enumerated command tree
-  cannot structurally satisfy example/return-coverage dimensions).
+The table above is kind-independent (any project has README + package.json). The
+_headline judgment_ of the skill lives in a kind-specific surface:
+
+- **typedoc** — per-symbol JSDoc on exported functions/classes/types (the richest
+  surface; every export is introspectable). Writeback: `upsertJsDocTag`.
+- **cli** — JSDoc on the command's `<Command>Options` interface; `CliRefineSource`
+  correlates the option-interface tags onto the command surface. For an
+  adapter-model CLI (no static command tree), enrich the stable exported symbols
+  together with `@packageDocumentation` instead.
+- **config** — **per-property** JSDoc on the config type's properties:
+  `@useWhen`/`@avoidWhen`/`@never`/`@remarks` on each option, plus a sibling
+  `<config>.example.ts` (written only if absent — never clobbered) for the
+  example finding. Findings carry a dot-path `configKey`; `resolveTargetLocation`
+  returns `{ file, declName, propertyPath }`. Writeback: `upsertPropertyJsDocTag`.
+- **mcp (build mode)** — JSDoc on the tool-handler symbols **plus**
+  `_meta.toSkills.{useWhen,avoidWhen,pitfalls}` annotations in your TS server
+  source. `resolveTargetLocation` resolves a tool to its `{ file, declName }`.
+  Writeback: `upsertJsDocTag`. (`gen`/`audit --source mcp --mode build`.)
+- **mcp (runtime mode)** — the server source is **not** editable, so the only
+  writable surface is the overlay JSON. This is handled by `skillit refine`'s
+  overlay path, **not** this loop — there is nothing to enrich in source.
+
+## Scope
+
+- **Supported:** `cli` (Commander), `typedoc` (TS library), `config` (a config
+  type via `--config-type`), and `mcp` **build mode** (an MCP server whose TS
+  source you own, via `--mcp` + optional `--server`).
+- **Runtime mode** (third-party MCP servers, no editable source) is served by
+  `skillit refine`'s overlay path, not this loop.
+- Kind-aware grade targets: typedoc → A; cli → B; config → B; mcp → B (A only if
+  every tool handler carries full JSDoc). A non-enumerated command tree, a
+  function-less config type, and a thinly-annotated tool set each cap below A.
