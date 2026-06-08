@@ -62,6 +62,29 @@ export async function generateTypeDocSkill(opts: GenerateTypeDocSkillOpts): Prom
   });
 }
 
+/** Options for mcp-path skill generation. */
+export interface GenerateMcpSkillOpts {
+  /** Path to mcp.json / MCP config file. */
+  mcpPath: string;
+  /** Server entry to select; defaults to the first enabled entry. */
+  server?: string;
+  /** Absolute output directory. */
+  outDir: string;
+}
+
+/**
+ * MCP-path skill generation — lazily imports `@skillit/mcp` so the CLI does not
+ * load the MCP stack (and its SDK) at startup for non-mcp commands.
+ */
+export async function generateMcpSkill(opts: GenerateMcpSkillOpts): Promise<void> {
+  const { generateMcpSkill: run } = await import('@skillit/mcp');
+  await run({
+    mcpPath: opts.mcpPath,
+    ...(opts.server !== undefined ? { serverName: opts.server } : {}),
+    outDir: opts.outDir
+  });
+}
+
 /** CLI-path skill generation: loadProgram → extractCliSkill → writeCliSkill. */
 export async function generateCliSkill(opts: GenerateSkillOpts): Promise<void> {
   const program = await loadProgram({ program: opts.program, cwd: opts.cwd });
