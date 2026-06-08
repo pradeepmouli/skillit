@@ -2,6 +2,7 @@
 '@skillit/client': minor
 '@skillit/core': minor
 '@skillit/cli': minor
+'@skillit/typedoc': minor
 ---
 
 feat: ship the `/skillit-bootstrap` agent skill (Phase 1)
@@ -19,5 +20,11 @@ feat: ship the `/skillit-bootstrap` agent skill (Phase 1)
 - **core:** new shared `readPackageMetadata()` / `findNearestPackageDir()`
   exports (the single package-metadata reader used by both the config and cli
   sources).
+- **typedoc + client:** `skillit gen --source typedoc` and `skillit audit
+--source typedoc` are now wired, so the bootstrap skill's typedoc claim is
+  real. `gen` drives the existing `@skillit/typedoc` plugin pipeline
+  (`load(app)` + `convert()`); `audit` reuses `extractSkills`. New
+  `@skillit/typedoc` exports: `generateTypeDocSkills`, `extractTypeDocSkills`,
+  `createTypeDocRefineSource`.
 - config / mcp orchestration and the mechanical no-hand-edit guard are deferred
   to later phases; the CLI commands remain for headless/CI use.
