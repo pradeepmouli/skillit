@@ -83,4 +83,16 @@ No runtime-behavior claims were written this run (the enrichments were metadata
 
 ## typedoc smoke
 
-(Recorded in Task 7 — see the changeset commit.)
+Command (run from `packages/core`):
+
+```
+cd packages/core && node ../client/dist/bin.js audit --source typedoc --json 2>&1 | head -30
+```
+
+Result: **errored** — no JSON produced, no grade.
+
+```
+skillit audit does not yet support the typedoc source; cli and config are supported in this release.
+```
+
+Follow-up: the typedoc audit path is not yet wired in `@skillit/client`; tracked for Phase 2.
