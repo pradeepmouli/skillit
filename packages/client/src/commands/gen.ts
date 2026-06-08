@@ -1,5 +1,5 @@
 // packages/client/src/commands/gen.ts
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { Command } from 'commander';
 import {
@@ -11,8 +11,10 @@ import {
 import {
   generateCliSkill as defaultGenerateCliSkill,
   generateConfigSkill as defaultGenerateConfigSkill,
+  generateMcpSkill as defaultGenerateMcpSkill,
   generateTypeDocSkill as defaultGenerateTypeDocSkill,
   type GenerateConfigSkillOpts,
+  type GenerateMcpSkillOpts,
   type GenerateSkillOpts,
   type GenerateTypeDocSkillOpts
 } from '../generate.js';
@@ -24,6 +26,7 @@ export interface GenDeps {
   generateCliSkill?(opts: GenerateSkillOpts): Promise<void>;
   generateConfigSkill?(opts: GenerateConfigSkillOpts): Promise<void>;
   generateTypeDocSkill?(opts: GenerateTypeDocSkillOpts): Promise<void>;
+  generateMcpSkill?(opts: GenerateMcpSkillOpts): Promise<void>;
 }
 
 /** Parsed options for the `gen` action. */
@@ -31,6 +34,8 @@ export interface GenCommandOpts {
   source?: string;
   program?: string;
   configType?: string;
+  mcp?: string;
+  server?: string;
   out: string;
 }
 
@@ -55,6 +60,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
   const generateCliSkill = deps.generateCliSkill ?? defaultGenerateCliSkill;
   const generateConfigSkill = deps.generateConfigSkill ?? defaultGenerateConfigSkill;
   const generateTypeDocSkill = deps.generateTypeDocSkill ?? defaultGenerateTypeDocSkill;
+  const generateMcpSkill = deps.generateMcpSkill ?? defaultGenerateMcpSkill;
 
   return new Command('gen')
     .description(
@@ -63,10 +69,16 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
     .option('--source <kind>', 'cli | mcp | typedoc | config (auto-detected if omitted)')
     .option('--program <file#export>', 'commander program entry (cli source)')
     .option('--config-type <file#export>', 'config type entry (config source)')
+    .option('--mcp <path>', 'path to mcp.json or MCP config file (mcp source)')
+    .option('--server <name>', 'MCP server entry to select (mcp source)')
     .option('--out <dir>', 'output directory for the generated skill', 'skills')
     .action(async (opts: GenCommandOpts) => {
       const cwd = process.cwd();
       const outDir = join(cwd, opts.out);
+
+      // Detect the project nature at most once (it can spawn the project's CLI
+      // bin). Only needed to auto-route when --source is omitted.
+      const nature = opts.source === undefined ? await detectProjectNature(cwd) : undefined;
 
       if (opts.source === 'config') {
         if (opts.configType === undefined) {
@@ -87,20 +99,28 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         return;
       }
 
-      // Short-circuit mcp with a clear, gen-specific message BEFORE routing
-      // through refine's resolver — that resolver applies refine-specific
-      // validation (e.g. requiring --mcp) and emits refine-flavored errors that
-      // would be misleading here.
-      if (opts.source === 'mcp') {
-        throw new Error(
-          `skillit gen does not yet support the mcp source; cli, config, and typedoc are supported in this release.`
-        );
+      // mcp: explicit --source, an explicit --mcp path (which only the mcp
+      // source consumes), or auto-detected via @modelcontextprotocol/sdk.
+      const isMcp =
+        opts.source === 'mcp' ||
+        (opts.source === undefined && (opts.mcp !== undefined || nature === 'mcp'));
+      if (isMcp) {
+        if (opts.mcp === undefined) {
+          throw new Error(
+            'The mcp source requires --mcp <path> (path to mcp.json or MCP config file).'
+          );
+        }
+        const mcpPath = isAbsolute(opts.mcp) ? opts.mcp : join(cwd, opts.mcp);
+        await generateMcpSkill({
+          mcpPath,
+          ...(opts.server !== undefined ? { server: opts.server } : {}),
+          outDir
+        });
+        return;
       }
 
       // typedoc: explicit, or auto-detected as a plain TS library.
-      const isTypedoc =
-        opts.source === 'typedoc' ||
-        (opts.source === undefined && (await detectProjectNature(cwd)) === 'typedoc');
+      const isTypedoc = opts.source === 'typedoc' || nature === 'typedoc';
       if (isTypedoc) {
         const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
         await generateTypeDocSkill({ cwd, entryPoints, tsconfig, outDir });

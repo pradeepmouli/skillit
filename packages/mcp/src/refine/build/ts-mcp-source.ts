@@ -1,11 +1,14 @@
 import { glob } from 'node:fs/promises';
 import { readFile, writeFile } from 'node:fs/promises';
-import type {
-  AuditContext,
-  DraftedFix,
-  ExtractedSkill,
-  RefineSource,
-  TargetLocation
+import {
+  findNearestPackageDir,
+  readPackageMetadata,
+  type AuditContext,
+  type DraftedFix,
+  type ExtractedSkill,
+  type PackageMetadata,
+  type RefineSource,
+  type TargetLocation
 } from '@skillit/core';
 import { extractMcpSkill } from '../../extract.js';
 import type { McpExtractOptions } from '../../types.js';
@@ -17,17 +20,37 @@ interface TypeScriptMcpRefineSourceOptions {
   transport: McpExtractOptions['transport'];
   /** glob pattern for TypeScript source files to edit */
   sourceGlob: string;
+  /** Working directory used to locate package.json + README for audit metadata. */
+  cwd: string;
 }
 
 export class TypeScriptMcpRefineSource implements RefineSource {
+  /** Cached metadata loaded during {@link extract} (always called first in the audit/refine loop). */
+  private cachedMetadata: PackageMetadata = {};
+
   constructor(private readonly opts: TypeScriptMcpRefineSourceOptions) {}
 
   async extract(): Promise<ExtractedSkill> {
-    return extractMcpSkill({ transport: this.opts.transport });
+    const skill = await extractMcpSkill({ transport: this.opts.transport });
+
+    // Load package metadata (package.json + README) from cwd and cache it so
+    // auditContext() can return it synchronously — mirroring CliRefineSource.
+    const pkgDir = await findNearestPackageDir(this.opts.cwd);
+    this.cachedMetadata = pkgDir ? await readPackageMetadata(pkgDir) : {};
+
+    return skill;
   }
 
   auditContext(_skill: ExtractedSkill): AuditContext {
-    return {};
+    const meta = this.cachedMetadata;
+    return {
+      ...(meta.packageDescription !== undefined
+        ? { packageDescription: meta.packageDescription }
+        : {}),
+      ...(meta.keywords !== undefined ? { keywords: meta.keywords } : {}),
+      ...(meta.repository !== undefined ? { repository: meta.repository } : {}),
+      ...(meta.readme !== undefined ? { readme: meta.readme } : {})
+    };
   }
 
   /**

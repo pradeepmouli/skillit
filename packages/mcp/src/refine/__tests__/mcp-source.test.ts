@@ -27,7 +27,7 @@ describe('McpRefineSource', () => {
     tmp = mkdtempSync(join(tmpdir(), 'mcp-source-'));
     const overlayPath = join(tmp, 'overlay.json');
     const rawExtract = vi.fn(async () => baseSkill());
-    const source = new McpRefineSource({ overlayPath, extract: rawExtract });
+    const source = new McpRefineSource({ overlayPath, extract: rawExtract, cwd: tmp });
 
     const s1 = await source.extract();
     expect(s1.functions[0]!.name).toBe('list_files');
@@ -40,7 +40,7 @@ describe('McpRefineSource', () => {
   it('applyFixes writes overlay to disk', async () => {
     tmp = mkdtempSync(join(tmpdir(), 'mcp-source-'));
     const overlayPath = join(tmp, 'overlay.json');
-    const source = new McpRefineSource({ overlayPath, extract: async () => baseSkill() });
+    const source = new McpRefineSource({ overlayPath, extract: async () => baseSkill(), cwd: tmp });
     await source.applyFixes([
       { toolName: 'tool_a', tag: 'pitfalls', value: 'Do not call in parallel' }
     ]);

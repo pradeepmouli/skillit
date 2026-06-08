@@ -1,6 +1,6 @@
 ---
 name: skillit-bootstrap
-description: 'Bootstrap an AI-agent skill from a TypeScript codebase by running the deterministic skillit generate/audit loop and enriching repo source (JSDoc, README, examples, package.json) until the skill reaches its grade target. Use for cli or typedoc projects; never edit SKILL.md/references directly.'
+description: 'Bootstrap an AI-agent skill from a TypeScript codebase by running the deterministic skillit generate/audit loop and enriching repo source (JSDoc, README, config-type properties, MCP tool annotations, examples, package.json) until the skill reaches its grade target. Use for cli, typedoc, config, or mcp (build-mode) projects; never edit SKILL.md/references directly.'
 version: 0.1.0
 toSkills:
   managed: bundled-orchestrator
@@ -23,22 +23,31 @@ edit only repo _source surfaces_. If you find yourself about to write a
 
 ## When to use
 
-- A `cli` (Commander) or `typedoc` (TypeScript library) project that needs a
-  generated agent skill, or whose skill scores below its grade target.
+- A `cli` (Commander), `typedoc` (TypeScript library), `config` (a TypeScript
+  config type), or `mcp` (an MCP server whose TS source you own — "build mode")
+  project that needs a generated agent skill, or whose skill scores below its
+  grade target.
 - Run after the project is set up with the right `@skillit/*` package (see
-  step 1). For `config` and `mcp` projects, this release does not orchestrate
-  them yet — use `skillit refine` (see `references/surface-routing.md`).
+  step 1).
+- **Third-party MCP servers you cannot edit** are out of scope here: with no
+  editable source, the skill is produced from an overlay ("runtime mode") via
+  `skillit refine`. This loop targets the build-mode (own-source) path. See
+  `references/surface-routing.md`.
 
 ## Inputs
 
 ```
-/skillit-bootstrap [--source cli|typedoc] [--program <file#export>]
+/skillit-bootstrap [--source cli|typedoc|config|mcp] [--program <file#export>]
+                   [--config-type <file#export>] [--mcp <path>] [--server <name>]
                    [--out <dir>] [--grade A|B|C] [--max-iterations <n>]
                    [--ground <glob>...]
 ```
 
-- `--source` — override detection (`cli` or `typedoc` this release).
+- `--source` — override detection (`cli`, `typedoc`, `config`, or `mcp`).
 - `--program` — Commander program entry for the cli source (`./dist/cli.js#program`).
+- `--config-type` — config type entry for the config source (`./src/config.ts#MyConfig`).
+- `--mcp` — path to `mcp.json` / MCP config file (mcp source).
+- `--server` — MCP server entry to select when the config lists several (mcp source).
 - `--out` — skill output dir (default `skills`).
 - `--grade` — override the kind-aware target (below).
 - `--max-iterations` — hard cap on enrich/regenerate passes (default 5).
@@ -48,13 +57,19 @@ edit only repo _source surfaces_. If you find yourself about to write a
 ## The loop
 
 1. **Set up once.** Determine the source kind (honor `--source`, else infer:
-   `commander`/`yargs` dep → cli; otherwise a TS library → typedoc). If the
-   project has no `@skillit/*` package installed yet, run `skillit init --source
-<kind>` once (it installs + wires only; it does not generate).
-2. **Generate.** Run `skillit gen --source <kind> [--program …] [--out …]`. This
-   deterministically produces the skill from current source. Never hand-edit its
-   output.
-3. **Audit.** Run `skillit audit --source <kind> [--program …] --json` and read
+   `commander`/`yargs` dep → cli; `@modelcontextprotocol/sdk` dep → mcp;
+   otherwise a TS library → typedoc). `config` is never auto-detected — select it
+   explicitly with `--config-type <file#export>`. Each kind has its own selector:
+   cli → `--program`, config → `--config-type`, mcp → `--mcp` (+ optional
+   `--server`); typedoc needs none. If the project has no `@skillit/*` package
+   installed yet, run `skillit init --source <kind>` once (it installs + wires
+   only; it does not generate).
+2. **Generate.** Run `skillit gen --source <kind> <selector> [--out …]` (the
+   selector is the kind's from step 1). This deterministically produces the skill
+   from current source. Never hand-edit its output. (For mcp, `gen` spins up the
+   server to introspect it, so the source skill is a function of a deterministic
+   server.)
+3. **Audit.** Run `skillit audit --source <kind> <selector> --json` and read
    the JSON: `estimate.grade`, `estimate.dimensions` (D1–D8), and
    `improvements[]`. Each improvement carries `suggestion`, `dimension`,
    `targets: [{file, name, kind}]`, and (when resolvable) `resolvedLocations[]`
@@ -77,9 +92,12 @@ edit only repo _source surfaces_. If you find yourself about to write a
    `estimate` to the previous pass.
 6. **Decide convergence** (your judgment, using these signals):
    - **Pass** — `estimate.grade` ≥ the target. Default target is _kind-aware_:
-     typedoc/library → **A**; cli adapter-model → **B** (some dimensions — e.g.
-     enumerated-tree examples — don't structurally apply to a cli surface).
-     `--grade` overrides.
+     typedoc/library → **A** (every export is introspectable); cli adapter-model
+     → **B**, config → **B**, mcp → **B** — these surfaces structurally cap below
+     A (a cli command tree isn't enumerated per-symbol; a config type has no
+     functions/params, so per-option routing + one example file is its ceiling;
+     mcp reaches **A** only if every tool handler carries full JSDoc). `--grade`
+     overrides.
    - **Plateau** — the score did not rise AND every remaining finding targets a
      symbol that genuinely has nothing more to truthfully say. You can _see_ the
      source, so distinguish "legitimately complete" from "stuck re-drafting" —

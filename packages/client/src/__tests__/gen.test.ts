@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildGenCommand, type GenDeps } from '../commands/gen.js';
 import type {
   GenerateConfigSkillOpts,
+  GenerateMcpSkillOpts,
   GenerateSkillOpts,
   GenerateTypeDocSkillOpts
 } from '../generate.js';
@@ -69,10 +70,12 @@ function makeStubs(): {
   cliCalls: GenerateSkillOpts[];
   configCalls: GenerateConfigSkillOpts[];
   typedocCalls: GenerateTypeDocSkillOpts[];
+  mcpCalls: GenerateMcpSkillOpts[];
 } {
   const cliCalls: GenerateSkillOpts[] = [];
   const configCalls: GenerateConfigSkillOpts[] = [];
   const typedocCalls: GenerateTypeDocSkillOpts[] = [];
+  const mcpCalls: GenerateMcpSkillOpts[] = [];
   const deps: GenDeps = {
     generateCliSkill: async (opts) => {
       cliCalls.push(opts);
@@ -82,9 +85,12 @@ function makeStubs(): {
     },
     generateTypeDocSkill: async (opts) => {
       typedocCalls.push(opts);
+    },
+    generateMcpSkill: async (opts) => {
+      mcpCalls.push(opts);
     }
   };
-  return { deps, cliCalls, configCalls, typedocCalls };
+  return { deps, cliCalls, configCalls, typedocCalls, mcpCalls };
 }
 
 async function run(deps: GenDeps, argv: string[]): Promise<void> {
@@ -125,14 +131,26 @@ describe('buildGenCommand', () => {
     await expect(run(deps, ['--source', 'config'])).rejects.toThrow(/--config-type/);
   });
 
-  it('rejects an explicit mcp source with a clear gen-specific message (not a refine error)', async () => {
+  it('routes --source mcp to generateMcpSkill with the resolved mcp path', async () => {
+    const dir = await writeCliFixture();
+    const { deps, mcpCalls } = makeStubs();
+    await run(deps, ['--source', 'mcp', '--mcp', './mcp.json', '--out', 'skills']);
+    expect(mcpCalls).toHaveLength(1);
+    expect(mcpCalls[0]!.mcpPath).toBe(join(dir, 'mcp.json'));
+    expect(mcpCalls[0]!.outDir).toBe(join(dir, 'skills'));
+  });
+
+  it('passes --server through to generateMcpSkill', async () => {
+    await writeCliFixture();
+    const { deps, mcpCalls } = makeStubs();
+    await run(deps, ['--source', 'mcp', '--mcp', './mcp.json', '--server', 'fs']);
+    expect(mcpCalls[0]!.server).toBe('fs');
+  });
+
+  it('errors when --source mcp is given without --mcp', async () => {
     await writeCliFixture();
     const { deps } = makeStubs();
-    // Must NOT surface refine's "requires --mcp" error; must say gen doesn't
-    // support mcp yet.
-    await expect(run(deps, ['--source', 'mcp'])).rejects.toThrow(
-      /skillit gen does not yet support the mcp source/
-    );
+    await expect(run(deps, ['--source', 'mcp', '--out', 'skills'])).rejects.toThrow(/--mcp/);
   });
 
   it('generates the typedoc skill for a typedoc source', async () => {

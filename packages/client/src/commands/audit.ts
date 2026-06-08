@@ -21,6 +21,7 @@ import {
 } from '../detect-source.js';
 import { parseConfigTypeSpec, resolveRefineSource, type RefineCommandOpts } from './refine.js';
 import { resolveTypeDocEntry } from '../typedoc-entry.js';
+import { resolveMcpMode } from '../mcp-mode.js';
 
 /** An improvement with each of its targets resolved to a concrete location (or null). */
 export interface AuditReportImprovement extends ActionableImprovement {
@@ -68,28 +69,29 @@ export interface AuditCommandOpts {
   program?: string;
   configType?: string;
   mcp?: string;
+  server?: string;
+  mode?: string;
+  overlay?: string;
   json?: boolean;
 }
 
 export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
   const cwd = process.cwd();
 
-  // Short-circuit an explicitly requested mcp source with a clear message
-  // BEFORE routing through refine's resolver — that resolver applies
-  // refine-specific validation (e.g. requiring --mcp) and emits refine-flavored
-  // errors that would mislead here.
-  if (opts.source === 'mcp') {
-    console.error(
-      `skillit audit does not yet support the mcp source; cli, config, and typedoc are supported in this release.`
-    );
-    process.exitCode = 1;
-    return;
-  }
+  // Auto-detect the project nature once when no explicit --source is given;
+  // reuse it for both the typedoc and mcp branches below.
+  const nature = opts.source === undefined ? await detectProjectNature(cwd) : undefined;
 
-  // typedoc: explicit, or auto-detected as a plain TS library.
+  // mcp: explicit --source, an explicit --mcp path (which only the mcp source
+  // consumes), or auto-detected via @modelcontextprotocol/sdk.
+  const isMcp =
+    opts.source === 'mcp' ||
+    (opts.source === undefined && (opts.mcp !== undefined || nature === 'mcp'));
+  // typedoc: explicit, or auto-detected as a plain TS library — but never when
+  // an explicit --mcp path was given (that routes to mcp above).
   const isTypedoc =
     opts.source === 'typedoc' ||
-    (opts.source === undefined && (await detectProjectNature(cwd)) === 'typedoc');
+    (opts.source === undefined && opts.mcp === undefined && nature === 'typedoc');
 
   let source: RefineSource;
   if (isTypedoc) {
@@ -98,6 +100,33 @@ export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
     const { createTypeDocRefineSource } = await import('@skillit/typedoc');
     const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
     source = createTypeDocRefineSource({ entryPoints, tsconfig, cwd });
+  } else if (isMcp) {
+    if (opts.mcp === undefined) {
+      console.error('The mcp source requires --mcp <path> (path to mcp.json or MCP config file).');
+      process.exitCode = 1;
+      return;
+    }
+    const resolved = await resolveMcpMode(cwd, opts);
+    if ('error' in resolved) {
+      console.error(resolved.error);
+      process.exitCode = 1;
+      return;
+    }
+    // Lazy import: keeps `@skillit/mcp` (and its SDK peer) off the CLI startup
+    // path so non-mcp commands run without the MCP SDK installed.
+    const { createMcpRefineSource } = await import('@skillit/mcp');
+    source = await createMcpRefineSource({
+      mcpPath: isAbsolute(opts.mcp) ? opts.mcp : join(cwd, opts.mcp),
+      mode: resolved.mode,
+      cwd,
+      ...(opts.server !== undefined ? { serverName: opts.server } : {}),
+      overlayPath: opts.overlay
+        ? isAbsolute(opts.overlay)
+          ? opts.overlay
+          : join(cwd, opts.overlay)
+        : join(cwd, '.skillit-overlay.json'),
+      sourceGlob: join(cwd, '**', '*.ts')
+    });
   } else {
     const candidates = await detectInstalledSources(cwd);
     const detected = classifyRefineSources(candidates);
@@ -156,6 +185,9 @@ export function buildAuditCommand(): Command {
     .option('--program <file#export>', 'commander program entry (cli source)')
     .option('--config-type <file#export>', 'config type entry (config source)')
     .option('--mcp <path>', 'path to mcp.json or MCP config file')
+    .option('--server <name>', 'MCP server entry to select (mcp source)')
+    .option('--mode <build|runtime>', 'MCP refine mode (auto-detected if omitted)')
+    .option('--overlay <path>', 'overlay JSON path (mcp runtime mode)')
     .option('--json', 'emit the full AuditResult + SkillJudgeEstimate as JSON')
     .action((opts: AuditCommandOpts) => runAuditCommand(opts));
 }
