@@ -13,7 +13,6 @@ import {
   type TargetLocation
 } from '@skillit/core';
 import { CliRefineSource, loadProgram } from '@skillit/cli';
-import { createTypeDocRefineSource } from '@skillit/typedoc';
 import {
   classifyRefineSources,
   detectInstalledSources,
@@ -94,6 +93,9 @@ export async function runAuditCommand(opts: AuditCommandOpts): Promise<void> {
 
   let source: RefineSource;
   if (isTypedoc) {
+    // Lazy import: keeps `@skillit/typedoc` (and its `typedoc` peer) off the CLI
+    // startup path so non-typedoc commands run without TypeDoc installed.
+    const { createTypeDocRefineSource } = await import('@skillit/typedoc');
     const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
     source = createTypeDocRefineSource({ entryPoints, tsconfig, cwd });
   } else {

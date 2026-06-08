@@ -1,7 +1,6 @@
 // packages/client/src/generate.ts
 import { extractCliSkill, loadProgram, writeCliSkill } from '@skillit/cli';
 import { ConfigRefineSource, renderSkills, writeSkills } from '@skillit/core';
-import { generateTypeDocSkills } from '@skillit/typedoc';
 import type { RefineSourceKind } from './detect-source.js';
 
 /** Options for CLI-path skill generation. */
@@ -46,8 +45,15 @@ export interface GenerateTypeDocSkillOpts {
   outDir: string;
 }
 
-/** TypeDoc-path skill generation — delegates to the plugin pipeline. */
+/**
+ * TypeDoc-path skill generation — delegates to the plugin pipeline.
+ *
+ * `@skillit/typedoc` (and its `typedoc` peer) is imported lazily so the CLI
+ * does not load TypeDoc at startup: only the typedoc source path pays that
+ * cost, and cli/config/mcp consumers need not install the `typedoc` peer.
+ */
 export async function generateTypeDocSkill(opts: GenerateTypeDocSkillOpts): Promise<void> {
+  const { generateTypeDocSkills } = await import('@skillit/typedoc');
   await generateTypeDocSkills({
     entryPoints: opts.entryPoints,
     tsconfig: opts.tsconfig,

@@ -20,7 +20,18 @@ export interface TypeDocRunOptions {
   entryPoints: string[];
   /** Absolute path to the project's tsconfig.json. */
   tsconfig: string;
-  /** Working directory of the target package (used for package.json resolution). */
+  /**
+   * Working directory of the target package.
+   *
+   * @remarks
+   * The **audit** path ({@link extractTypeDocSkills} /
+   * {@link createTypeDocRefineSource}) resolves package.json + README metadata
+   * from this directory. The **gen** path ({@link generateTypeDocSkills}) runs
+   * the skillit TypeDoc plugin, which reads that metadata from `process.cwd()`
+   * — so for `gen`, `cwd` must equal `process.cwd()` (the skillit CLI always
+   * invokes it from the target package dir). Honoring an arbitrary `cwd` in the
+   * gen plugin path is a tracked follow-up.
+   */
   cwd: string;
 }
 
