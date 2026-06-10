@@ -4,7 +4,7 @@ import {
   detectProjectNature,
   detectRefineSource
 } from '../detect-source.js';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -154,5 +154,13 @@ describe('detectPackageManager', () => {
   it('returns npm when no lockfile is present', async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
     expect(detectPackageManager(tmpDir)).toBe('npm');
+  });
+
+  it('walks up to find lock file in a parent directory (monorepo workspace)', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'detect-source-'));
+    const subDir = join(tmpDir, 'packages', 'my-pkg');
+    await mkdir(subDir, { recursive: true });
+    await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+    expect(detectPackageManager(subDir)).toBe('pnpm');
   });
 });
