@@ -1,5 +1,18 @@
 # @to-skills/target-mcpc
 
+## 0.3.2
+
+### Patch Changes
+
+- [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+  - fix(client): isolate the copilot model backend with an empty tool whitelist
+  - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
+  - fix(client): extract drafted annotation from <answer> tags
+  - fix(client): forbid Insight-block decoration in the claude refine backend
+- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2), [`126416e`](https://github.com/pradeepmouli/skillit/commit/126416e59bd35e798f4655ebac8c4ab2243ccdea), [`62c0e2a`](https://github.com/pradeepmouli/skillit/commit/62c0e2a5f4ec05af30f262d24f53631d190eadb9), [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186), [`3d5d8eb`](https://github.com/pradeepmouli/skillit/commit/3d5d8eb9df812c628a118764ccdf3a5d4478b4db), [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a), [`9d67124`](https://github.com/pradeepmouli/skillit/commit/9d671242bf95a5bb49dd2121c37c08008c1a8279), [`de239d9`](https://github.com/pradeepmouli/skillit/commit/de239d97f22ab00254c8de313d9a8c41f3bdc101)]:
+  - @skillit/core@2.0.0
+  - @skillit/mcp@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
