@@ -1,5 +1,63 @@
 # @to-skills/mcp
 
+## 0.4.0
+
+### Minor Changes
+
+- [#68](https://github.com/pradeepmouli/skillit/pull/68) [`de239d9`](https://github.com/pradeepmouli/skillit/commit/de239d97f22ab00254c8de313d9a8c41f3bdc101) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: bootstrap config + mcp source kinds (Phase 2)
+  - `/skillit-bootstrap` now orchestrates `config` and `mcp` (build mode) in
+    addition to `cli` and `typedoc`. Updated skill scope, inputs
+    (`--config-type` / `--mcp` / `--server`), per-kind surface routing (config
+    per-option JSDoc — `@useWhen`/`@avoidWhen`/**`@pitfalls`**/`@remarks` + a
+    `<config>.example.ts`; mcp handler JSDoc + `_meta.toSkills`), and kind-aware
+    grade targets (config → B, mcp → B/A).
+  - **mcp:** `skillit gen --source mcp` and `skillit audit --source mcp` are now
+    wired (build + runtime). New `@skillit/mcp` exports: `createMcpRefineSource`,
+    `generateMcpSkill`, `selectServerEntry`. The build/runtime dispatch is shared
+    by `refine` and `audit` (DRY); `@skillit/mcp` (and its SDK) load lazily off
+    the CLI startup path.
+  - **fix(mcp):** the MCP `RefineSource`s now read `package.json` + README metadata
+    (description, keywords, repository) into their audit context via the shared
+    `readPackageMetadata` reader. Previously they returned an empty context, so the
+    description/README audit findings were unaddressable and an mcp-source skill
+    could not clear them — the same gap fixed for `CliRefineSource` in the prior
+    release.
+  - **config:** already wired into `gen`/`audit`; Phase 2 brings it into the
+    bootstrap loop. (Dogfood note: the config surface authors pitfalls as
+    `@pitfalls`, not `@never`.)
+
+### Patch Changes
+
+- [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+  - fix(client): isolate the copilot model backend with an empty tool whitelist
+  - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
+  - fix(client): extract drafted annotation from <answer> tags
+  - fix(client): forbid Insight-block decoration in the claude refine backend
+
+- [#69](https://github.com/pradeepmouli/skillit/pull/69) [`3d5d8eb`](https://github.com/pradeepmouli/skillit/commit/3d5d8eb9df812c628a118764ccdf3a5d4478b4db) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - refactor: consolidate project metadata onto the ExtractedSkill IR
+
+  `auditSkill(skill, context)` is now `auditSkill(skill)` — the deterministic audit
+  is a pure function of the IR. `ExtractedSkill` gains `readme?: ParsedReadme`;
+  every source populates it (plus the existing identity fields) in `extract()`. The
+  separate `AuditContext` type and the `RefineSource.auditContext()` method are
+  **removed** — they were a parallel metadata channel that three sources
+  independently forgot, leaving package-description/README findings unaddressable.
+  Project metadata now has one source of truth (the IR), consumed by both the
+  renderer and the audit; repo-reading stays at the agent layer.
+
+  BREAKING (`@skillit/core`): `auditSkill` is single-arg; `AuditContext` and
+  `RefineSource.auditContext()` are gone. Callers pass metadata via the skill IR.
+
+- [#61](https://github.com/pradeepmouli/skillit/pull/61) [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: agent-bootstrap Phase 0 core affordances
+  - **`skillit gen`** — new first-class, deterministic, side-effect-free command that (re)generates the skill from current source (cli + config). It shares ONE generate path with the rest of the client (`packages/client/src/generate.ts`).
+  - **`skillit init` is now install/wire only** — it no longer generates or refines. After `init`, run `skillit gen`. (Behavior change for `init`.)
+  - **`skillit audit --json`** — new command wrapping `auditSkill` + `estimateSkillJudgeScore`, emitting the full `AuditResult` + `SkillJudgeEstimate` plus a resolved on-disk location per improvement target.
+  - **`RefineSource.resolveTargetLocation`** — new optional method on the core `RefineSource` contract, implemented for typedoc, cli, config, and mcp (build) sources.
+
+- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2), [`126416e`](https://github.com/pradeepmouli/skillit/commit/126416e59bd35e798f4655ebac8c4ab2243ccdea), [`62c0e2a`](https://github.com/pradeepmouli/skillit/commit/62c0e2a5f4ec05af30f262d24f53631d190eadb9), [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186), [`3d5d8eb`](https://github.com/pradeepmouli/skillit/commit/3d5d8eb9df812c628a118764ccdf3a5d4478b4db), [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a), [`9d67124`](https://github.com/pradeepmouli/skillit/commit/9d671242bf95a5bb49dd2121c37c08008c1a8279)]:
+  - @skillit/core@2.0.0
+  - @skillit/target-mcp-protocol@3.0.0
+
 ## 0.3.0
 
 ### Minor Changes

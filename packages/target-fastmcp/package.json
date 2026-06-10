@@ -1,6 +1,6 @@
 {
   "name": "@skillit/target-fastmcp",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "FastMCP CLI-as-proxy invocation-target adapter for @skillit/mcp — emits shell-command skills using the fastmcp Python CLI for agents without MCP support",
   "keywords": [
     "agent-skills",

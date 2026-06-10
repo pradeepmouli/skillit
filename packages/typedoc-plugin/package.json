@@ -1,6 +1,6 @@
 {
   "name": "typedoc-plugin-skillit",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "TypeDoc plugin that generates AI agent skills (SKILL.md) and llms.txt — auto-discovered by TypeDoc",
   "keywords": [
     "agent-skills",
