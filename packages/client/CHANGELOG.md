@@ -1,5 +1,11 @@
 # @skillit/client
 
+## 0.3.1
+
+### Patch Changes
+
+- [#74](https://github.com/pradeepmouli/skillit/pull/74) [`354e3c1`](https://github.com/pradeepmouli/skillit/commit/354e3c10c2f345a96b5f3164c8f660f9fc92e48b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - fix: add repository field required for npm provenance validation
+
 ## 0.3.0
 
 ### Minor Changes
