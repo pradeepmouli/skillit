@@ -7,10 +7,16 @@ import type { ParsedReadme } from '../audit-types.js';
 export interface PackageMetadata {
   /** Scope-stripped package name. */
   packageName?: string;
+  /** Full (scoped) package name as written in package.json, e.g. `@scope/pkg`. */
+  fullPackageName?: string;
   packageDescription?: string;
   keywords?: string[];
   repository?: string;
   readme?: ParsedReadme;
+  /** `bin` field from package.json — maps command names to entry-point paths. */
+  bin?: Record<string, string>;
+  /** `private` field from package.json — true means the package is not published. */
+  isPrivate?: boolean;
 }
 
 const DEFAULT_MAX_DEPTH = 5;
@@ -60,12 +66,27 @@ export async function readPackageMetadata(pkgDir: string): Promise<PackageMetada
       description?: string;
       keywords?: string[];
       repository?: string | { url?: string };
+      bin?: Record<string, string> | string;
+      private?: boolean;
     };
-    if (pkg.name) meta.packageName = stripScope(pkg.name);
+    if (pkg.name) {
+      meta.fullPackageName = pkg.name;
+      meta.packageName = stripScope(pkg.name);
+    }
     if (pkg.description) meta.packageDescription = pkg.description;
     if (Array.isArray(pkg.keywords)) meta.keywords = pkg.keywords;
     const repo = typeof pkg.repository === 'string' ? pkg.repository : pkg.repository?.url;
     if (repo) meta.repository = repo;
+    if (pkg.bin) {
+      // bin can be a string shorthand (maps package name → path); normalize to record
+      meta.bin =
+        typeof pkg.bin === 'string' && pkg.name
+          ? { [stripScope(pkg.name)]: pkg.bin }
+          : typeof pkg.bin === 'object'
+            ? (pkg.bin as Record<string, string>)
+            : undefined;
+    }
+    if (pkg.private) meta.isPrivate = true;
   } catch {
     /* no/invalid package.json */
   }

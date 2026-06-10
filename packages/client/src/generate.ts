@@ -1,6 +1,19 @@
 // packages/client/src/generate.ts
-import { extractCliSkill, loadProgram, writeCliSkill } from '@skillit/cli';
-import { ConfigRefineSource, renderSkills, writeSkills } from '@skillit/core';
+import {
+  applyNpxMode,
+  extractCliSkill,
+  loadProgram,
+  writeCliSkill,
+  type CliInvocationMode
+} from '@skillit/cli';
+import {
+  ConfigRefineSource,
+  findNearestPackageDir,
+  readPackageMetadata,
+  renderSkills,
+  writeSkills
+} from '@skillit/core';
+export type { CliInvocationMode } from '@skillit/cli';
 import type { RefineSourceKind } from './detect-source.js';
 
 /** Options for CLI-path skill generation. */
@@ -15,6 +28,11 @@ export interface GenerateSkillOpts {
   outDir: string;
   /** `--program <file#export>` entry, if provided. */
   program?: string;
+  /**
+   * Override the invocation mode for command examples.
+   * Defaults to `npx` for public packages with a `bin` field, `global` otherwise.
+   */
+  invocationMode?: CliInvocationMode;
 }
 
 /** Options for config-path skill generation. */
@@ -85,10 +103,13 @@ export async function generateMcpSkill(opts: GenerateMcpSkillOpts): Promise<void
   });
 }
 
-/** CLI-path skill generation: loadProgram → extractCliSkill → writeCliSkill. */
+/** CLI-path skill generation: loadProgram → extractCliSkill → applyNpxMode → writeCliSkill. */
 export async function generateCliSkill(opts: GenerateSkillOpts): Promise<void> {
   const program = await loadProgram({ program: opts.program, cwd: opts.cwd });
   const skill = await extractCliSkill({ program, metadata: { name: opts.name } });
+  const pkgDir = await findNearestPackageDir(opts.cwd);
+  const meta = pkgDir ? await readPackageMetadata(pkgDir) : {};
+  applyNpxMode(skill, meta, opts.invocationMode);
   writeCliSkill(skill, { outDir: opts.outDir });
 }
 

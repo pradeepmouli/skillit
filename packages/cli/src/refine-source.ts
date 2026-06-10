@@ -16,6 +16,7 @@ import {
 import { Command } from 'commander';
 import { extractCliSkill } from './extract.js';
 import { introspectCommander } from './introspect-commander.js';
+import { applyNpxMode, type CliInvocationMode } from './npx-mode.js';
 import { readOptionsTags } from './options-jsdoc.js';
 
 const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.cache']);
@@ -27,6 +28,11 @@ export interface CliRefineSourceOptions {
   sourceGlob: string;
   /** Working directory (reserved for future relative-path resolution). */
   cwd: string;
+  /**
+   * Override the invocation mode used in generated command examples.
+   * Defaults to `npx` for public packages with a `bin` field, `global` otherwise.
+   */
+  invocationMode?: CliInvocationMode;
 }
 
 /**
@@ -134,6 +140,7 @@ export class CliRefineSource implements RefineSource {
     if (meta.keywords !== undefined) skill.keywords = meta.keywords;
     if (meta.repository !== undefined) skill.repository = meta.repository;
     if (meta.readme !== undefined) skill.readme = meta.readme;
+    applyNpxMode(skill, meta, this.opts.invocationMode);
     return skill;
   }
 
