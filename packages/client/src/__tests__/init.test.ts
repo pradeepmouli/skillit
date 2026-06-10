@@ -1,5 +1,5 @@
 import { buildInitCommand, type InitDeps } from '../commands/init.js';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -76,6 +76,87 @@ async function run(deps: InitDeps, argv: string[] = []): Promise<void> {
   const cmd = buildInitCommand(deps);
   await cmd.parseAsync(argv, { from: 'user' });
 }
+
+describe('postinstall wiring', () => {
+  it('calls wirePostinstall for the cli source', async () => {
+    await writeCliFixture();
+    const wirePostinstallCalls: string[] = [];
+    const { deps } = makeStubs({
+      wirePostinstall: async (cwd) => {
+        wirePostinstallCalls.push(cwd);
+      }
+    });
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    expect(wirePostinstallCalls).toHaveLength(1);
+  });
+
+  it('does not call wirePostinstall for mcp source', async () => {
+    await writeMcpFixture();
+    const wirePostinstallCalls: string[] = [];
+    const { deps } = makeStubs({
+      wirePostinstall: async (cwd) => {
+        wirePostinstallCalls.push(cwd);
+      }
+    });
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    expect(wirePostinstallCalls).toHaveLength(0);
+  });
+
+  it('writes skillit-postinstall.cjs and adds scripts.postinstall to package.json', async () => {
+    const dir = await writeCliFixture();
+    const { deps } = makeStubs();
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const script = await readFile(join(dir, 'skillit-postinstall.cjs'), 'utf8');
+    expect(script).toContain('replaceAll');
+    expect(script).toContain('skills');
+    const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
+      scripts?: Record<string, string>;
+    };
+    expect(pkg.scripts?.['postinstall']).toBe('node ./skillit-postinstall.cjs');
+  });
+
+  it('skips wiring and warns when scripts.postinstall is already set', async () => {
+    const dir = await writeCliFixture();
+    const pkgPath = join(dir, 'package.json');
+    const existing = JSON.parse(await readFile(pkgPath, 'utf8')) as {
+      scripts?: Record<string, string>;
+    };
+    existing.scripts = { postinstall: 'existing-hook' };
+    await writeFile(pkgPath, JSON.stringify(existing, null, 2) + '\n');
+
+    const { deps } = makeStubs();
+    const warned: string[] = [];
+    const origWarn = console.warn;
+    console.warn = (...args: unknown[]): void => {
+      warned.push(String(args[0]));
+    };
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+      console.warn = origWarn;
+    }
+
+    await expect(readFile(join(dir, 'skillit-postinstall.cjs'), 'utf8')).rejects.toThrow();
+    expect(warned.some((w) => w.includes('already set'))).toBe(true);
+  });
+});
 
 describe('buildInitCommand (install/wire only)', () => {
   it('installs @skillit/cli with the detected pnpm command for a cli project', async () => {
