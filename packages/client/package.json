@@ -4,6 +4,11 @@
   "description": "The skillit CLI — generate, audit, and refine AI-agent skills from a TypeScript codebase, plus the Anthropic model client for the headless refine loop.",
   "license": "MIT",
   "author": "Pradeep Mouli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
+    "directory": "packages/client"
+  },
   "bin": {
     "skillit": "./dist/bin.js"
   },
