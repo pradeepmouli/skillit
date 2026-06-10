@@ -17,13 +17,30 @@ function messageOf(error: unknown): string {
 }
 
 /**
+ * Duck-type check for a Commander {@link Command}.
+ *
+ * `instanceof Command` fails when the consumer's `commander` package is a
+ * different module instance than the one loaded here (e.g. separate monorepos
+ * with separate `node_modules`). Structural checks are cross-realm safe.
+ */
+function isCommanderCommand(value: unknown): value is Command {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v['name'] === 'function' &&
+    Array.isArray(v['commands']) &&
+    typeof v['parseAsync'] === 'function'
+  );
+}
+
+/**
  * Resolves a candidate export into a commander {@link Command}.
  *
  * Accepts either a `Command` instance directly or a zero-argument factory
  * function that returns one. Returns `undefined` for anything else.
  */
 async function resolveCommand(candidate: unknown): Promise<Command | undefined> {
-  if (candidate instanceof Command) {
+  if (isCommanderCommand(candidate)) {
     return candidate;
   }
   if (
@@ -31,7 +48,7 @@ async function resolveCommand(candidate: unknown): Promise<Command | undefined> 
     (candidate as (...args: unknown[]) => unknown).length === 0
   ) {
     const result = await (candidate as () => unknown)();
-    if (result instanceof Command) {
+    if (isCommanderCommand(result)) {
       return result;
     }
   }
