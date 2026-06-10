@@ -124,6 +124,7 @@ describe('postinstall wiring', () => {
     const script = await readFile(join(dir, 'skillit-postinstall.cjs'), 'utf8');
     expect(script).toContain('replaceAll');
     expect(script).toContain('skills');
+    expect(script).toContain('.claude');
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
       scripts?: Record<string, string>;
     };
