@@ -1,11 +1,14 @@
 // packages/client/src/commands/init.ts
 import { spawn } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { Command } from 'commander';
 import {
   detectPackageManager,
   detectProjectNature,
   type RefineSourceKind
 } from '../detect-source.js';
+import { generatePostinstallScript } from '../postinstall-template.js';
 
 type PackageManager = 'pnpm' | 'yarn' | 'npm';
 
@@ -17,6 +20,11 @@ type PackageManager = 'pnpm' | 'yarn' | 'npm';
 export interface InitDeps {
   /** Install `pkg` as a dev dependency in `cwd` using package manager `pm`. */
   runInstall?(pkg: string, pm: PackageManager, cwd: string): Promise<void>;
+  /**
+   * Write `skillit-postinstall.cjs` and wire `scripts.postinstall` in
+   * `package.json`. Skips (with a warning) if `postinstall` is already set.
+   */
+  wirePostinstall?(cwd: string): Promise<void>;
 }
 
 interface InitOpts {
@@ -40,6 +48,25 @@ function addDevCommand(pm: PackageManager, pkg: string): string {
   return `npm install -D ${pkg}`;
 }
 
+async function defaultWirePostinstall(cwd: string): Promise<void> {
+  const pkgPath = join(cwd, 'package.json');
+  const raw = await readFile(pkgPath, 'utf8');
+  const pkg = JSON.parse(raw) as { scripts?: Record<string, string>; [key: string]: unknown };
+
+  if (pkg.scripts?.['postinstall']) {
+    console.warn(
+      `Skipping postinstall wiring: scripts.postinstall is already set to "${pkg.scripts['postinstall']}". Add "node ./skillit-postinstall.cjs" to it manually if needed.`
+    );
+    return;
+  }
+
+  await writeFile(join(cwd, 'skillit-postinstall.cjs'), generatePostinstallScript(), 'utf8');
+
+  if (!pkg.scripts) pkg.scripts = {};
+  pkg.scripts['postinstall'] = 'node ./skillit-postinstall.cjs';
+  await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+}
+
 /** Default install: spawn the package manager's add-dev command, cwd-scoped. */
 function defaultRunInstall(pkg: string, pm: PackageManager, cwd: string): Promise<void> {
   const command = addDevCommand(pm, pkg);
@@ -56,6 +83,7 @@ function defaultRunInstall(pkg: string, pm: PackageManager, cwd: string): Promis
 
 export function buildInitCommand(deps: InitDeps = {}): Command {
   const runInstall = deps.runInstall ?? defaultRunInstall;
+  const wirePostinstall = deps.wirePostinstall ?? defaultWirePostinstall;
 
   return new Command('init')
     .description(
@@ -109,6 +137,7 @@ export function buildInitCommand(deps: InitDeps = {}): Command {
       // support for those lands in a later phase). Don't point users at a
       // command that would immediately error for their source.
       if (nature === 'cli') {
+        await wirePostinstall(cwd);
         console.log(`Installed ${pkg}. Generate the skill with:\n  skillit gen --source cli`);
       } else if (nature === 'mcp') {
         console.log(
