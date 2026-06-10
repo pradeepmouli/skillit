@@ -13,6 +13,7 @@ import {
   generateConfigSkill as defaultGenerateConfigSkill,
   generateMcpSkill as defaultGenerateMcpSkill,
   generateTypeDocSkill as defaultGenerateTypeDocSkill,
+  type CliInvocationMode,
   type GenerateConfigSkillOpts,
   type GenerateMcpSkillOpts,
   type GenerateSkillOpts,
@@ -37,6 +38,7 @@ export interface GenCommandOpts {
   mcp?: string;
   server?: string;
   out: string;
+  invocation?: string;
 }
 
 /** Strip a leading `@scope/` from a package name for a skill dir name. */
@@ -72,6 +74,10 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
     .option('--mcp <path>', 'path to mcp.json or MCP config file (mcp source)')
     .option('--server <name>', 'MCP server entry to select (mcp source)')
     .option('--out <dir>', 'output directory for the generated skill', 'skills')
+    .option(
+      '--invocation <mode>',
+      'invocation mode for CLI command examples: npx (zero-install) or global (bare binary)'
+    )
     .action(async (opts: GenCommandOpts) => {
       const cwd = process.cwd();
       const outDir = join(cwd, opts.out);
@@ -142,7 +148,10 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
           nature,
           name,
           outDir,
-          ...(opts.program !== undefined ? { program: opts.program } : {})
+          ...(opts.program !== undefined ? { program: opts.program } : {}),
+          ...(opts.invocation !== undefined
+            ? { invocationMode: opts.invocation as CliInvocationMode }
+            : {})
         });
         return;
       }

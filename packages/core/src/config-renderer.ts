@@ -4,13 +4,21 @@ import type { ExtractedConfigSurface, ExtractedConfigOption } from './config-typ
 // Inline SKILL.md sections
 // ---------------------------------------------------------------------------
 
+export interface ConfigRenderOpts {
+  /** When set, CLI usage blocks are prefixed with this string (e.g. `npx @scope/pkg`). */
+  invocationPrefix?: string;
+}
+
 /**
  * Render ExtractedConfigSurface[] as SKILL.md inline sections.
  *
  * CLI surfaces → ## Commands
  * Config/env surfaces → ## Configuration
  */
-export function renderConfigSurfaceSection(surfaces: ExtractedConfigSurface[] | undefined): string {
+export function renderConfigSurfaceSection(
+  surfaces: ExtractedConfigSurface[] | undefined,
+  opts?: ConfigRenderOpts
+): string {
   if (!surfaces || surfaces.length === 0) return '';
 
   const cli = surfaces.filter((s) => s.sourceType === 'cli');
@@ -19,7 +27,7 @@ export function renderConfigSurfaceSection(surfaces: ExtractedConfigSurface[] | 
   const parts: string[] = [];
 
   if (cli.length > 0) {
-    parts.push(renderCommandsSection(cli));
+    parts.push(renderCommandsSection(cli, opts));
   }
 
   if (config.length > 0) {
@@ -29,7 +37,10 @@ export function renderConfigSurfaceSection(surfaces: ExtractedConfigSurface[] | 
   return parts.join('\n\n');
 }
 
-function renderCommandsSection(surfaces: ExtractedConfigSurface[]): string {
+function renderCommandsSection(
+  surfaces: ExtractedConfigSurface[],
+  opts?: ConfigRenderOpts
+): string {
   const lines: string[] = ['## Commands'];
 
   for (const surface of surfaces) {
@@ -42,10 +53,13 @@ function renderCommandsSection(surfaces: ExtractedConfigSurface[]): string {
     }
 
     if (surface.usage) {
+      const usageLine = opts?.invocationPrefix
+        ? `${opts.invocationPrefix} ${surface.name} ${surface.usage}`.trimEnd()
+        : surface.usage;
       lines.push('');
       lines.push('**Usage:**');
       lines.push('```');
-      lines.push(surface.usage);
+      lines.push(usageLine);
       lines.push('```');
     }
 
@@ -159,7 +173,10 @@ function renderOptionsTable(options: ExtractedConfigOption[], mode: 'cli' | 'con
  * CLI surfaces → # Commands with ## commandName / #### --flag
  * Config/env surfaces → # Configuration with ## InterfaceName / #### propertyName
  */
-export function renderConfigReference(surfaces: ExtractedConfigSurface[] | undefined): string {
+export function renderConfigReference(
+  surfaces: ExtractedConfigSurface[] | undefined,
+  opts?: ConfigRenderOpts
+): string {
   if (!surfaces || surfaces.length === 0) return '';
 
   const cli = surfaces.filter((s) => s.sourceType === 'cli');
@@ -168,7 +185,7 @@ export function renderConfigReference(surfaces: ExtractedConfigSurface[] | undef
   const parts: string[] = [];
 
   if (cli.length > 0) {
-    parts.push(renderCommandsReference(cli));
+    parts.push(renderCommandsReference(cli, opts));
   }
 
   if (config.length > 0) {
@@ -178,7 +195,10 @@ export function renderConfigReference(surfaces: ExtractedConfigSurface[] | undef
   return parts.join('\n\n');
 }
 
-function renderCommandsReference(surfaces: ExtractedConfigSurface[]): string {
+function renderCommandsReference(
+  surfaces: ExtractedConfigSurface[],
+  opts?: ConfigRenderOpts
+): string {
   const lines: string[] = ['# Commands'];
 
   for (const surface of surfaces) {
@@ -191,9 +211,12 @@ function renderCommandsReference(surfaces: ExtractedConfigSurface[]): string {
     }
 
     if (surface.usage) {
+      const usageLine = opts?.invocationPrefix
+        ? `${opts.invocationPrefix} ${surface.name} ${surface.usage}`.trimEnd()
+        : surface.usage;
       lines.push('');
       lines.push('```');
-      lines.push(surface.usage);
+      lines.push(usageLine);
       lines.push('```');
     }
 

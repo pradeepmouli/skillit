@@ -266,7 +266,9 @@ export function renderSkill(
     const configSurfaces = skill.configSurfaces.filter((s) => s.sourceType !== 'cli');
 
     if (cliSurfaces.length > 0) {
-      const content = renderConfigReference(cliSurfaces);
+      const content = renderConfigReference(cliSurfaces, {
+        invocationPrefix: skill.cliInvocationPrefix
+      });
       references.push({
         filename: `${basePath}/references/commands.md`,
         content: truncateToTokenBudget(content, opts.maxTokens),
@@ -584,7 +586,9 @@ function renderSkillMd(
     sections.push('## Troubleshooting\n\n' + skill.readmeTroubleshooting);
   }
 
-  const configSection = renderConfigSurfaceSection(skill.configSurfaces);
+  const configSection = renderConfigSurfaceSection(skill.configSurfaces, {
+    invocationPrefix: skill.cliInvocationPrefix
+  });
   if (configSection) sections.push(configSection);
 
   const quickRef = renderQuickReference(skill);

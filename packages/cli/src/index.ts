@@ -29,3 +29,5 @@ export type { LoadProgramOptions } from './program-loader.js';
 export { readOptionsTags } from './options-jsdoc.js';
 export { CliRefineSource } from './refine-source.js';
 export type { CliRefineSourceOptions } from './refine-source.js';
+export { applyNpxMode, resolveInvocationMode } from './npx-mode.js';
+export type { CliInvocationMode } from './npx-mode.js';

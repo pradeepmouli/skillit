@@ -80,6 +80,12 @@ export interface ExtractedSkill {
    * metadata — the audit reads this directly; no separate AuditContext.
    */
   readme?: ParsedReadme;
+  /**
+   * Invocation prefix for CLI command examples, e.g. `npx @scope/pkg`.
+   * When set, command usage blocks are prefixed with this string.
+   * Absent for non-CLI extractors or when the package is installed globally.
+   */
+  cliInvocationPrefix?: string;
   /** MCP resources (empty/absent for non-MCP extractors). */
   resources?: ExtractedResource[];
   /** MCP prompts (empty/absent for non-MCP extractors). */
