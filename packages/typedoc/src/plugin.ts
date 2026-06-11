@@ -14,7 +14,8 @@ import {
   scanDocs,
   docsToExtractedDocuments,
   estimateSkillJudgeScore,
-  formatScoreEstimate
+  formatScoreEstimate,
+  discoverDepSkillsSync
 } from '@skillit/core';
 import { extractSkills } from './extractor.js';
 
@@ -384,6 +385,10 @@ export function load(app: Application): void {
       }
       if (readme?.features) skill.readmeFeatures ??= readme.features;
       if (readme?.troubleshooting) skill.readmeTroubleshooting ??= readme.troubleshooting;
+
+      const pkgDir = process.cwd();
+      skill.rootDir = pkgDir;
+      skill.seeAlso = discoverDepSkillsSync(pkgDir);
     }
 
     // Accumulate for llms.txt
