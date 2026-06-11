@@ -58,9 +58,9 @@ describe('discoverDepSkillsSync', () => {
 
     const refs = discoverDepSkillsSync(tmpDir);
     expect(refs).toHaveLength(1);
-    expect(refs[0].name).toBe('some-lib-core');
-    expect(refs[0].path).toBe('node_modules/some-lib/skills/some-lib-core');
-    expect(refs[0].description).toBe('Core API for some-lib');
+    expect(refs[0]!.name).toBe('some-lib-core');
+    expect(refs[0]!.path).toBe('node_modules/some-lib/skills/some-lib-core');
+    expect(refs[0]!.description).toBe('Core API for some-lib');
   });
 
   it('uses skillit.skills explicit list when present', async () => {
@@ -74,9 +74,9 @@ describe('discoverDepSkillsSync', () => {
 
     const refs = discoverDepSkillsSync(tmpDir);
     expect(refs).toHaveLength(1);
-    expect(refs[0].name).toBe('my-skill');
-    expect(refs[0].path).toBe('node_modules/custom-lib/custom-skills/my-skill');
-    expect(refs[0].description).toBe('A custom skill');
+    expect(refs[0]!.name).toBe('my-skill');
+    expect(refs[0]!.path).toBe('node_modules/custom-lib/custom-skills/my-skill');
+    expect(refs[0]!.description).toBe('A custom skill');
   });
 
   it('skips skill directories whose SKILL.md has no name field', async () => {
@@ -102,7 +102,7 @@ describe('discoverDepSkillsSync', () => {
 
     const refs = discoverDepSkillsSync(tmpDir);
     expect(refs).toHaveLength(1);
-    expect(refs[0].description).toBeUndefined();
+    expect(refs[0]!.description).toBeUndefined();
   });
 
   it('strips quotes from frontmatter description', async () => {
@@ -118,7 +118,7 @@ describe('discoverDepSkillsSync', () => {
     );
 
     const refs = discoverDepSkillsSync(tmpDir);
-    expect(refs[0].description).toBe('Quoted description');
+    expect(refs[0]!.description).toBe('Quoted description');
   });
 
   it('collects refs from multiple dependencies', async () => {
