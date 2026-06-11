@@ -3,7 +3,10 @@ import type { Dirent } from 'node:fs';
 import { join } from 'node:path';
 import type { DepSkillRef } from '../types.js';
 
-function extractFrontmatterField(content: string, field: string): string | undefined {
+function extractFrontmatterField(
+  content: string,
+  field: 'name' | 'description'
+): string | undefined {
   const match = content.match(new RegExp(`^${field}:\\s*(.+?)\\s*$`, 'm'));
   if (!match?.[1]) return undefined;
   return match[1].replace(/^["']|["']$/g, '');
@@ -39,7 +42,10 @@ function discoverForDep(pkgDir: string, depName: string): DepSkillRef[] {
   const explicitSkills = depPkg.skillit?.skills;
   if (Array.isArray(explicitSkills) && explicitSkills.length > 0) {
     for (const relPath of explicitSkills) {
-      if (typeof relPath === 'string') skillDirs.push(join(depDir, relPath));
+      if (typeof relPath === 'string') {
+        const dir = join(depDir, relPath);
+        if (existsSync(join(dir, 'SKILL.md'))) skillDirs.push(dir);
+      }
     }
   } else {
     const skillsRoot = join(depDir, 'skills');
