@@ -1,5 +1,6 @@
 import type { ExtractedSkill } from './types.js';
 import type { AuditIssue, AuditPass, AuditResult, AuditSeverity } from './audit-types.js';
+import { discoverDepSkillsSync } from './refine/dep-skills.js';
 
 const GENERIC_KEYWORDS = new Set([
   'typescript',
@@ -736,6 +737,40 @@ function checkW11(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPas
 }
 
 // ---------------------------------------------------------------------------
+// W12: Dep-skill coverage — deps with skills should appear in ## See Also
+// ---------------------------------------------------------------------------
+function checkW12(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  if (!skill.rootDir) {
+    passing.push(pass('W12', 'No rootDir set — dep-skill check skipped'));
+    return;
+  }
+  const found = discoverDepSkillsSync(skill.rootDir);
+  if (found.length === 0) {
+    passing.push(pass('W12', 'No dep skills found'));
+    return;
+  }
+  const covered = new Set((skill.seeAlso ?? []).map((r) => r.name));
+  const missing = found.filter((r) => !covered.has(r.name));
+  if (missing.length === 0) {
+    passing.push(pass('W12', 'All dep skills referenced in ## See Also'));
+    return;
+  }
+  for (const ref of missing) {
+    issues.push(
+      issue(
+        'warning',
+        'W12',
+        'package.json',
+        null,
+        ref.name,
+        `Dep '${ref.name}' has a skill at '${ref.path}' but is missing from ## See Also`,
+        'Run `skillit gen` to populate the ## See Also section with dep skill references'
+      )
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // A1: Generic keywords — for each generic keyword present, emit alert
 // ---------------------------------------------------------------------------
 function checkA1(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
@@ -980,6 +1015,7 @@ export function auditSkill(skill: ExtractedSkill): AuditResult {
   checkW9(skill, issues, passing);
   checkW10(skill, issues, passing);
   checkW11(skill, issues, passing);
+  checkW12(skill, issues, passing);
 
   // Alert checks
   checkA1(skill, issues, passing);

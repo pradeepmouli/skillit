@@ -132,6 +132,7 @@ export function estimateSkillJudgeScore(
   if (passes(audit, 'W9')) d3 += 8; // @never
   if (passes(audit, 'W3')) d3 += 3; // notable tags
   if (passes(audit, 'W6')) d3 += 2; // README troubleshooting
+  if (passes(audit, 'W12')) d3 += 3; // dep-skill seeAlso coverage
   d3 = clamp(d3, MAX_D3);
 
   // --- D4: Description /15 ---
@@ -451,6 +452,18 @@ function buildImprovements(
           suggestion: 'Add README Troubleshooting section (+2 on D3)',
           points: 2,
           dimension: 'D3'
+        }
+      });
+    }
+    if (!passes(audit, 'W12')) {
+      suggestions.push({
+        gain: 3,
+        imp: {
+          suggestion:
+            'Dep skills are missing from ## See Also — run `skillit gen` to populate it (+3 on D3)',
+          points: 3,
+          dimension: 'D3',
+          targets: []
         }
       });
     }
