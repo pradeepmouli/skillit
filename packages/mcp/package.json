@@ -60,7 +60,7 @@
   "devDependencies": {
     "@skillit/target-fastmcp": "workspace:*",
     "@skillit/target-mcpc": "workspace:*",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.3",
     "vitest": "^4.1.7"
   }
 }
