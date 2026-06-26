@@ -4,38 +4,42 @@
 // Tools are intentionally left unannotated (no _meta.toSkills) so that
 // TypeScriptMcpRefineSource.applyFixes() has something meaningful to add.
 //
-// The `server` adapter below accepts { description, _meta? } options objects —
-// the shape that applyMetaEdit injects _meta.toSkills into.  At runtime,
-// `_meta` is intentionally ignored and `description` is forwarded to the SDK
-// as a string annotation, so the compiled server keeps working after each
-// applyFixes() pass without requiring any manual dist/ update.
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// Design: `server` is a registration collector — each server.tool() call
+// pushes an entry into `registeredTools`.  The setRequestHandler below
+// serialises the array verbatim into the tools/list response, forwarding
+// `_meta` when present.  After applyFixes() injects _meta.toSkills and the
+// source is recompiled, the next extract() reads the updated annotations and
+// the audit grade improves.
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-const mcpServer = new McpServer({
-  name: 'ts-source-server',
-  version: '0.0.0'
-});
+const sdkServer = new Server(
+  { name: 'ts-source-server', version: '0.0.0' },
+  { capabilities: { tools: {} } }
+);
 
-type ToolHandler = () => Promise<{ content: Array<{ type: 'text'; text: string }> }>;
+type ToolOpts = { description: string; _meta?: Record<string, unknown> };
+const registeredTools: Array<{ name: string } & ToolOpts> = [];
 
 const server = {
-  tool(
-    name: string,
-    opts: { description: string; _meta?: Record<string, unknown> },
-    handler: ToolHandler
-  ): void {
-    mcpServer.tool(name, opts.description, handler);
+  tool(name: string, opts: ToolOpts, _handler: () => unknown): void {
+    registeredTools.push({ name, ...opts });
   }
 };
 
-server.tool('compute', { description: 'Compute a result from the given input.' }, async () => ({
-  content: [{ type: 'text' as const, text: 'computed' }]
-}));
+server.tool('compute', { description: 'Compute a result from the given input.' }, () => {});
 
-server.tool('list_items', { description: 'List all available items.' }, async () => ({
-  content: [{ type: 'text' as const, text: 'item-a, item-b, item-c' }]
+server.tool('list_items', { description: 'List all available items.' }, () => {});
+
+sdkServer.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: registeredTools.map(({ name, description, _meta }) => ({
+    name,
+    description,
+    inputSchema: { type: 'object' as const, properties: {} },
+    ...(_meta !== undefined ? { _meta } : {})
+  }))
 }));
 
 const transport = new StdioServerTransport();
-await mcpServer.connect(transport);
+await sdkServer.connect(transport);
