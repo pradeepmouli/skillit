@@ -16,6 +16,16 @@ export interface ParsedReadme {
   troubleshooting?: string;
 }
 
+/** A cross-reference to a skill bundled inside a direct dependency. */
+export interface DepSkillRef {
+  /** Skill name from the dep's SKILL.md frontmatter `name:` field. */
+  name: string;
+  /** Agent-loadable path relative to the consuming project root (e.g. `node_modules/@lspeasy/core/skills/lspeasy-core`). */
+  path: string;
+  /** Description from the dep's SKILL.md frontmatter `description:` field, if present. */
+  description?: string;
+}
+
 /** Extracted API surface for a single package/module */
 export interface ExtractedSkill {
   /** Package or module name */
@@ -92,6 +102,10 @@ export interface ExtractedSkill {
   prompts?: ExtractedPrompt[];
   /** Setup instructions emitted when the invocation target is CLI-based. */
   setup?: SkillSetup;
+  /** Skills from direct dependencies cross-referenced in ## See Also. */
+  seeAlso?: DepSkillRef[];
+  /** Absolute path to the package root — used by audit for dep-skill discovery. */
+  rootDir?: string;
   /**
    * Structured audit execution state for extractors that run an audit pipeline.
    *

@@ -581,6 +581,9 @@ function renderSkillMd(
   const neverRules = renderNeverRules(skill);
   if (neverRules) sections.push(neverRules);
 
+  const seeAlso = renderSeeAlso(skill);
+  if (seeAlso) sections.push(seeAlso);
+
   // Troubleshooting section from README — inline in SKILL.md
   if (skill.readmeTroubleshooting) {
     sections.push('## Troubleshooting\n\n' + skill.readmeTroubleshooting);
@@ -1336,6 +1339,16 @@ function renderNeverRules(skill: ExtractedSkill): string {
     lines.push(`- ${item}`);
   }
   return '## NEVER\n\n' + lines.join('\n');
+}
+
+function renderSeeAlso(skill: ExtractedSkill): string {
+  if (!skill.seeAlso || skill.seeAlso.length === 0) return '';
+  const lines = ['## See Also\n'];
+  for (const ref of skill.seeAlso) {
+    const desc = ref.description ? ` — ${ref.description}` : '';
+    lines.push(`- **${ref.name}** (\`${ref.path}\`)${desc}`);
+  }
+  return lines.join('\n');
 }
 
 /** Extract the first sentence (or first meaningful phrase) from a description */

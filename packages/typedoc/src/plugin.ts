@@ -14,7 +14,8 @@ import {
   scanDocs,
   docsToExtractedDocuments,
   estimateSkillJudgeScore,
-  formatScoreEstimate
+  formatScoreEstimate,
+  discoverDepSkillsSync
 } from '@skillit/core';
 import { extractSkills } from './extractor.js';
 
@@ -384,6 +385,14 @@ export function load(app: Application): void {
       }
       if (readme?.features) skill.readmeFeatures ??= readme.features;
       if (readme?.troubleshooting) skill.readmeTroubleshooting ??= readme.troubleshooting;
+
+      // process.cwd() is the TypeDoc plugin's established convention for package root
+      // (see lines 521, 627). In a monorepo, TypeDoc must be invoked from the
+      // individual package directory (not the workspace root) for dep discovery to
+      // read the correct package.json dependencies.
+      const pkgDir = process.cwd();
+      skill.rootDir = pkgDir;
+      skill.seeAlso = discoverDepSkillsSync(pkgDir);
     }
 
     // Accumulate for llms.txt

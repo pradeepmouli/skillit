@@ -8,3 +8,4 @@ export { ConfigRefineSource } from './config-source.js';
 export type { ConfigRefineSourceOptions } from './config-source.js';
 export { stripScope, findNearestPackageDir, readPackageMetadata } from './package-metadata.js';
 export type { PackageMetadata } from './package-metadata.js';
+export { discoverDepSkills, discoverDepSkillsSync } from './dep-skills.js';

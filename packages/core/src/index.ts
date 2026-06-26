@@ -15,6 +15,7 @@
  */
 
 export type {
+  DepSkillRef,
   ExtractedSkill,
   ExtractedSkillAudit,
   ExtractedFunction,

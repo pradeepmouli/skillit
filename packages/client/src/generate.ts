@@ -8,11 +8,13 @@ import {
 } from '@skillit/cli';
 import {
   ConfigRefineSource,
+  discoverDepSkills,
   findNearestPackageDir,
   readPackageMetadata,
   renderSkills,
   writeSkills
 } from '@skillit/core';
+import { dirname } from 'node:path';
 export type { CliInvocationMode } from '@skillit/cli';
 import type { RefineSourceKind } from './detect-source.js';
 
@@ -110,6 +112,10 @@ export async function generateCliSkill(opts: GenerateSkillOpts): Promise<void> {
   const pkgDir = await findNearestPackageDir(opts.cwd);
   const meta = pkgDir ? await readPackageMetadata(pkgDir) : {};
   applyNpxMode(skill, meta, opts.invocationMode);
+  if (pkgDir) {
+    skill.rootDir = pkgDir;
+    skill.seeAlso = await discoverDepSkills(pkgDir);
+  }
   writeCliSkill(skill, { outDir: opts.outDir });
 }
 
@@ -125,6 +131,11 @@ export async function generateConfigSkill(opts: GenerateConfigSkillOpts): Promis
     // surface, not the package blurb (which is about the whole package).
     description: `Configuration options for ${opts.typeName}.`
   }).extract();
+  const pkgDir = await findNearestPackageDir(dirname(opts.configFile));
+  if (pkgDir) {
+    skill.rootDir = pkgDir;
+    skill.seeAlso = await discoverDepSkills(pkgDir);
+  }
   // Config skills are content-rich (per-option routing + example); raise the
   // per-reference token budget so a multi-option surface isn't truncated.
   const rendered = renderSkills([skill], { outDir: opts.outDir, maxTokens: 16000 });
