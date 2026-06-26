@@ -65,9 +65,20 @@ _headline judgment_ of the skill lives in a kind-specific surface:
 - **typedoc** — per-symbol JSDoc on exported functions/classes/types (the richest
   surface; every export is introspectable). Writeback: `upsertJsDocTag`.
 - **cli** — JSDoc on the command's `<Command>Options` interface; `CliRefineSource`
-  correlates the option-interface tags onto the command surface. For an
-  adapter-model CLI (no static command tree), enrich the stable exported symbols
-  together with `@packageDocumentation` instead.
+  correlates the option-interface tags onto the command surface.
+  - Targets have `kind: "command"` and map to `<PascalName>Options`
+    (e.g. `callHierarchy` → `CallHierarchyOptions`).
+  - **`resolvedLocations` null** → the interface doesn't exist yet. Create it in
+    any `.ts` file inside the source glob (e.g. `src/command-options.ts`). No
+    properties needed — only the JSDoc block:
+    ```ts
+    /** @useWhen - <scenario> @avoidWhen - <alt> @never - NEVER … Fix: … */
+    interface CallHierarchyOptions {}
+    ```
+    After `skillit gen` + re-audit, `resolveTargetLocation` will find the interface
+    and subsequent `skillit refine` passes can write tags into it directly.
+  - For an adapter-model CLI (no static command tree), enrich the stable exported
+    symbols together with `@packageDocumentation` instead.
 - **config** — **per-property** JSDoc on the config type's properties:
   `@useWhen`/`@avoidWhen`/`@pitfalls`/`@remarks` on each option, plus a sibling
   `<config>.example.ts` (written only if absent — never clobbered) for the
