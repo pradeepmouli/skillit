@@ -1,6 +1,6 @@
 # Contributing to skillit
 
-Thank you for your interest in contributing to skillit! This document covers how to get set up and submit changes. For coding standards and conventions, see [AGENTS.md](./AGENTS.md).
+Thank you for your interest in contributing to skillit! This document covers how to get set up and submit changes. The package scripts in [package.json](./package.json) are the current source of truth for local checks.
 
 ## Table of Contents
 
@@ -15,8 +15,8 @@ Thank you for your interest in contributing to skillit! This document covers how
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 10.6+ (install via `npm install -g pnpm`)
+- Node.js 22+
+- pnpm 11+ (the repo pins pnpm 11.1.3 via `packageManager`)
 - Git
 
 ### Fork and Clone
@@ -82,7 +82,7 @@ pnpm type-check && pnpm lint && pnpm test
 
 ## Project Structure
 
-skillit is a pnpm monorepo with three packages:
+skillit is a pnpm monorepo with packages for the core library, generators, adapters, targets, and docs tooling:
 
 ```
 skillit/
@@ -96,8 +96,14 @@ skillit/
 │   │   └── src/
 │   │       ├── plugin.ts   # TypeDoc lifecycle hooks
 │   │       └── extractor.ts # Reflection tree walker
-│   └── typedoc-plugin/     # Auto-discovery wrapper (npm: typedoc-plugin-skillit)
-├── AGENTS.md               # Coding standards and conventions
+│   ├── typedoc-plugin/     # Auto-discovery wrapper (npm: typedoc-plugin-skillit)
+│   ├── cli/                # CLI extraction package
+│   ├── mcp/                # MCP server skill extraction and bundling
+│   ├── client/             # Client package and bundled bootstrap skill
+│   ├── docusaurus/         # Docusaurus integration
+│   ├── vitepress/          # VitePress integration
+│   └── target-*/           # CLI invocation adapters for MCP targets
+├── .github/                # Workflows, prompts, and automation guidance
 └── CONTRIBUTING.md         # This file
 ```
 
@@ -106,6 +112,11 @@ skillit/
 - **packages/core** — Framework-agnostic types (`ExtractedSkill` hierarchy), renderers (SKILL.md, llms.txt), token budgeting utilities, and the file writer
 - **packages/typedoc** — TypeDoc plugin that hooks into the TypeDoc lifecycle (`plugin.ts`) and walks the reflection tree to extract skill metadata (`extractor.ts`)
 - **packages/typedoc-plugin** — Thin auto-discovery wrapper published to npm as `typedoc-plugin-skillit`
+- **packages/cli** — CLI and config-source extraction commands
+- **packages/mcp** — MCP extraction, bundling, and refine workflows
+- **packages/client** — Client helpers and bundled bootstrap skill
+- **packages/docusaurus** / **packages/vitepress** — Documentation-site integrations
+- **packages/target-\*** — Optional invocation adapters for generated MCP skills
 
 ## Testing
 
@@ -159,7 +170,7 @@ test(core): add llms.txt renderer edge case coverage
 git checkout -b feat/your-feature-name
 ```
 
-2. Make your changes following the standards in [AGENTS.md](./AGENTS.md)
+2. Make your changes following the existing code style and package scripts in [package.json](./package.json)
 
 3. Run quality checks:
 
@@ -180,7 +191,7 @@ git commit -m "feat(scope): description"
 git push origin feat/your-feature-name
 ```
 
-6. Open a Pull Request against `master` on [github.com/pradeepmouli/skillit](https://github.com/pradeepmouli/skillit)
+6. Open a Pull Request against `develop` on [github.com/pradeepmouli/skillit](https://github.com/pradeepmouli/skillit)
 
 ### PR Guidelines
 
@@ -207,7 +218,7 @@ Maintainers will publish releases when ready.
 
 ## Getting Help
 
-- **Questions**: Open a [Discussion](https://github.com/pradeepmouli/skillit/discussions)
+- **Questions**: Open an [Issue](https://github.com/pradeepmouli/skillit/issues)
 - **Bug Reports**: Open an [Issue](https://github.com/pradeepmouli/skillit/issues)
 - **Feature Requests**: Open an [Issue](https://github.com/pradeepmouli/skillit/issues) with the `enhancement` label
 
