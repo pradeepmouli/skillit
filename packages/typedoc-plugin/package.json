@@ -25,6 +25,10 @@
     "url": "https://github.com/pradeepmouli/skillit.git",
     "directory": "packages/typedoc-plugin"
   },
+  "homepage": "https://github.com/pradeepmouli/skillit/tree/develop/packages/typedoc-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/pradeepmouli/skillit/issues"
+  },
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/pradeepmouli"
