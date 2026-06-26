@@ -4,35 +4,38 @@
 // Tools are intentionally left unannotated (no _meta.toSkills) so that
 // TypeScriptMcpRefineSource.applyFixes() has something meaningful to add.
 //
-// This file is the _source surface_ for the build-mode loop:
-//   1. skillit gen --source mcp --mcp mcp.json --mode build
-//   2. skillit audit --source mcp --mcp mcp.json --mode build --json
-//   3. applyFixes writes _meta.toSkills into the options object below
-//   4. Recompile (tsc / tsx) → update dist/server.js
-//   5. Go to 1 — grade should improve
-//
-// @ts-nocheck — intentional: the options-object calling convention
-// ({ description }) is what TypeScriptMcpRefineSource/applyMetaEdit scan for.
-// The compiled server (dist/server.js) uses the old Server API for spawning.
+// The `server` adapter below accepts { description, _meta? } options objects —
+// the shape that applyMetaEdit injects _meta.toSkills into.  At runtime,
+// `_meta` is intentionally ignored and `description` is forwarded to the SDK
+// as a string annotation, so the compiled server keeps working after each
+// applyFixes() pass without requiring any manual dist/ update.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-const server = new McpServer({
+const mcpServer = new McpServer({
   name: 'ts-source-server',
   version: '0.0.0'
 });
 
-server.tool(
-  'compute',
-  { description: 'Compute a result from the given input.' },
-  async (_args) => ({
-    content: [{ type: 'text', text: 'computed' }]
-  })
-);
+type ToolHandler = () => Promise<{ content: Array<{ type: 'text'; text: string }> }>;
+
+const server = {
+  tool(
+    name: string,
+    opts: { description: string; _meta?: Record<string, unknown> },
+    handler: ToolHandler
+  ): void {
+    mcpServer.tool(name, opts.description, handler);
+  }
+};
+
+server.tool('compute', { description: 'Compute a result from the given input.' }, async () => ({
+  content: [{ type: 'text' as const, text: 'computed' }]
+}));
 
 server.tool('list_items', { description: 'List all available items.' }, async () => ({
-  content: [{ type: 'text', text: 'item-a, item-b, item-c' }]
+  content: [{ type: 'text' as const, text: 'item-a, item-b, item-c' }]
 }));
 
 const transport = new StdioServerTransport();
-await server.connect(transport);
+await mcpServer.connect(transport);
