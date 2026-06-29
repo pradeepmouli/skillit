@@ -131,6 +131,35 @@ describe('postinstall wiring', () => {
     expect(pkg.scripts?.['postinstall']).toBe('node ./skillit-postinstall.cjs');
   });
 
+  it('writes a default skillit.config.ts when none exists', async () => {
+    const dir = await writeCliFixture();
+    const { deps } = makeStubs();
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const config = await readFile(join(dir, 'skillit.config.ts'), 'utf8');
+    expect(config).toContain('defineSkillitConfig');
+    expect(config).toContain('plugins');
+  });
+
+  it('does not overwrite an existing skillit.config.ts', async () => {
+    const dir = await writeCliFixture();
+    const configPath = join(dir, 'skillit.config.ts');
+    await writeFile(configPath, 'export default { skillDir: "keep-me" };\n', 'utf8');
+    const { deps } = makeStubs();
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const config = await readFile(configPath, 'utf8');
+    expect(config).toContain('keep-me');
+  });
+
   it('skips wiring and warns when scripts.postinstall is already set', async () => {
     const dir = await writeCliFixture();
     const pkgPath = join(dir, 'package.json');

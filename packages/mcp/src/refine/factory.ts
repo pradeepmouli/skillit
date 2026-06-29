@@ -107,6 +107,8 @@ export interface GenerateMcpSkillOptions {
   serverName?: string;
   /** Absolute output directory. */
   outDir: string;
+  /** Optional render token cap override. */
+  maxTokens?: number;
 }
 
 /**
@@ -136,5 +138,5 @@ export async function generateMcpSkill(opts: GenerateMcpSkillOptions): Promise<v
     skill.seeAlso = await discoverDepSkills(pkgDir);
   }
   // renderAndWriteMcpSkill is synchronous (writeSkills is sync), so no await.
-  renderAndWriteMcpSkill(skill, opts.outDir);
+  renderAndWriteMcpSkill(skill, opts.outDir, opts.maxTokens);
 }

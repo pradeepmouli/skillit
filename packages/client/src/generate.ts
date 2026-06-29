@@ -12,9 +12,12 @@ import {
   findNearestPackageDir,
   readPackageMetadata,
   renderSkills,
+  truncateToTokenBudget,
   writeSkills
 } from '@skillit/core';
-import { dirname } from 'node:path';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import type { SkillitContentType } from './config.js';
 export type { CliInvocationMode } from '@skillit/cli';
 import type { RefineSourceKind } from './detect-source.js';
 
@@ -35,6 +38,10 @@ export interface GenerateSkillOpts {
    * Defaults to `npx` for public packages with a `bin` field, `global` otherwise.
    */
   invocationMode?: CliInvocationMode;
+  /** Optional render token cap override. */
+  maxTokens?: number;
+  /** Optional per-content-type reference token overrides. */
+  contentTypeMaxTokens?: Partial<Record<SkillitContentType, number>>;
 }
 
 /** Options for config-path skill generation. */
@@ -51,6 +58,10 @@ export interface GenerateConfigSkillOpts {
   name?: string;
   /** Absolute output directory (`<cwd>/<out>`). */
   outDir: string;
+  /** Optional render token cap override. */
+  maxTokens?: number;
+  /** Optional per-content-type reference token overrides. */
+  contentTypeMaxTokens?: Partial<Record<SkillitContentType, number>>;
 }
 
 /** Options for typedoc-path skill generation. */
@@ -63,6 +74,10 @@ export interface GenerateTypeDocSkillOpts {
   tsconfig: string;
   /** Absolute output directory. */
   outDir: string;
+  /** Optional render token cap override. */
+  maxTokens?: number;
+  /** Optional per-content-type reference token overrides. */
+  contentTypeMaxTokens?: Partial<Record<SkillitContentType, number>>;
 }
 
 /**
@@ -78,8 +93,10 @@ export async function generateTypeDocSkill(opts: GenerateTypeDocSkillOpts): Prom
     entryPoints: opts.entryPoints,
     tsconfig: opts.tsconfig,
     cwd: opts.cwd,
-    outDir: opts.outDir
+    outDir: opts.outDir,
+    ...(opts.maxTokens !== undefined ? { maxTokens: opts.maxTokens } : {})
   });
+  await applyContentTypeTokenOverrides(opts.outDir, opts.contentTypeMaxTokens);
 }
 
 /** Options for mcp-path skill generation. */
@@ -90,6 +107,10 @@ export interface GenerateMcpSkillOpts {
   server?: string;
   /** Absolute output directory. */
   outDir: string;
+  /** Optional render token cap override. */
+  maxTokens?: number;
+  /** Optional per-content-type reference token overrides. */
+  contentTypeMaxTokens?: Partial<Record<SkillitContentType, number>>;
 }
 
 /**
@@ -101,8 +122,10 @@ export async function generateMcpSkill(opts: GenerateMcpSkillOpts): Promise<void
   await run({
     mcpPath: opts.mcpPath,
     ...(opts.server !== undefined ? { serverName: opts.server } : {}),
-    outDir: opts.outDir
+    outDir: opts.outDir,
+    ...(opts.maxTokens !== undefined ? { maxTokens: opts.maxTokens } : {})
   });
+  await applyContentTypeTokenOverrides(opts.outDir, opts.contentTypeMaxTokens);
 }
 
 /** CLI-path skill generation: loadProgram → extractCliSkill → applyNpxMode → writeCliSkill. */
@@ -116,7 +139,11 @@ export async function generateCliSkill(opts: GenerateSkillOpts): Promise<void> {
     skill.rootDir = pkgDir;
     skill.seeAlso = await discoverDepSkills(pkgDir);
   }
-  writeCliSkill(skill, { outDir: opts.outDir });
+  writeCliSkill(skill, {
+    outDir: opts.outDir,
+    ...(opts.maxTokens !== undefined ? { maxTokens: opts.maxTokens } : {})
+  });
+  await applyContentTypeTokenOverrides(opts.outDir, opts.contentTypeMaxTokens);
 }
 
 /** Config-path skill generation: extract the surface → render → write. */
@@ -138,6 +165,77 @@ export async function generateConfigSkill(opts: GenerateConfigSkillOpts): Promis
   }
   // Config skills are content-rich (per-option routing + example); raise the
   // per-reference token budget so a multi-option surface isn't truncated.
-  const rendered = renderSkills([skill], { outDir: opts.outDir, maxTokens: 16000 });
+  const rendered = renderSkills([skill], {
+    outDir: opts.outDir,
+    maxTokens: opts.maxTokens ?? 16000
+  });
   writeSkills(rendered, { outDir: opts.outDir });
+  await applyContentTypeTokenOverrides(opts.outDir, opts.contentTypeMaxTokens);
+}
+
+async function applyContentTypeTokenOverrides(
+  outDir: string,
+  contentTypeMaxTokens: Partial<Record<SkillitContentType, number>> | undefined
+): Promise<void> {
+  if (!contentTypeMaxTokens || Object.keys(contentTypeMaxTokens).length === 0) return;
+  const files = await collectMarkdownFiles(outDir);
+  for (const file of files) {
+    const contentType = contentTypeFromFile(file, outDir);
+    if (!contentType) continue;
+    const maxTokens = contentTypeMaxTokens[contentType];
+    if (maxTokens === undefined || maxTokens < 1) continue;
+    const raw = await readFile(file, 'utf8');
+    const next = truncateToTokenBudget(raw, maxTokens);
+    if (next !== raw) {
+      await writeFile(file, next, 'utf8');
+    }
+  }
+}
+
+async function collectMarkdownFiles(root: string): Promise<string[]> {
+  const out: string[] = [];
+  await walk(root, out);
+  return out;
+}
+
+async function walk(dir: string, out: string[]): Promise<void> {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await walk(path, out);
+      continue;
+    }
+    if (entry.isFile() && entry.name.endsWith('.md')) out.push(path);
+  }
+}
+
+function contentTypeFromFile(file: string, outDir: string): SkillitContentType | undefined {
+  const normalized = file.slice(outDir.length + 1).replaceAll('\\', '/');
+  const segments = normalized.split('/');
+  if (segments.length < 2) return undefined;
+  if (segments[segments.length - 1] === 'SKILL.md') return 'skill';
+  if (segments[1] !== 'references') return undefined;
+  const bucket = segments[2];
+  if (!bucket) return undefined;
+  if (bucket === 'docs') return 'docs';
+  if (
+    bucket === 'functions' ||
+    bucket === 'classes' ||
+    bucket === 'types' ||
+    bucket === 'variables' ||
+    bucket === 'commands' ||
+    bucket === 'config' ||
+    bucket === 'resources' ||
+    bucket === 'prompts' ||
+    bucket === 'examples'
+  ) {
+    return bucket;
+  }
+  return undefined;
 }

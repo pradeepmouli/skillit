@@ -309,8 +309,8 @@ function recordFailure(result: BundleResult, skillName: string, err: unknown): v
  *
  * @public
  */
-export function renderAndWriteMcpSkill(skill: ExtractedSkill, outDir: string) {
-  const rendered = renderSkill(skill);
+export function renderAndWriteMcpSkill(skill: ExtractedSkill, outDir: string, maxTokens?: number) {
+  const rendered = renderSkill(skill, maxTokens !== undefined ? { maxTokens } : undefined);
   return writeBundledSkill([rendered], { outDir });
 }
 

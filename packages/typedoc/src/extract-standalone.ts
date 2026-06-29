@@ -71,13 +71,16 @@ async function convertProject(
  * - Integrating skillit into a custom build pipeline or programmatic tool
  */
 export async function generateTypeDocSkills(
-  opts: TypeDocRunOptions & { outDir: string }
+  opts: TypeDocRunOptions & { outDir: string; maxTokens?: number }
 ): Promise<void> {
   await convertProject(opts, (app) => {
     // load() registers options (skillsOutDir etc.) and the EVENT_RESOLVE_END hook.
     // Must be called before setValue so the declaration exists.
     load(app);
     app.options.setValue('skillsOutDir', opts.outDir);
+    if (opts.maxTokens !== undefined) {
+      app.options.setValue('skillsMaxTokens', opts.maxTokens);
+    }
   });
 }
 

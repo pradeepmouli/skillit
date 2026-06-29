@@ -65,6 +65,10 @@ async function writeConfigFixture(): Promise<string> {
   return process.cwd();
 }
 
+async function writeSkillitConfigFixture(contents: string): Promise<void> {
+  await writeFile(join(tmpDir, 'skillit.config.ts'), contents);
+}
+
 function makeStubs(): {
   deps: GenDeps;
   cliCalls: GenerateSkillOpts[];
@@ -113,6 +117,32 @@ describe('buildGenCommand', () => {
     const { deps, cliCalls } = makeStubs();
     await run(deps, ['--source', 'cli', '--out', 'docs/skills']);
     expect(cliCalls[0]!.outDir).toBe(join(dir, 'docs/skills'));
+  });
+
+  it('uses skillDir from skillit.config.ts when --out is omitted', async () => {
+    const dir = await writeCliFixture();
+    await writeSkillitConfigFixture(`export default { skillDir: 'generated-skills' };\n`);
+    const { deps, cliCalls } = makeStubs();
+    await run(deps, ['--source', 'cli']);
+    expect(cliCalls[0]!.outDir).toBe(join(dir, 'generated-skills'));
+  });
+
+  it('uses per-plugin skillDir and token overrides from skillit.config.ts', async () => {
+    const dir = await writeCliFixture();
+    await writeSkillitConfigFixture(`export default {
+  plugins: {
+    cli: {
+      skillDir: 'cli-skills',
+      maxTokens: 9999,
+      contentTypes: { commands: { maxTokens: 1111 } }
+    }
+  }
+};\n`);
+    const { deps, cliCalls } = makeStubs();
+    await run(deps, ['--source', 'cli']);
+    expect(cliCalls[0]!.outDir).toBe(join(dir, 'cli-skills'));
+    expect(cliCalls[0]!.maxTokens).toBe(9999);
+    expect(cliCalls[0]!.contentTypeMaxTokens).toEqual({ commands: 1111 });
   });
 
   it('generates the config skill from --config-type', async () => {

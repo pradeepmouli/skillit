@@ -21,6 +21,12 @@ import {
 } from '../generate.js';
 import { parseConfigTypeSpec, resolveRefineSource } from './refine.js';
 import { resolveTypeDocEntry } from '../typedoc-entry.js';
+import {
+  loadSkillitConfig,
+  type SkillitConfig,
+  type SkillitContentType,
+  type SkillitPluginName
+} from '../config.js';
 
 /** Injectable generators (test seam, mirrors InitDeps). */
 export interface GenDeps {
@@ -37,8 +43,14 @@ export interface GenCommandOpts {
   configType?: string;
   mcp?: string;
   server?: string;
-  out: string;
+  out?: string;
   invocation?: string;
+}
+
+interface ResolvedPluginOverrides {
+  out: string;
+  maxTokens?: number;
+  contentTypeMaxTokens?: Partial<Record<SkillitContentType, number>>;
 }
 
 /** Strip a leading `@scope/` from a package name for a skill dir name. */
@@ -73,20 +85,25 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
     .option('--config-type <file#export>', 'config type entry (config source)')
     .option('--mcp <path>', 'path to mcp.json or MCP config file (mcp source)')
     .option('--server <name>', 'MCP server entry to select (mcp source)')
-    .option('--out <dir>', 'output directory for the generated skill', 'skills')
+    .option(
+      '--out <dir>',
+      'output directory for the generated skill (defaults to skillit.config.ts skillDir or "skills")'
+    )
     .option(
       '--invocation <mode>',
       'invocation mode for CLI command examples: npx (zero-install) or global (bare binary)'
     )
     .action(async (opts: GenCommandOpts) => {
       const cwd = process.cwd();
-      const outDir = join(cwd, opts.out);
+      const loadedConfig = await loadSkillitConfig(cwd);
 
       // Detect the project nature at most once (it can spawn the project's CLI
       // bin). Only needed to auto-route when --source is omitted.
       const nature = opts.source === undefined ? await detectProjectNature(cwd) : undefined;
 
       if (opts.source === 'config') {
+        const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'config');
+        const outDir = join(cwd, plugin.out);
         if (opts.configType === undefined) {
           throw new Error(
             'The config source requires --config-type <file#export> (e.g. ./src/config.ts#MyConfig).'
@@ -100,7 +117,11 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         await generateConfigSkill({
           configFile: parsed.configFile,
           typeName: parsed.typeName,
-          outDir
+          outDir,
+          ...(plugin.maxTokens !== undefined ? { maxTokens: plugin.maxTokens } : {}),
+          ...(plugin.contentTypeMaxTokens !== undefined
+            ? { contentTypeMaxTokens: plugin.contentTypeMaxTokens }
+            : {})
         });
         return;
       }
@@ -111,6 +132,8 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         opts.source === 'mcp' ||
         (opts.source === undefined && (opts.mcp !== undefined || nature === 'mcp'));
       if (isMcp) {
+        const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'mcp');
+        const outDir = join(cwd, plugin.out);
         if (opts.mcp === undefined) {
           throw new Error(
             'The mcp source requires --mcp <path> (path to mcp.json or MCP config file).'
@@ -120,7 +143,11 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         await generateMcpSkill({
           mcpPath,
           ...(opts.server !== undefined ? { server: opts.server } : {}),
-          outDir
+          outDir,
+          ...(plugin.maxTokens !== undefined ? { maxTokens: plugin.maxTokens } : {}),
+          ...(plugin.contentTypeMaxTokens !== undefined
+            ? { contentTypeMaxTokens: plugin.contentTypeMaxTokens }
+            : {})
         });
         return;
       }
@@ -128,8 +155,19 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
       // typedoc: explicit, or auto-detected as a plain TS library.
       const isTypedoc = opts.source === 'typedoc' || nature === 'typedoc';
       if (isTypedoc) {
+        const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'typedoc');
+        const outDir = join(cwd, plugin.out);
         const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
-        await generateTypeDocSkill({ cwd, entryPoints, tsconfig, outDir });
+        await generateTypeDocSkill({
+          cwd,
+          entryPoints,
+          tsconfig,
+          outDir,
+          ...(plugin.maxTokens !== undefined ? { maxTokens: plugin.maxTokens } : {}),
+          ...(plugin.contentTypeMaxTokens !== undefined
+            ? { contentTypeMaxTokens: plugin.contentTypeMaxTokens }
+            : {})
+        });
         return;
       }
 
@@ -141,6 +179,8 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
       if ('error' in resolution) throw new Error(resolution.error);
 
       if (resolution.kind === 'cli') {
+        const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'cli');
+        const outDir = join(cwd, plugin.out);
         const name = skillNameFrom(await readPackageName(cwd));
         const nature: RefineSourceKind = 'cli';
         await generateCliSkill({
@@ -148,6 +188,10 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
           nature,
           name,
           outDir,
+          ...(plugin.maxTokens !== undefined ? { maxTokens: plugin.maxTokens } : {}),
+          ...(plugin.contentTypeMaxTokens !== undefined
+            ? { contentTypeMaxTokens: plugin.contentTypeMaxTokens }
+            : {}),
           ...(opts.program !== undefined ? { program: opts.program } : {}),
           ...(opts.invocation !== undefined
             ? { invocationMode: opts.invocation as CliInvocationMode }
@@ -161,4 +205,27 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         `skillit gen does not yet support the ${resolution.kind} source; cli and config are supported in this release.`
       );
     });
+}
+
+function resolvePluginOverrides(
+  opts: GenCommandOpts,
+  config: SkillitConfig,
+  pluginName: SkillitPluginName
+): ResolvedPluginOverrides {
+  const plugin = config.plugins?.[pluginName];
+  const out = opts.out ?? plugin?.skillDir ?? config.skillDir ?? 'skills';
+  const contentTypeMaxTokens = plugin?.contentTypes
+    ? Object.fromEntries(
+        Object.entries(plugin.contentTypes)
+          .filter(([, value]) => value?.maxTokens !== undefined)
+          .map(([key, value]) => [key, value!.maxTokens!])
+      )
+    : undefined;
+  return {
+    out,
+    ...(plugin?.maxTokens !== undefined ? { maxTokens: plugin.maxTokens } : {}),
+    ...(contentTypeMaxTokens && Object.keys(contentTypeMaxTokens).length > 0
+      ? { contentTypeMaxTokens }
+      : {})
+  };
 }
