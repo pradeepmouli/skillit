@@ -22,9 +22,11 @@ import {
 import { parseConfigTypeSpec, resolveRefineSource } from './refine.js';
 import { resolveTypeDocEntry } from '../typedoc-entry.js';
 import {
+  SKILLIT_CONTENT_TYPES,
   loadSkillitConfig,
   type SkillitConfig,
   type SkillitContentType,
+  type SkillitPluginConfig,
   type SkillitPluginName
 } from '../config.js';
 
@@ -214,13 +216,7 @@ function resolvePluginOverrides(
 ): ResolvedPluginOverrides {
   const plugin = config.plugins?.[pluginName];
   const out = opts.out ?? plugin?.skillDir ?? config.skillDir ?? 'skills';
-  const contentTypeMaxTokens = plugin?.contentTypes
-    ? Object.fromEntries(
-        Object.entries(plugin.contentTypes).flatMap(([key, value]) =>
-          typeof value?.maxTokens === 'number' ? [[key, value.maxTokens]] : []
-        )
-      )
-    : undefined;
+  const contentTypeMaxTokens = extractContentTypeMaxTokens(plugin);
   return {
     out,
     ...(plugin?.maxTokens !== undefined ? { maxTokens: plugin.maxTokens } : {}),
@@ -228,4 +224,16 @@ function resolvePluginOverrides(
       ? { contentTypeMaxTokens }
       : {})
   };
+}
+
+function extractContentTypeMaxTokens(
+  plugin: SkillitPluginConfig | undefined
+): Partial<Record<SkillitContentType, number>> | undefined {
+  if (!plugin?.contentTypes) return undefined;
+  const contentTypeMaxTokens: Partial<Record<SkillitContentType, number>> = {};
+  for (const contentType of SKILLIT_CONTENT_TYPES) {
+    const value = plugin.contentTypes[contentType]?.maxTokens;
+    if (typeof value === 'number') contentTypeMaxTokens[contentType] = value;
+  }
+  return Object.keys(contentTypeMaxTokens).length > 0 ? contentTypeMaxTokens : undefined;
 }
