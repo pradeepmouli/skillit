@@ -19,6 +19,10 @@ when run without an agent.
 | `skillit refine` | Headless audit → draft → review loop that writes routing annotations back into source.               |
 | `skillit mcp`    | Extract / bundle skills from a live MCP server.                                                      |
 
+`skillit init` now also scaffolds a `skillit.config.ts` file (if none exists),
+so you can set a global `skillDir` and per-source (`cli` / `config` / `mcp` /
+`typedoc`) overrides.
+
 ## Quick start
 
 ```bash
