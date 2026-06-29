@@ -64,47 +64,47 @@ async function defaultWirePostinstall(cwd: string): Promise<void> {
     return;
   }
 
-  async function defaultEnsureSkillitConfig(cwd: string): Promise<void> {
-    const candidates = skillitConfigCandidates().map((name) => join(cwd, name));
-    for (const candidate of candidates) {
-      if (await exists(candidate)) return;
-    }
-    const configPath = join(cwd, 'skillit.config.ts');
-    await writeFile(configPath, defaultSkillitConfigTemplate(), 'utf8');
-  }
-
-  async function exists(path: string): Promise<boolean> {
-    try {
-      await access(path, constants.F_OK);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  function defaultSkillitConfigTemplate(): string {
-    return `import { defineSkillitConfig } from '@skillit/client';
-
-  export default defineSkillitConfig({
-    // skillDir: 'skills',
-    // plugins: {
-    //   cli: {
-    //     // skillDir: 'skills',
-    //     // maxTokens: 4000,
-    //     // contentTypes: {
-    //     //   commands: { maxTokens: 5000 }
-    //     // }
-    //   }
-    // }
-  });
-  `;
-  }
-
   await writeFile(join(cwd, 'skillit-postinstall.cjs'), generatePostinstallScript(), 'utf8');
 
   if (!pkg.scripts) pkg.scripts = {};
   pkg.scripts['postinstall'] = 'node ./skillit-postinstall.cjs';
   await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+}
+
+async function defaultEnsureSkillitConfig(cwd: string): Promise<void> {
+  const candidates = skillitConfigCandidates().map((name) => join(cwd, name));
+  for (const candidate of candidates) {
+    if (await exists(candidate)) return;
+  }
+  const configPath = join(cwd, 'skillit.config.ts');
+  await writeFile(configPath, defaultSkillitConfigTemplate(), 'utf8');
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function defaultSkillitConfigTemplate(): string {
+  return `import { defineSkillitConfig } from '@skillit/client';
+
+export default defineSkillitConfig({
+  // skillDir: 'skills',
+  // plugins: {
+  //   cli: {
+  //     // skillDir: 'skills',
+  //     // maxTokens: 4000,
+  //     // contentTypes: {
+  //     //   commands: { maxTokens: 5000 }
+  //     // }
+  //   }
+  // }
+});
+`;
 }
 
 /** Default install: spawn the package manager's add-dev command, cwd-scoped. */
