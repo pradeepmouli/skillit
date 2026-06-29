@@ -215,10 +215,11 @@ function resolvePluginOverrides(
   const plugin = config.plugins?.[pluginName];
   const out = opts.out ?? plugin?.skillDir ?? config.skillDir ?? 'skills';
   const contentTypeMaxTokens = plugin?.contentTypes
-    ? Object.entries(plugin.contentTypes).reduce<Record<string, number>>((acc, [key, value]) => {
-        if (typeof value?.maxTokens === 'number') acc[key] = value.maxTokens;
-        return acc;
-      }, {})
+    ? Object.fromEntries(
+        Object.entries(plugin.contentTypes).flatMap(([key, value]) =>
+          typeof value?.maxTokens === 'number' ? [[key, value.maxTokens]] : []
+        )
+      )
     : undefined;
   return {
     out,
