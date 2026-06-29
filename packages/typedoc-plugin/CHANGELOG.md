@@ -1,5 +1,12 @@
 # typedoc-plugin-to-skills
 
+## 1.4.2
+
+### Patch Changes
+
+- Updated dependencies [[`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b)]:
+  - @skillit/typedoc@1.2.1
+
 ## 1.4.1
 
 ### Patch Changes
@@ -66,6 +73,7 @@
 - Router skill: deduplicate sections, natural example queries
 
   Each section now has distinct content:
+
   - When to Use: package descriptions (broad)
   - Decision Tree: numbered routing
   - Routing Logic: @useWhen detail (only place)
@@ -148,6 +156,7 @@
 - Switch When to Use from tables to bullet lists, matching published skill conventions
 
   BREAKING: When to Use section now uses bullet lists instead of markdown tables.
+
   - Multi-source attribution: "Display images → use `Sprite`" (not table rows)
   - Avoid when: "**Do NOT use when:**" bullet list
   - NEVER rules: own "## NEVER" section (not folded into When to Use)
@@ -186,6 +195,7 @@
 ### Patch Changes
 
 - Description from package.json only, Quick Start extracts first code block when too long
+
   - buildDescription uses package.json tagline (not @packageDocumentation summary)
   - @packageDocumentation summary stays in body intro only
   - Quick Start cap extracts first complete code block instead of truncating to pointer
@@ -242,6 +252,7 @@
 ### Patch Changes
 
 - Fix description truncation inside backtick-quoted identifiers (e.g. `?z2f`)
+
   - truncateDescription regex now skips .!? inside backticks
   - buildDescription combines package.json tagline with JSDoc keywords when both exist
 
@@ -271,6 +282,7 @@
 ### Patch Changes
 
 - Fix @remarks not extracted in single-package mode, deduplicate examples.md
+
   - extractModule now extracts @remarks from module comment (was only in mergeModules)
   - examples.md only created for 2+ examples (first example is Quick Start in SKILL.md body)
 
@@ -312,6 +324,7 @@
 ### Patch Changes
 
 - Fix pitfall multi-line formatting, description keyword-stuffing, redundant keyword bullets
+
   - parseBulletList now joins continuation lines into preceding bullet (fixes split NEVER rules)
   - Description uses @useWhen triggers instead of mechanical keyword list when available
   - "When to Use" section skips keyword bullet when @useWhen decision tables exist
@@ -457,6 +470,7 @@
 ### Patch Changes
 
 - Skill quality improvements: contextual descriptions, module-grouped references, empty description suppression, submodule flattening
+
   - SKILL.md description answers "what does this library do" instead of listing function names
   - When to Use shows keyword-based context instead of tautological "Calling fn()"
   - Quick Reference and references grouped by source module
@@ -483,6 +497,7 @@
 ### Patch Changes
 
 - Improve extraction coverage and rendering quality
+
   - Extract and render interface properties in types reference (previously empty for interfaces)
   - Extract and render variables/constants (previously silently dropped)
   - Extract and render function overloads (previously only first signature)
@@ -551,6 +566,7 @@
 - Progressive disclosure: SKILL.md is now a lean discovery document, with full API details in references/
 
   Skills now generate a file tree instead of a single monolithic file:
+
   - `SKILL.md` — frontmatter, overview, when-to-use, quick reference (~500 tokens)
   - `references/functions.md` — full function signatures, params, examples
   - `references/classes.md` — class details with constructors, methods, properties
@@ -578,6 +594,7 @@
 ### Patch Changes
 
 - Enrich skills with package.json metadata and TypeDoc projectDocuments
+
   - Extract keywords, repository URL, author from package.json
   - Keywords incorporated into skill description triggers
   - Repository and author rendered as Links section

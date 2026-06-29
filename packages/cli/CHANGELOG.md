@@ -1,5 +1,31 @@
 # @to-skills/cli
 
+## 0.6.0
+
+### Minor Changes
+
+- [#76](https://github.com/pradeepmouli/skillit/pull/76) [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Add npx invocation mode for CLI skills on public packages.
+
+  - `skillit gen --source cli` now defaults to `npx <packageName>` as the invocation prefix for public packages that declare a `bin` field in `package.json` (mirrors `npm install -g` detection: `bin` present + not `"private": true`).
+  - Add `--invocation npx|global` flag to `skillit gen` to override the auto-detected mode.
+  - README sections (features, troubleshooting, quick start) are now included in generated CLI skills, with the bare binary name substituted by `npx <packageName>` in npx mode.
+  - New `applyNpxMode` / `resolveInvocationMode` helpers exported from `@skillit/cli`.
+  - New `PackageMetadata` fields: `fullPackageName`, `bin`, `isPrivate`.
+  - New `ExtractedSkill` field: `cliInvocationPrefix`.
+  - `CliRefineSource` and `CliRefineSourceOptions` support `invocationMode` override.
+
+### Patch Changes
+
+- [#75](https://github.com/pradeepmouli/skillit/pull/75) [`df9d69e`](https://github.com/pradeepmouli/skillit/commit/df9d69e1630faf5bd33cd09bdb6382ebbd42ee19) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - fix(program-loader): duck-type Commander check for cross-realm instances
+
+  `instanceof Command` fails when the consumer's `commander` package is a
+  different module instance (e.g. separate monorepos with separate
+  `node_modules`). Structural duck-type check on `name`, `commands`, and
+  `parseAsync` is cross-realm safe.
+
+- Updated dependencies [[`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b), [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b)]:
+  - @skillit/core@2.1.0
+
 ## 0.5.0
 
 ### Minor Changes
@@ -30,6 +56,7 @@
 ### Patch Changes
 
 - [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+
   - fix(client): isolate the copilot model backend with an empty tool whitelist
   - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
   - fix(client): extract drafted annotation from <answer> tags
@@ -50,6 +77,7 @@
   `RefineSource.auditContext()` are gone. Callers pass metadata via the skill IR.
 
 - [#61](https://github.com/pradeepmouli/skillit/pull/61) [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: agent-bootstrap Phase 0 core affordances
+
   - **`skillit gen`** — new first-class, deterministic, side-effect-free command that (re)generates the skill from current source (cli + config). It shares ONE generate path with the rest of the client (`packages/client/src/generate.ts`).
   - **`skillit init` is now install/wire only** — it no longer generates or refines. After `init`, run `skillit gen`. (Behavior change for `init`.)
   - **`skillit audit --json`** — new command wrapping `auditSkill` + `estimateSkillJudgeScore`, emitting the full `AuditResult` + `SkillJudgeEstimate` plus a resolved on-disk location per improvement target.
@@ -63,6 +91,7 @@
 ### Minor Changes
 
 - [#41](https://github.com/pradeepmouli/skillit/pull/41) [`989f899`](https://github.com/pradeepmouli/skillit/commit/989f899fd506f422d67c808bce8b5302f11986c6) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(client): guard msg.content[0] access — throw on empty or non-text response
+
   - fix(typedoc/refine): fix JSDoc closer indentation + use async fs I/O in TypeDocRefineSource
   - feat(client): add skillit bin with refine command
   - feat(client): add AnthropicModelClient (Sonnet drafter, Opus reviewer)

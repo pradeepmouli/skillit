@@ -1,5 +1,51 @@
 # @skillit/client
 
+## 0.4.0
+
+### Minor Changes
+
+- [#78](https://github.com/pradeepmouli/skillit/pull/78) [`3589fc4`](https://github.com/pradeepmouli/skillit/commit/3589fc4609fc8ba5c2ba064dbd5b82aea7e5347d) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - `skillit init --source cli` now wires a postinstall script.
+
+  - After installing `@skillit/cli`, `init` writes a self-contained `skillit-postinstall.cjs` script to the project root and sets `scripts.postinstall` in `package.json` to `node ./skillit-postinstall.cjs`.
+  - The postinstall script replaces `npx <packageName>` with the bare binary name in all `skills/**/*.md` files, so globally-installed consumers get invocation examples that match their actual shell command.
+  - Skips wiring (with a warning) if `scripts.postinstall` is already set.
+  - New injectable `wirePostinstall` dep on `InitDeps` for testing.
+  - New `generatePostinstallScript()` export from `@skillit/client`.
+
+- [#76](https://github.com/pradeepmouli/skillit/pull/76) [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Add npx invocation mode for CLI skills on public packages.
+
+  - `skillit gen --source cli` now defaults to `npx <packageName>` as the invocation prefix for public packages that declare a `bin` field in `package.json` (mirrors `npm install -g` detection: `bin` present + not `"private": true`).
+  - Add `--invocation npx|global` flag to `skillit gen` to override the auto-detected mode.
+  - README sections (features, troubleshooting, quick start) are now included in generated CLI skills, with the bare binary name substituted by `npx <packageName>` in npx mode.
+  - New `applyNpxMode` / `resolveInvocationMode` helpers exported from `@skillit/cli`.
+  - New `PackageMetadata` fields: `fullPackageName`, `bin`, `isPrivate`.
+  - New `ExtractedSkill` field: `cliInvocationPrefix`.
+  - `CliRefineSource` and `CliRefineSourceOptions` support `invocationMode` override.
+
+- [#79](https://github.com/pradeepmouli/skillit/pull/79) [`3f93df0`](https://github.com/pradeepmouli/skillit/commit/3f93df0b14953b71399ba4afbc580e0ce1e769d0) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Postinstall script now copies skills to `~/.claude/skills/` after rewriting invocations.
+
+  Global installs (`npm install -g <pkg>`) will have their skills available to Claude Code immediately after install, with no manual configuration.
+
+### Patch Changes
+
+- [#82](https://github.com/pradeepmouli/skillit/pull/82) [`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Skill generation now auto-populates a `## See Also` section linking to skills bundled in direct dependencies.
+
+  When a dependency ships a skill (detected via `node_modules/<dep>/skills/*/SKILL.md` or `package.json#skillit.skills`), its name, path, and description appear in `## See Also` of the consuming package's skill. This prevents agents using only a CLI skill from missing critical context — like `## NEVER` rules — documented in a core library skill.
+
+  **New exports from `@skillit/core`:**
+
+  - `DepSkillRef` — cross-reference type (`name`, `path`, `description?`)
+  - `discoverDepSkills(pkgDir)` / `discoverDepSkillsSync(pkgDir)` — dep-skill discovery helpers
+  - `ExtractedSkill.seeAlso?` and `ExtractedSkill.rootDir?` — new IR fields
+
+  **New audit check W12:** warns when a dep has a skill not referenced in `## See Also`; contributes +3 to D3 (Anti-Patterns) when passing.
+
+- Updated dependencies [[`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b), [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b), [`df9d69e`](https://github.com/pradeepmouli/skillit/commit/df9d69e1630faf5bd33cd09bdb6382ebbd42ee19)]:
+  - @skillit/core@2.1.0
+  - @skillit/typedoc@1.2.1
+  - @skillit/mcp@0.4.1
+  - @skillit/cli@0.6.0
+
 ## 0.3.1
 
 ### Patch Changes
@@ -11,6 +57,7 @@
 ### Minor Changes
 
 - [#58](https://github.com/pradeepmouli/skillit/pull/58) [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: refine TypeScript config surfaces (`--source config`)
+
   - `@skillit/core` adds `ConfigRefineSource` + `extractConfigSurface`: extract a
     config type's options (incl. nested dot-path keys) and refine their per-option
     routing JSDoc (`@useWhen`/`@avoidWhen`/`@pitfalls`) in place via
@@ -44,12 +91,14 @@
     - the rendered skill describes the config surface, not the package blurb.
 
 - [#61](https://github.com/pradeepmouli/skillit/pull/61) [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: agent-bootstrap Phase 0 core affordances
+
   - **`skillit gen`** — new first-class, deterministic, side-effect-free command that (re)generates the skill from current source (cli + config). It shares ONE generate path with the rest of the client (`packages/client/src/generate.ts`).
   - **`skillit init` is now install/wire only** — it no longer generates or refines. After `init`, run `skillit gen`. (Behavior change for `init`.)
   - **`skillit audit --json`** — new command wrapping `auditSkill` + `estimateSkillJudgeScore`, emitting the full `AuditResult` + `SkillJudgeEstimate` plus a resolved on-disk location per improvement target.
   - **`RefineSource.resolveTargetLocation`** — new optional method on the core `RefineSource` contract, implemented for typedoc, cli, config, and mcp (build) sources.
 
 - [#67](https://github.com/pradeepmouli/skillit/pull/67) [`9d67124`](https://github.com/pradeepmouli/skillit/commit/9d671242bf95a5bb49dd2121c37c08008c1a8279) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: ship the `/skillit-bootstrap` agent skill (Phase 1)
+
   - New bundled Claude Code skill `skillit-bootstrap` (`packages/client/skills/`)
     that orchestrates the agent-bootstrap loop — `skillit gen` → `skillit audit
 --json` → agent enriches repo source → regenerate — for the **cli** and
@@ -97,6 +146,7 @@
 ### Patch Changes
 
 - [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+
   - fix(client): isolate the copilot model backend with an empty tool whitelist
   - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
   - fix(client): extract drafted annotation from <answer> tags
@@ -127,6 +177,7 @@
 ### Minor Changes
 
 - [#41](https://github.com/pradeepmouli/skillit/pull/41) [`989f899`](https://github.com/pradeepmouli/skillit/commit/989f899fd506f422d67c808bce8b5302f11986c6) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(client): guard msg.content[0] access — throw on empty or non-text response
+
   - fix(typedoc/refine): fix JSDoc closer indentation + use async fs I/O in TypeDocRefineSource
   - feat(client): add skillit bin with refine command
   - feat(client): add AnthropicModelClient (Sonnet drafter, Opus reviewer)
