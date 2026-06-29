@@ -116,30 +116,33 @@ function normalizeConfig(raw: unknown): SkillitConfig {
   const input = raw as Record<string, unknown>;
   const output: SkillitConfig = {};
 
-  if (typeof input.skillDir === 'string') output.skillDir = input.skillDir;
+  if (typeof input['skillDir'] === 'string') output.skillDir = input['skillDir'];
 
   if (
-    typeof input.plugins === 'object' &&
-    input.plugins !== null &&
-    !Array.isArray(input.plugins)
+    typeof input['plugins'] === 'object' &&
+    input['plugins'] !== null &&
+    !Array.isArray(input['plugins'])
   ) {
-    const plugins = input.plugins as Record<string, unknown>;
+    const plugins = input['plugins'] as Record<string, unknown>;
     const normalizedPlugins: Partial<Record<SkillitPluginName, SkillitPluginConfig>> = {};
     for (const key of ['cli', 'config', 'mcp', 'typedoc'] as const) {
       const value = plugins[key];
       if (typeof value !== 'object' || value === null || Array.isArray(value)) continue;
       const pluginInput = value as Record<string, unknown>;
       const plugin: SkillitPluginConfig = {};
-      if (typeof pluginInput.skillDir === 'string') plugin.skillDir = pluginInput.skillDir;
-      if (typeof pluginInput.maxTokens === 'number' && Number.isFinite(pluginInput.maxTokens)) {
-        plugin.maxTokens = pluginInput.maxTokens;
+      if (typeof pluginInput['skillDir'] === 'string') plugin.skillDir = pluginInput['skillDir'];
+      if (
+        typeof pluginInput['maxTokens'] === 'number' &&
+        Number.isFinite(pluginInput['maxTokens'])
+      ) {
+        plugin.maxTokens = pluginInput['maxTokens'];
       }
       if (
-        typeof pluginInput.contentTypes === 'object' &&
-        pluginInput.contentTypes !== null &&
-        !Array.isArray(pluginInput.contentTypes)
+        typeof pluginInput['contentTypes'] === 'object' &&
+        pluginInput['contentTypes'] !== null &&
+        !Array.isArray(pluginInput['contentTypes'])
       ) {
-        const contentTypesInput = pluginInput.contentTypes as Record<string, unknown>;
+        const contentTypesInput = pluginInput['contentTypes'] as Record<string, unknown>;
         const contentTypes: Partial<Record<SkillitContentType, SkillitContentTypeOverride>> = {};
         for (const contentType of [
           'skill',
@@ -158,8 +161,8 @@ function normalizeConfig(raw: unknown): SkillitConfig {
           if (typeof override !== 'object' || override === null || Array.isArray(override))
             continue;
           const parsed = override as Record<string, unknown>;
-          if (typeof parsed.maxTokens === 'number' && Number.isFinite(parsed.maxTokens)) {
-            contentTypes[contentType] = { maxTokens: parsed.maxTokens };
+          if (typeof parsed['maxTokens'] === 'number' && Number.isFinite(parsed['maxTokens'])) {
+            contentTypes[contentType] = { maxTokens: parsed['maxTokens'] };
           }
         }
         if (Object.keys(contentTypes).length > 0) plugin.contentTypes = contentTypes;
