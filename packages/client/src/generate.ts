@@ -16,8 +16,8 @@ import {
   writeSkills
 } from '@skillit/core';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import type { SkillitContentType } from './config.js';
+import { dirname, join, relative } from 'node:path';
+import { SKILLIT_CONTENT_TYPES, type SkillitContentType } from './config.js';
 export type { CliInvocationMode } from '@skillit/cli';
 import type { RefineSourceKind } from './detect-source.js';
 
@@ -216,7 +216,7 @@ async function walk(dir: string, out: string[]): Promise<void> {
 }
 
 function contentTypeFromFile(file: string, outDir: string): SkillitContentType | undefined {
-  const normalized = file.slice(outDir.length + 1).replaceAll('\\', '/');
+  const normalized = relative(outDir, file).replaceAll('\\', '/');
   const segments = normalized.split('/');
   if (segments.length < 2) return undefined;
   if (segments[segments.length - 1] === 'SKILL.md') return 'skill';
@@ -224,18 +224,8 @@ function contentTypeFromFile(file: string, outDir: string): SkillitContentType |
   const bucket = segments[2];
   if (!bucket) return undefined;
   if (bucket === 'docs') return 'docs';
-  if (
-    bucket === 'functions' ||
-    bucket === 'classes' ||
-    bucket === 'types' ||
-    bucket === 'variables' ||
-    bucket === 'commands' ||
-    bucket === 'config' ||
-    bucket === 'resources' ||
-    bucket === 'prompts' ||
-    bucket === 'examples'
-  ) {
-    return bucket;
+  if (SKILLIT_CONTENT_TYPES.includes(bucket as SkillitContentType) && bucket !== 'skill') {
+    return bucket as SkillitContentType;
   }
   return undefined;
 }

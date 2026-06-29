@@ -5,18 +5,21 @@ import { pathToFileURL } from 'node:url';
 
 export type SkillitPluginName = 'cli' | 'config' | 'mcp' | 'typedoc';
 
-export type SkillitContentType =
-  | 'skill'
-  | 'functions'
-  | 'classes'
-  | 'types'
-  | 'variables'
-  | 'commands'
-  | 'config'
-  | 'docs'
-  | 'resources'
-  | 'prompts'
-  | 'examples';
+export const SKILLIT_CONTENT_TYPES = [
+  'skill',
+  'functions',
+  'classes',
+  'types',
+  'variables',
+  'commands',
+  'config',
+  'docs',
+  'resources',
+  'prompts',
+  'examples'
+] as const;
+
+export type SkillitContentType = (typeof SKILLIT_CONTENT_TYPES)[number];
 
 export interface SkillitContentTypeOverride {
   maxTokens?: number;
@@ -90,22 +93,30 @@ async function loadJavaScriptConfig(path: string): Promise<unknown> {
 
 async function loadTypeScriptLikeConfig(path: string): Promise<unknown> {
   const source = await readFile(path, 'utf8');
-  const transformed = source
-    .replace(/^\s*import\s+[^;]+;?\s*$/gm, '')
-    .replace(/^\s*export\s+default\s+/m, 'return ');
-  if (!/\breturn\b/.test(transformed)) {
+  let ts: typeof import('typescript');
+  try {
+    ts = await import('typescript');
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Unsupported ${path}: expected a default export (for example: export default defineSkillitConfig({...})).`
+      `Loading ${path} requires the "typescript" package. Install it and try again. (${reason})`
     );
   }
   try {
-    const factory = new Function('defineSkillitConfig', transformed) as (
-      define: typeof defineSkillitConfig
-    ) => unknown;
-    return factory(defineSkillitConfig);
+    const transpiled = ts.transpileModule(source, {
+      fileName: path,
+      compilerOptions: {
+        module: ts.ModuleKind.ESNext,
+        target: ts.ScriptTarget.ES2022
+      }
+    }).outputText;
+    const encoded = Buffer.from(transpiled, 'utf8').toString('base64');
+    const moduleUrl = `data:text/javascript;base64,${encoded}`;
+    const mod = (await import(moduleUrl)) as { default?: unknown };
+    return mod.default ?? {};
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to evaluate ${path}: ${reason}`);
+    throw new Error(`Failed to load ${path}: ${reason}`);
   }
 }
 
@@ -144,19 +155,7 @@ function normalizeConfig(raw: unknown): SkillitConfig {
       ) {
         const contentTypesInput = pluginInput['contentTypes'] as Record<string, unknown>;
         const contentTypes: Partial<Record<SkillitContentType, SkillitContentTypeOverride>> = {};
-        for (const contentType of [
-          'skill',
-          'functions',
-          'classes',
-          'types',
-          'variables',
-          'commands',
-          'config',
-          'docs',
-          'resources',
-          'prompts',
-          'examples'
-        ] as const) {
+        for (const contentType of SKILLIT_CONTENT_TYPES) {
           const override = contentTypesInput[contentType];
           if (typeof override !== 'object' || override === null || Array.isArray(override))
             continue;

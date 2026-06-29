@@ -217,8 +217,8 @@ function resolvePluginOverrides(
   const contentTypeMaxTokens = plugin?.contentTypes
     ? Object.fromEntries(
         Object.entries(plugin.contentTypes)
-          .filter(([, value]) => value?.maxTokens !== undefined)
-          .map(([key, value]) => [key, value!.maxTokens!])
+          .filter(([, value]) => typeof value?.maxTokens === 'number')
+          .map(([key, value]) => [key, value.maxTokens as number])
       )
     : undefined;
   return {
