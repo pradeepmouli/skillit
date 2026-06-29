@@ -3,6 +3,7 @@ export { AnthropicModelClient } from './model/anthropic.js';
 export { parseReviewVerdict } from './model/anthropic.js';
 export {
   SKILLIT_CONTENT_TYPES,
+  defineConfig,
   defineSkillitConfig,
   loadSkillitConfig,
   skillitConfigCandidates,
