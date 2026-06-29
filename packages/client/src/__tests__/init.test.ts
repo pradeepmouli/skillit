@@ -141,7 +141,7 @@ describe('postinstall wiring', () => {
       restore();
     }
     const config = await readFile(join(dir, 'skillit.config.ts'), 'utf8');
-    expect(config).toContain('defineSkillitConfig');
+    expect(config).toContain('defineConfig');
     expect(config).toContain('plugins');
   });
 

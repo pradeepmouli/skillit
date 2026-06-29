@@ -90,9 +90,9 @@ async function exists(path: string): Promise<boolean> {
 }
 
 function defaultSkillitConfigTemplate(): string {
-  return `import { defineSkillitConfig } from '@skillit/client';
+  return `import { defineConfig } from '@skillit/client';
 
-export default defineSkillitConfig({
+export default defineConfig({
   // skillDir: 'skills',
   // plugins: {
   //   cli: {

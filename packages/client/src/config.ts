@@ -53,8 +53,13 @@ export function skillitConfigCandidates(): readonly string[] {
   return CONFIG_CANDIDATES;
 }
 
-export function defineSkillitConfig(config: SkillitConfig): SkillitConfig {
+export function defineConfig(config: SkillitConfig): SkillitConfig {
   return config;
+}
+
+/** @deprecated Use {@link defineConfig} instead. */
+export function defineSkillitConfig(config: SkillitConfig): SkillitConfig {
+  return defineConfig(config);
 }
 
 export async function loadSkillitConfig(cwd: string): Promise<LoadedSkillitConfig> {
