@@ -222,7 +222,6 @@ function contentTypeFromFile(file: string, outDir: string): SkillitContentType |
   if (segments[segments.length - 1] === 'SKILL.md') return 'skill';
   if (segments[1] !== 'references') return undefined;
   const bucket = segments[2];
-  if (!bucket) return undefined;
   if (bucket === 'docs') return 'docs';
   if (SKILLIT_CONTENT_TYPES.includes(bucket as SkillitContentType)) {
     return bucket as SkillitContentType;
