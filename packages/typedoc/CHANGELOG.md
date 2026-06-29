@@ -1,5 +1,24 @@
 # @to-skills/typedoc
 
+## 1.2.1
+
+### Patch Changes
+
+- [#82](https://github.com/pradeepmouli/skillit/pull/82) [`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Skill generation now auto-populates a `## See Also` section linking to skills bundled in direct dependencies.
+
+  When a dependency ships a skill (detected via `node_modules/<dep>/skills/*/SKILL.md` or `package.json#skillit.skills`), its name, path, and description appear in `## See Also` of the consuming package's skill. This prevents agents using only a CLI skill from missing critical context — like `## NEVER` rules — documented in a core library skill.
+
+  **New exports from `@skillit/core`:**
+
+  - `DepSkillRef` — cross-reference type (`name`, `path`, `description?`)
+  - `discoverDepSkills(pkgDir)` / `discoverDepSkillsSync(pkgDir)` — dep-skill discovery helpers
+  - `ExtractedSkill.seeAlso?` and `ExtractedSkill.rootDir?` — new IR fields
+
+  **New audit check W12:** warns when a dep has a skill not referenced in `## See Also`; contributes +3 to D3 (Anti-Patterns) when passing.
+
+- Updated dependencies [[`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b), [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b)]:
+  - @skillit/core@2.1.0
+
 ## 1.2.0
 
 ### Minor Changes
@@ -30,6 +49,7 @@
 ### Patch Changes
 
 - [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+
   - fix(client): isolate the copilot model backend with an empty tool whitelist
   - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
   - fix(client): extract drafted annotation from <answer> tags
@@ -50,6 +70,7 @@
   `RefineSource.auditContext()` are gone. Callers pass metadata via the skill IR.
 
 - [#61](https://github.com/pradeepmouli/skillit/pull/61) [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: agent-bootstrap Phase 0 core affordances
+
   - **`skillit gen`** — new first-class, deterministic, side-effect-free command that (re)generates the skill from current source (cli + config). It shares ONE generate path with the rest of the client (`packages/client/src/generate.ts`).
   - **`skillit init` is now install/wire only** — it no longer generates or refines. After `init`, run `skillit gen`. (Behavior change for `init`.)
   - **`skillit audit --json`** — new command wrapping `auditSkill` + `estimateSkillJudgeScore`, emitting the full `AuditResult` + `SkillJudgeEstimate` plus a resolved on-disk location per improvement target.
@@ -145,6 +166,7 @@
 - Switch When to Use from tables to bullet lists, matching published skill conventions
 
   BREAKING: When to Use section now uses bullet lists instead of markdown tables.
+
   - Multi-source attribution: "Display images → use `Sprite`" (not table rows)
   - Avoid when: "**Do NOT use when:**" bullet list
   - NEVER rules: own "## NEVER" section (not folded into When to Use)
@@ -246,6 +268,7 @@
 ### Patch Changes
 
 - Fix @remarks not extracted in single-package mode, deduplicate examples.md
+
   - extractModule now extracts @remarks from module comment (was only in mergeModules)
   - examples.md only created for 2+ examples (first example is Quick Start in SKILL.md body)
 
@@ -287,6 +310,7 @@
 ### Patch Changes
 
 - Fix pitfall multi-line formatting, description keyword-stuffing, redundant keyword bullets
+
   - parseBulletList now joins continuation lines into preceding bullet (fixes split NEVER rules)
   - Description uses @useWhen triggers instead of mechanical keyword list when available
   - "When to Use" section skips keyword bullet when @useWhen decision tables exist
@@ -515,6 +539,7 @@
 - Progressive disclosure: SKILL.md is now a lean discovery document, with full API details in references/
 
   Skills now generate a file tree instead of a single monolithic file:
+
   - `SKILL.md` — frontmatter, overview, when-to-use, quick reference (~500 tokens)
   - `references/functions.md` — full function signatures, params, examples
   - `references/classes.md` — class details with constructors, methods, properties

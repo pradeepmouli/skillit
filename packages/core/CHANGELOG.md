@@ -1,5 +1,31 @@
 # @to-skills/core
 
+## 2.1.0
+
+### Minor Changes
+
+- [#82](https://github.com/pradeepmouli/skillit/pull/82) [`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Skill generation now auto-populates a `## See Also` section linking to skills bundled in direct dependencies.
+
+  When a dependency ships a skill (detected via `node_modules/<dep>/skills/*/SKILL.md` or `package.json#skillit.skills`), its name, path, and description appear in `## See Also` of the consuming package's skill. This prevents agents using only a CLI skill from missing critical context — like `## NEVER` rules — documented in a core library skill.
+
+  **New exports from `@skillit/core`:**
+
+  - `DepSkillRef` — cross-reference type (`name`, `path`, `description?`)
+  - `discoverDepSkills(pkgDir)` / `discoverDepSkillsSync(pkgDir)` — dep-skill discovery helpers
+  - `ExtractedSkill.seeAlso?` and `ExtractedSkill.rootDir?` — new IR fields
+
+  **New audit check W12:** warns when a dep has a skill not referenced in `## See Also`; contributes +3 to D3 (Anti-Patterns) when passing.
+
+- [#76](https://github.com/pradeepmouli/skillit/pull/76) [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Add npx invocation mode for CLI skills on public packages.
+
+  - `skillit gen --source cli` now defaults to `npx <packageName>` as the invocation prefix for public packages that declare a `bin` field in `package.json` (mirrors `npm install -g` detection: `bin` present + not `"private": true`).
+  - Add `--invocation npx|global` flag to `skillit gen` to override the auto-detected mode.
+  - README sections (features, troubleshooting, quick start) are now included in generated CLI skills, with the bare binary name substituted by `npx <packageName>` in npx mode.
+  - New `applyNpxMode` / `resolveInvocationMode` helpers exported from `@skillit/cli`.
+  - New `PackageMetadata` fields: `fullPackageName`, `bin`, `isPrivate`.
+  - New `ExtractedSkill` field: `cliInvocationPrefix`.
+  - `CliRefineSource` and `CliRefineSourceOptions` support `invocationMode` override.
+
 ## 2.0.0
 
 ### Major Changes
@@ -21,6 +47,7 @@
 ### Minor Changes
 
 - [#58](https://github.com/pradeepmouli/skillit/pull/58) [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: refine TypeScript config surfaces (`--source config`)
+
   - `@skillit/core` adds `ConfigRefineSource` + `extractConfigSurface`: extract a
     config type's options (incl. nested dot-path keys) and refine their per-option
     routing JSDoc (`@useWhen`/`@avoidWhen`/`@pitfalls`) in place via
@@ -54,6 +81,7 @@
     - the rendered skill describes the config surface, not the package blurb.
 
 - [#61](https://github.com/pradeepmouli/skillit/pull/61) [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: agent-bootstrap Phase 0 core affordances
+
   - **`skillit gen`** — new first-class, deterministic, side-effect-free command that (re)generates the skill from current source (cli + config). It shares ONE generate path with the rest of the client (`packages/client/src/generate.ts`).
   - **`skillit init` is now install/wire only** — it no longer generates or refines. After `init`, run `skillit gen`. (Behavior change for `init`.)
   - **`skillit audit --json`** — new command wrapping `auditSkill` + `estimateSkillJudgeScore`, emitting the full `AuditResult` + `SkillJudgeEstimate` plus a resolved on-disk location per improvement target.
@@ -85,6 +113,7 @@
 ### Patch Changes
 
 - [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+
   - fix(client): isolate the copilot model backend with an empty tool whitelist
   - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
   - fix(client): extract drafted annotation from <answer> tags
@@ -107,6 +136,7 @@
 - [#60](https://github.com/pradeepmouli/skillit/pull/60) [`62c0e2a`](https://github.com/pradeepmouli/skillit/commit/62c0e2a5f4ec05af30f262d24f53631d190eadb9) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - fix(core): correct config-refine JSDoc indentation and per-option coverage ordering
 
   Two refinements surfaced by review of the config refine pipeline:
+
   - `upsertTagOnAnchor` derived the JSDoc indent from the declaration's column.
     For a property documented on the same line (`/** desc */ outDir`), that column
     is the text _after_ the comment, so every rebuilt continuation line was
@@ -132,6 +162,7 @@
 ### Minor Changes
 
 - [#41](https://github.com/pradeepmouli/skillit/pull/41) [`989f899`](https://github.com/pradeepmouli/skillit/commit/989f899fd506f422d67c808bce8b5302f11986c6) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(client): guard msg.content[0] access — throw on empty or non-text response
+
   - fix(typedoc/refine): fix JSDoc closer indentation + use async fs I/O in TypeDocRefineSource
   - feat(client): add skillit bin with refine command
   - feat(client): add AnthropicModelClient (Sonnet drafter, Opus reviewer)
@@ -153,12 +184,14 @@
 - [#20](https://github.com/pradeepmouli/to-skills/pull/20) [`2b91bd8`](https://github.com/pradeepmouli/to-skills/commit/2b91bd8e2882ee470c00e5b12705a28c052bb5c8) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Extract and bundle MCP servers as Agent Skills (`@to-skills/mcp` + invocation-target adapters)
 
   New host package and three invocation-target adapters land at `0.1.0`:
+
   - `@to-skills/mcp` — CLI + programmatic API for extracting a SKILL.md from a live Model Context Protocol server (stdio or HTTP) and bundling a server's own skill into its npm package via a `to-skills.mcp` field. Ships `to-skills-mcp extract` and `to-skills-mcp bundle` subcommands plus `extractMcpSkill` / `bundleMcpSkill` programmatic entry points. Adds an in-package `llms.txt` emitter wired to the `--llms-txt` flag.
   - `@to-skills/target-mcp-protocol` — default invocation-target adapter; emits `mcp:` frontmatter for MCP-native agent harnesses (Claude Code, Cursor, OpenCode, Codex).
   - `@to-skills/target-mcpc` — CLI-as-proxy adapter for Apify's `mcpc@^2.1`. Renders shell-command skills consumable by any harness with a shell tool.
   - `@to-skills/target-fastmcp` — CLI-as-proxy adapter for the Python `fastmcp@^2` CLI; mirrors the mcpc adapter's shape with Python-side install instructions.
 
   `@to-skills/core` extensions (backward-compatible — existing extractors continue to produce non-MCP skills unchanged):
+
   - New IR fields on `ExtractedSkill`: `resources?: ExtractedResource[]`, `prompts?: ExtractedPrompt[]`, `setup?: SkillSetup`.
   - New types: `ExtractedResource`, `ExtractedPrompt`, `ExtractedPromptArgument`, `SkillSetup`, `AdapterFingerprint`, `InvocationAdapter`, `AdapterRenderContext`.
   - `renderSkill` extension points: `invocation` adapter dispatch with per-adapter context (`launchCommand`, `httpEndpoint`, `packageName`, `binName`); `additionalFrontmatter` for adapters that delegate body rendering to core; `bodyPrefix` for prepending Setup sections; `skipDefaultFunctionsRef` for adapters owning the Tools section; `canonicalize: false` for adapters that wrap core's renderer and post-process references.
@@ -188,6 +221,7 @@
 - Router skill: deduplicate sections, natural example queries
 
   Each section now has distinct content:
+
   - When to Use: package descriptions (broad)
   - Decision Tree: numbered routing
   - Routing Logic: @useWhen detail (only place)
@@ -242,6 +276,7 @@
 - Switch When to Use from tables to bullet lists, matching published skill conventions
 
   BREAKING: When to Use section now uses bullet lists instead of markdown tables.
+
   - Multi-source attribution: "Display images → use `Sprite`" (not table rows)
   - Avoid when: "**Do NOT use when:**" bullet list
   - NEVER rules: own "## NEVER" section (not folded into When to Use)
@@ -486,6 +521,7 @@
 - Progressive disclosure: SKILL.md is now a lean discovery document, with full API details in references/
 
   Skills now generate a file tree instead of a single monolithic file:
+
   - `SKILL.md` — frontmatter, overview, when-to-use, quick reference (~500 tokens)
   - `references/functions.md` — full function signatures, params, examples
   - `references/classes.md` — class details with constructors, methods, properties
