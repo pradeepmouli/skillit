@@ -112,11 +112,12 @@ export async function extractCliSkill(options: CliExtractionOptions): Promise<Ex
         sourceType: 'cli',
         options: []
       };
-      if (tags['useWhen'] !== undefined) autoSurface.useWhen = [tags['useWhen']];
-      if (tags['avoidWhen'] !== undefined) autoSurface.avoidWhen = [tags['avoidWhen']];
-      if (tags['pitfalls'] !== undefined) autoSurface.pitfalls = [tags['pitfalls']];
-      if (tags['remarks'] !== undefined) autoSurface.remarks = tags['remarks'];
-      if (tags['example'] !== undefined) autoSurface.usage = tags['example'];
+      // useWhen/avoidWhen/pitfalls are string[] on ExtractedConfigSurface; remarks/usage are plain strings.
+      if (tags.useWhen !== undefined) autoSurface.useWhen = [tags.useWhen];
+      if (tags.avoidWhen !== undefined) autoSurface.avoidWhen = [tags.avoidWhen];
+      if (tags.pitfalls !== undefined) autoSurface.pitfalls = [tags.pitfalls];
+      if (tags.remarks !== undefined) autoSurface.remarks = tags.remarks;
+      if (tags.example !== undefined) autoSurface.usage = tags.example;
       autoSurfaces.push(autoSurface);
     }
     configSurfaces = autoSurfaces;

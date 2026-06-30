@@ -43,12 +43,23 @@ export function readTagsAcross(
   candidates: string[],
   sources: Map<string, string>
 ): Partial<Record<RefineTag, string>> {
-  for (const iface of candidates) {
-    for (const src of sources.values()) {
-      if (!fileDeclaresInterface(src, iface)) continue;
-      const tags = readOptionsTags(iface, src);
-      if (Object.keys(tags).length > 0) return tags;
+  // Build a file index in a single pass over sources so we don't re-scan the
+  // same file once per candidate.  Candidates are still resolved in priority
+  // order after the index is built.
+  const ifaceIndex = new Map<string, string>();
+  for (const src of sources.values()) {
+    for (const iface of candidates) {
+      if (!ifaceIndex.has(iface) && fileDeclaresInterface(src, iface)) {
+        ifaceIndex.set(iface, src);
+      }
     }
+  }
+
+  for (const iface of candidates) {
+    const src = ifaceIndex.get(iface);
+    if (src === undefined) continue;
+    const tags = readOptionsTags(iface, src);
+    if (Object.keys(tags).length > 0) return tags;
   }
   return {};
 }
