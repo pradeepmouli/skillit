@@ -38,6 +38,17 @@ async function writeMcpFixture(): Promise<string> {
   return process.cwd();
 }
 
+async function writeTypedocFixture(): Promise<string> {
+  tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
+  await writeFile(
+    join(tmpDir, 'package.json'),
+    JSON.stringify({ name: 'my-lib', dependencies: {} })
+  );
+  await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+  process.chdir(tmpDir);
+  return process.cwd();
+}
+
 interface InstallCall {
   pkg: string;
   pm: string;
@@ -218,7 +229,7 @@ describe('buildInitCommand (install/wire only)', () => {
     expect(out).toMatch(/skillit gen/);
   });
 
-  it('installs @skillit/mcp and points at skillit mcp extract (not gen) for an mcp project', async () => {
+  it('installs @skillit/mcp and points at skillit gen --source mcp for an mcp project', async () => {
     await writeMcpFixture();
     const { deps, installCalls } = makeStubs();
     const { logged, restore } = captureLog();
@@ -229,10 +240,7 @@ describe('buildInitCommand (install/wire only)', () => {
     }
     const out = logged.join('\n');
     expect(installCalls[0]!.pkg).toBe('@skillit/mcp');
-    // mcp generation is via `skillit mcp extract`, not `skillit gen` (which does
-    // not support mcp this release) — init must point at the command that works.
-    expect(out).toMatch(/skillit mcp extract/);
-    expect(out).not.toMatch(/skillit gen --source mcp/);
+    expect(out).toMatch(/skillit gen --source mcp --mcp <path>/);
   });
 
   it('does not install for the config source (built in) and points at skillit gen', async () => {
@@ -253,6 +261,19 @@ describe('buildInitCommand (install/wire only)', () => {
     }
     expect(installCalls).toHaveLength(0);
     expect(logged.join('\n')).toMatch(/skillit gen --source config/);
+  });
+
+  it('installs typedoc plugin and points at skillit gen --source typedoc', async () => {
+    await writeTypedocFixture();
+    const { deps, installCalls } = makeStubs();
+    const { logged, restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    expect(installCalls[0]!.pkg).toBe('typedoc-plugin-skillit');
+    expect(logged.join('\n')).toMatch(/skillit gen --source typedoc/);
   });
 
   it('throws with the exact command on install failure', async () => {

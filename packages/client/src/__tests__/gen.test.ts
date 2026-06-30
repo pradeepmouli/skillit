@@ -127,6 +127,17 @@ describe('buildGenCommand', () => {
     expect(cliCalls[0]!.outDir).toBe(join(dir, 'generated-skills'));
   });
 
+  it('loads skillit.config.ts that imports defineConfig from @skillit/client', async () => {
+    const dir = await writeCliFixture();
+    await writeSkillitConfigFixture(`import { defineConfig } from '@skillit/client';
+
+export default defineConfig({ skillDir: 'generated-with-import' });
+`);
+    const { deps, cliCalls } = makeStubs();
+    await run(deps, ['--source', 'cli']);
+    expect(cliCalls[0]!.outDir).toBe(join(dir, 'generated-with-import'));
+  });
+
   it('uses per-plugin skillDir and token overrides from skillit.config.ts', async () => {
     const dir = await writeCliFixture();
     await writeSkillitConfigFixture(`export default {

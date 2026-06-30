@@ -1,6 +1,6 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, unlink, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export type SkillitPluginName = 'cli' | 'config' | 'mcp' | 'typedoc';
@@ -115,10 +115,29 @@ async function loadTypeScriptLikeConfig(path: string): Promise<unknown> {
         target: ts.ScriptTarget.ES2022
       }
     }).outputText;
-    const encoded = Buffer.from(transpiled, 'utf8').toString('base64');
-    const moduleUrl = `data:text/javascript;base64,${encoded}`;
-    const mod = (await import(moduleUrl)) as { default?: unknown };
-    return mod.default ?? {};
+    const helperName = `.skillit.config.helper-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`;
+    const helperPath = join(dirname(path), helperName);
+    const runtimePath = join(
+      dirname(path),
+      `.skillit.config.runtime-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`
+    );
+    const helperSpecifier = `./${basename(helperPath)}`;
+    const rewritten = transpiled
+      .replaceAll("'@skillit/client'", `'${helperSpecifier}'`)
+      .replaceAll('"@skillit/client"', `"${helperSpecifier}"`);
+    await writeFile(
+      helperPath,
+      `export function defineConfig(config) { return config; }\nexport const defineSkillitConfig = defineConfig;\n`,
+      'utf8'
+    );
+    await writeFile(runtimePath, rewritten, 'utf8');
+    try {
+      const mod = (await import(pathToFileURL(runtimePath).href)) as { default?: unknown };
+      return mod.default ?? {};
+    } finally {
+      await unlink(helperPath).catch(() => {});
+      await unlink(runtimePath).catch(() => {});
+    }
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to load ${path}: ${reason}`);
