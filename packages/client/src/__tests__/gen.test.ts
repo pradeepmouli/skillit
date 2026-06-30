@@ -109,7 +109,7 @@ describe('buildGenCommand', () => {
     await run(deps, ['--source', 'cli']);
     expect(cliCalls).toHaveLength(1);
     expect(cliCalls[0]!.outDir).toBe(join(dir, 'skills'));
-    expect(cliCalls[0]!.name).toBe('my-tool');
+    expect(cliCalls[0]!.name).toBe('scope-my-tool');
   });
 
   it('respects an explicit --out directory', async () => {
