@@ -106,7 +106,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
 
       if (opts.source === 'config') {
         const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'config');
-        const outDir = join(cwd, plugin.out);
+        const outDir = resolveOutDir(cwd, plugin.out);
         if (opts.configType === undefined) {
           throw new Error(
             'The config source requires --config-type <file#export> (e.g. ./src/config.ts#MyConfig).'
@@ -136,7 +136,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
         (opts.source === undefined && (opts.mcp !== undefined || nature === 'mcp'));
       if (isMcp) {
         const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'mcp');
-        const outDir = join(cwd, plugin.out);
+        const outDir = resolveOutDir(cwd, plugin.out);
         if (opts.mcp === undefined) {
           throw new Error(
             'The mcp source requires --mcp <path> (path to mcp.json or MCP config file).'
@@ -159,7 +159,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
       const isTypedoc = opts.source === 'typedoc' || nature === 'typedoc';
       if (isTypedoc) {
         const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'typedoc');
-        const outDir = join(cwd, plugin.out);
+        const outDir = resolveOutDir(cwd, plugin.out);
         const { entryPoints, tsconfig } = resolveTypeDocEntry(cwd);
         await generateTypeDocSkill({
           cwd,
@@ -183,7 +183,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
 
       if (resolution.kind === 'cli') {
         const plugin = resolvePluginOverrides(opts, loadedConfig.config, 'cli');
-        const outDir = join(cwd, plugin.out);
+        const outDir = resolveOutDir(cwd, plugin.out);
         const name = skillNameFrom(await readPackageName(cwd));
         const nature: RefineSourceKind = 'cli';
         await generateCliSkill({
@@ -225,6 +225,10 @@ function resolvePluginOverrides(
       ? { contentTypeMaxTokens }
       : {})
   };
+}
+
+function resolveOutDir(cwd: string, out: string): string {
+  return isAbsolute(out) ? out : join(cwd, out);
 }
 
 function extractContentTypeMaxTokens(
