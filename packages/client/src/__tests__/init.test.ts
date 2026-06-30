@@ -136,6 +136,8 @@ describe('postinstall wiring', () => {
     expect(script).toContain('replaceAll');
     expect(script).toContain('skills');
     expect(script).toContain('.claude');
+    expect(script).toContain('.github');
+    expect(script).toContain('.codex');
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
       scripts?: Record<string, string>;
     };

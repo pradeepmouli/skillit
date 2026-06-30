@@ -45,16 +45,23 @@ function copyDir(src, dest) {
 
 rewrite(skillsDir);
 
-const userSkillsDir = path.join(os.homedir(), '.claude', 'skills');
-try {
-  fs.mkdirSync(userSkillsDir, { recursive: true });
-  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    copyDir(path.join(skillsDir, entry.name), path.join(userSkillsDir, entry.name));
+const installTargets = [
+  path.join(os.homedir(), '.claude', 'skills'),
+  path.join(os.homedir(), '.github', 'skills'),
+  path.join(os.homedir(), '.codex', 'skills')
+];
+
+for (const userSkillsDir of installTargets) {
+  try {
+    fs.mkdirSync(userSkillsDir, { recursive: true });
+    for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      copyDir(path.join(skillsDir, entry.name), path.join(userSkillsDir, entry.name));
+    }
+    console.log('[skillit] Skills installed to ' + userSkillsDir);
+  } catch (err) {
+    console.warn('[skillit] Could not install skills to ' + userSkillsDir + ': ' + err.message);
   }
-  console.log('[skillit] Skills installed to ' + userSkillsDir);
-} catch (err) {
-  console.warn('[skillit] Could not install skills to ' + userSkillsDir + ': ' + err.message);
 }
 `;
 }

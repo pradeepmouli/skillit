@@ -50,10 +50,12 @@ README, examples, package.json) until the skill hits its grade target — you
 never hand-edit a `SKILL.md`.
 
 ```bash
-# Install the bundled skill into your project (one time)
+# Install the bundled skill into your agent root (one time)
 cp -R node_modules/@skillit/client/skills/skillit-bootstrap .claude/skills/
+cp -R node_modules/@skillit/client/skills/skillit-bootstrap .github/skills/
+cp -R node_modules/@skillit/client/skills/skillit-bootstrap .codex/skills/
 
-# Then, in Claude Code:
+# Then, in your agent:
 /skillit-bootstrap --source cli --program ./dist/cli.js#program
 /skillit-bootstrap --source typedoc
 ```
@@ -118,16 +120,14 @@ npx skillit gen --source config --config-type ./src/config.ts#MyConfig
 npx skillit gen --out docs/skills
 ```
 
-This release implements `gen` for the **cli** and **config** sources; `mcp` and
-`typedoc` generation land in a later phase (use `skillit mcp extract` for MCP
-servers meanwhile).
-
-| Flag                          | Default  | Description                              |
-| ----------------------------- | -------- | ---------------------------------------- |
-| `--source <cli\|config>`      | auto     | Source kind (cli/config this release)    |
-| `--program <file#export>`     | —        | Commander program entry (cli source)     |
-| `--config-type <file#export>` | —        | Config type entry (config source)        |
-| `--out <dir>`                 | `skills` | Output directory for the generated skill |
+| Flag                                   | Default  | Description                              |
+| -------------------------------------- | -------- | ---------------------------------------- |
+| `--source <cli\|config\|mcp\|typedoc>` | auto     | Source kind                              |
+| `--program <file#export>`              | —        | Commander program entry (cli source)     |
+| `--config-type <file#export>`          | —        | Config type entry (config source)        |
+| `--mcp <path>`                         | —        | MCP config path (mcp source)             |
+| `--server <name>`                      | —        | MCP server entry (mcp source)            |
+| `--out <dir>`                          | `skills` | Output directory for the generated skill |
 
 ### Audit: score + findings as JSON
 
@@ -144,15 +144,14 @@ npx skillit audit --source cli
 npx skillit audit --source config --config-type ./src/config.ts#MyConfig --json
 ```
 
-Like `gen`, `audit` supports the **cli** and **config** sources this release;
-`mcp` / `typedoc` land in a later phase.
-
-| Flag                          | Default | Description                            |
-| ----------------------------- | ------- | -------------------------------------- |
-| `--source <cli\|config>`      | auto    | Source kind (cli/config this release)  |
-| `--program <file#export>`     | —       | Commander program entry (cli source)   |
-| `--config-type <file#export>` | —       | Config type entry (config source)      |
-| `--json`                      | off     | Emit the full audit + estimate as JSON |
+| Flag                                   | Default | Description                            |
+| -------------------------------------- | ------- | -------------------------------------- |
+| `--source <cli\|config\|mcp\|typedoc>` | auto    | Source kind                            |
+| `--program <file#export>`              | —       | Commander program entry (cli source)   |
+| `--config-type <file#export>`          | —       | Config type entry (config source)      |
+| `--mcp <path>`                         | —       | MCP config path (mcp source)           |
+| `--server <name>`                      | —       | MCP server entry (mcp source)          |
+| `--json`                               | off     | Emit the full audit + estimate as JSON |
 
 ### Refine: autonomous annotation loop
 
@@ -264,181 +263,59 @@ export function loadConfig(path: string): Config { ... }
 
 `pnpm typedoc` → the generated skill tells every LLM _when_ to use this function, _what_ to watch out for, and _how_ to call it.
 
-## Quick Start by Project Type
+## Configuration (new approach)
 
-### TypeScript Library (most common)
+`skillit` now centralizes routing in `skillit.config.ts` (scaffolded by `skillit init`):
 
-```bash
-pnpm add -D typedoc-plugin-skillit
-pnpm typedoc
-```
-
-That's it. TypeDoc auto-discovers the plugin. Skills appear at `skills/<package-name>/SKILL.md`.
-
-### Monorepo
-
-```json
-// typedoc.json
-{
-  "entryPointStrategy": "packages",
-  "entryPoints": ["packages/*"],
-  "plugin": ["typedoc-plugin-skillit"],
-  "skillsPerPackage": true
-}
-```
-
-One skill per package — each with its own SKILL.md, references, and config surfaces.
-
-### CLI Tool (commander/yargs)
-
-```typescript
-import { extractCliSkill, writeCliSkill } from '@skillit/cli';
-
-const skill = await extractCliSkill({
-  program, // commander Program object
-  metadata: { name: 'my-tool', keywords: ['build', 'deploy'] }
-});
-
-writeCliSkill(skill, {
-  outDir: 'skills',
-  installTargets: ['.claude/skills']
-});
-```
-
-Introspects command definitions, correlates flags with typed `*Options` interfaces for JSDoc enrichment, surfaces CLI audit findings on `skill.audit`, and can install the generated skill plus bundled CLI guidance into agent discovery roots.
-
-### Library with Docs Site (VitePress)
-
-```typescript
-// .vitepress/config.mts
-import { defineConfig } from 'vitepress';
-import { toSkills } from '@skillit/vitepress';
+```ts
+import { defineConfig } from '@skillit/client';
 
 export default defineConfig({
-  vite: {
-    plugins: [toSkills({ skillsOutDir: 'skills' })]
-  },
-  themeConfig: { sidebar: [...] }
+  skillDir: 'skills',
+  plugins: {
+    cli: { skillDir: 'skills/cli' },
+    typedoc: { maxTokens: 4000 }
+  }
 });
 ```
 
-The VitePress plugin uses your sidebar for authoritative page ordering — no frontmatter heuristics.
+Use `skillDir` for global output defaults and `plugins.<source>` overrides for
+source-specific output/token behavior (`cli`, `config`, `mcp`, `typedoc`).
 
-### Library with Docs Site (Docusaurus)
+## Plugin/content-source routing matrix
 
-```typescript
-import { extractDocusaurusDocs } from '@skillit/docusaurus';
+| Plugin surface                                | Primary content source(s)                                      | Additional content source(s)                   |
+| --------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------- |
+| `@skillit/core`                               | Shared renderer + writer + token budgeting                     | README/docs/examples scanners                  |
+| `@skillit/cli`                                | Commander/yargs command trees + flags                          | Typed option-interface JSDoc correlation       |
+| `@skillit/typedoc` / `typedoc-plugin-skillit` | TypeScript API + JSDoc tags                                    | package.json metadata + optional docs/examples |
+| `@skillit/vitepress`                          | VitePress sidebar/doc pages                                    | Merged with typedoc/core output in one skill   |
+| `@skillit/docusaurus`                         | Docusaurus docs + `_category_.json`                            | Merged with typedoc/core output in one skill   |
+| `@skillit/mcp` (bundled)                      | MCP server introspection + invocation adapters                 | Package build metadata (`skillit.mcp`)         |
+| `@skillit/mcp` (runtime)                      | MCP runtime config (`mcp.json` / `claude_desktop_config.json`) | Runtime overlay JSON from refine               |
 
-const docs = extractDocusaurusDocs({ projectRoot: '.' });
-// Returns ExtractedDocument[] — merge into your skill
-```
+## Use-case routing matrix
 
-Reads `_category_.json` for folder labels and ordering. Excludes `api/` and `blog/` by default.
+| Use case                               | Primary plugin/source                            | Additional source(s)                                     |
+| -------------------------------------- | ------------------------------------------------ | -------------------------------------------------------- |
+| Monorepo / multi-use-case routing      | `typedoc` + `skillit.config.ts` plugin overrides | `core` docs/examples scanning                            |
+| CLI tool                               | `cli` (`skillit gen --source cli`)               | `core` + typed options JSDoc                             |
+| API/library                            | `typedoc` (`typedoc-plugin-skillit`)             | `core`, optionally `vitepress`/`docusaurus`              |
+| MCP server (owned, build mode)         | `mcp` (`skillit gen/audit/refine --source mcp`)  | `target-mcp-protocol` / `target-mcpc` / `target-fastmcp` |
+| MCP server (third-party, runtime mode) | `mcp` runtime (`--mcp <config>`)                 | Runtime overlay from `skillit refine`                    |
 
-### Library with Prose Docs (any framework)
+## Package readers
 
-```json
-// typedoc.json — opt-in alongside API extraction
-{
-  "plugin": ["typedoc-plugin-skillit"],
-  "skillsIncludeDocs": true,
-  "skillsDocsDir": "docs"
-}
-```
+For package-level details and options, use the package READMEs directly:
 
-Scans `docs/` directory for markdown files. Also picks up root-level docs (ARCHITECTURE.md, MIGRATION.md, TROUBLESHOOTING.md).
-
-## What Gets Extracted
-
-### Sources
-
-| Source                         | Extractor                                      | What It Produces                                                        |
-| ------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| TypeScript source + JSDoc      | `typedoc-plugin-skillit`                       | API reference — functions, classes, types, enums, variables             |
-| `@useWhen` / `@avoidWhen` tags | TypeDoc plugin                                 | Decision procedures in SKILL.md "When to Use"                           |
-| `@pitfalls` tag                | TypeDoc plugin                                 | Anti-patterns in SKILL.md "Pitfalls"                                    |
-| `@remarks` tag                 | TypeDoc plugin                                 | Expert knowledge in references                                          |
-| `@category` tag                | TypeDoc plugin                                 | Export grouping in Quick Reference + references                         |
-| `@config` interfaces           | TypeDoc plugin                                 | Configuration tables in SKILL.md + references/config.md                 |
-| Commander/yargs programs       | `@skillit/cli`                                 | CLI commands + flags in references/commands.md                          |
-| `examples/` directory          | `@skillit/core`                                | Linked to matching exports by import analysis                           |
-| `docs/` directory              | `@skillit/core` or VitePress/Docusaurus plugin | Prose docs as reference files                                           |
-| Root `.md` files               | `@skillit/core`                                | ARCHITECTURE.md, MIGRATION.md, etc. as references                       |
-| README.md                      | `@skillit/core`                                | Blockquote description, ## Features, ## Quick Start, ## Troubleshooting |
-| package.json                   | TypeDoc plugin                                 | Name, description, keywords, repository, license                        |
-
-### Audit Checks
-
-The documentation audit runs automatically during `pnpm typedoc` and reports issues at four severity levels:
-
-| Severity    | What It Checks                                                                                                                          | CI Behavior           |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **fatal**   | package.json description, 5+ keywords, README description, JSDoc on every export                                                        | Exit 1 (configurable) |
-| **error**   | @param prose, @returns on non-void, interface property JSDoc, at least one @example, repository URL                                     | Exit 1 (configurable) |
-| **warning** | @useWhen, @avoidWhen, @pitfalls presence, @remarks on complex functions, @category usage, README ## Features, README ## Troubleshooting | Exit 0 (logged)       |
-| **alert**   | Generic keywords, @param restates type, trivial @example, verbose Quick Start                                                           | Exit 0 (logged)       |
-
-Enable CI enforcement: `"skillsAuditFailOnError": true`
-
-### Generated Output
-
-```
-skills/<package-name>/
-  SKILL.md                     # Discovery file (~200 tokens)
-  references/
-    functions.md               # Grouped by @category or source module
-    types.md                   # Interfaces with properties, type aliases
-    classes.md                 # With inheritance, methods, properties
-    config.md                  # @config interfaces as option tables
-    commands.md                # CLI commands with flags (from @skillit/cli)
-    variables.md               # Exported constants
-    examples.md                # From @example tags
-    architecture.md            # From root ARCHITECTURE.md
-    getting-started.md         # From docs/ pages
-    ...                        # One file per doc page
-```
-
-Each reference file is token-budgeted independently (default 4000 tokens).
-
-## Packages
-
-| Package                                                        | Description                                                            |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`typedoc-plugin-skillit`](packages/typedoc-plugin)            | Auto-discovery wrapper — just install, no config                       |
-| [`@skillit/core`](packages/core)                               | Types, renderer, audit engine, token budgeting, docs/examples scanning |
-| [`@skillit/typedoc`](packages/typedoc)                         | TypeDoc plugin — API + config extraction from the reflection tree      |
-| [`@skillit/cli`](packages/cli)                                 | Commander/yargs introspection + `--help` fallback + flag correlation   |
-| [`@skillit/vitepress`](packages/vitepress)                     | VitePress Vite plugin — sidebar-driven docs extraction                 |
-| [`@skillit/docusaurus`](packages/docusaurus)                   | Docusaurus adapter — `_category_.json` + docs scanning                 |
-| [`@skillit/mcp`](packages/mcp)                                 | MCP extractor/bundler — introspect live servers and emit SKILL.md      |
-| [`@skillit/target-mcp-protocol`](packages/target-mcp-protocol) | MCP-native invocation target adapter for rendered skills               |
-| [`@skillit/target-mcpc`](packages/target-mcpc)                 | CLI-proxy invocation adapter via `mcpc`                                |
-| [`@skillit/target-fastmcp`](packages/target-fastmcp)           | CLI-proxy invocation adapter via Python `fastmcp` CLI                  |
-
-## Configuration
-
-```json
-{
-  "plugin": ["typedoc-plugin-skillit"],
-  "skillsOutDir": "skills",
-  "skillsPerPackage": true,
-  "skillsAudit": true,
-  "blockTags": ["@useWhen", "@avoidWhen", "@pitfalls", "@config"]
-}
-```
-
-| Option                   | Default    | Description                                     |
-| ------------------------ | ---------- | ----------------------------------------------- |
-| `skillsOutDir`           | `"skills"` | Output directory for SKILL.md files             |
-| `skillsInstallTargets`   | `[]`       | Additional agent discovery directories to sync  |
-| `skillsPerPackage`       | `true`     | One skill per package in monorepos              |
-| `skillsMaxTokens`        | `4000`     | Max token budget per reference file             |
-| `skillsAudit`            | `true`     | Run documentation audit during generation       |
-| `skillsAuditFailOnError` | `false`    | Fail build on fatal/error audit issues (for CI) |
-| `skillsIncludeDocs`      | `false`    | Include prose docs from `docs/` directory       |
-| `llmsTxt`                | `false`    | Generate llms.txt and llms-full.txt             |
-
-See the [full options reference](packages/typedoc/src/plugin.ts) for all 14 options.
+- [`packages/core/README.md`](packages/core/README.md)
+- [`packages/cli/README.md`](packages/cli/README.md)
+- [`packages/typedoc/README.md`](packages/typedoc/README.md)
+- [`packages/typedoc-plugin/README.md`](packages/typedoc-plugin/README.md)
+- [`packages/vitepress/README.md`](packages/vitepress/README.md)
+- [`packages/docusaurus/README.md`](packages/docusaurus/README.md)
+- [`packages/mcp/README.md`](packages/mcp/README.md)
+- [`packages/client/README.md`](packages/client/README.md)
 
 ## Examples
 

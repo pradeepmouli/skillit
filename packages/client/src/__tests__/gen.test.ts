@@ -119,6 +119,13 @@ describe('buildGenCommand', () => {
     expect(cliCalls[0]!.outDir).toBe(join(dir, 'docs/skills'));
   });
 
+  it('honours an absolute --out path as-is', async () => {
+    await writeCliFixture();
+    const { deps, cliCalls } = makeStubs();
+    await run(deps, ['--source', 'cli', '--out', '/tmp/skillit-abs-out']);
+    expect(cliCalls[0]!.outDir).toBe('/tmp/skillit-abs-out');
+  });
+
   it('uses skillDir from skillit.config.ts when --out is omitted', async () => {
     const dir = await writeCliFixture();
     await writeSkillitConfigFixture(`export default { skillDir: 'generated-skills' };\n`);
