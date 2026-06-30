@@ -47,8 +47,8 @@ rewrite(skillsDir);
 
 const installTargets = [
   path.join(os.homedir(), '.claude', 'skills'),
-  path.join(os.homedir(), '.github', 'skills'),
-  path.join(os.homedir(), '.codex', 'skills')
+  path.join(os.homedir(), '.copilot', 'skills'),
+  path.join(os.homedir(), '.agents', 'skills')
 ];
 
 for (const userSkillsDir of installTargets) {
@@ -60,7 +60,8 @@ for (const userSkillsDir of installTargets) {
     }
     console.log('[skillit] Skills installed to ' + userSkillsDir);
   } catch (err) {
-    console.warn('[skillit] Could not install skills to ' + userSkillsDir + ': ' + err.message);
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn('[skillit] Could not install skills to ' + userSkillsDir + ': ' + message);
   }
 }
 `;

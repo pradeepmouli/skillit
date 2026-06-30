@@ -37,9 +37,10 @@ skillit audit --source cli --program ./dist/cli.js#program --json
 ```
 
 For the agent-driven workflow (recommended), use the bundled
-`/skillit-bootstrap` skill — it is installed to the default local skill roots
-for Claude (`~/.claude/skills`), Copilot (`~/.github/skills`), and Codex
-(`~/.codex/skills`) by the postinstall hook.
+`/skillit-bootstrap` skill. This package includes the skill files, and generated
+CLI packages wired by `skillit init` install bundled skills to user roots via
+postinstall: Claude (`~/.claude/skills`), Copilot (`~/.copilot/skills`), and
+Codex (`~/.agents/skills`).
 
 ## License
 
