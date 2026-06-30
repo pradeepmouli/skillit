@@ -41,11 +41,12 @@ export interface GenCommandOpts {
   invocation?: string;
 }
 
-/** Strip a leading `@scope/` from a package name for a skill dir name. */
+/**
+ * Derive a collision-safe skill name from a package name.
+ * `@scope/name` → `scope-name`, `name` → `name`.
+ */
 function skillNameFrom(packageName: string): string {
-  const slash = packageName.indexOf('/');
-  if (packageName.startsWith('@') && slash !== -1) return packageName.slice(slash + 1);
-  return packageName;
+  return packageName.replace(/^@/, '').replace(/\//g, '-');
 }
 
 async function readPackageName(cwd: string): Promise<string> {

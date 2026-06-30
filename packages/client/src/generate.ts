@@ -24,7 +24,7 @@ export interface GenerateSkillOpts {
   cwd: string;
   /** Resolved project nature. */
   nature: RefineSourceKind;
-  /** Skill name (consumer package name, scope stripped). */
+  /** Skill name derived from the consumer package name (`@scope/name` → `scope-name`). */
   name: string;
   /** Absolute output directory (`<cwd>/<out>`). */
   outDir: string;
