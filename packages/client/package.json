@@ -37,6 +37,7 @@
     "@skillit/core": "workspace:*",
     "@skillit/mcp": "workspace:*",
     "@skillit/typedoc": "workspace:*",
-    "commander": "^15.0.0"
+    "commander": "^15.0.0",
+    "typescript": "^6.0.3"
   }
 }
