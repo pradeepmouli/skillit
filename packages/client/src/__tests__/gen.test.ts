@@ -115,6 +115,14 @@ describe('buildGenCommand', () => {
     expect(cliCalls[0]!.outDir).toBe(join(dir, 'docs/skills'));
   });
 
+  it('honours an absolute --out path as-is', async () => {
+    await writeCliFixture();
+    const { deps, cliCalls } = makeStubs();
+    const absOut = join(tmpdir(), 'skillit-abs-out-test');
+    await run(deps, ['--source', 'cli', '--out', absOut]);
+    expect(cliCalls[0]!.outDir).toBe(absOut);
+  });
+
   it('generates the config skill from --config-type', async () => {
     const dir = await writeConfigFixture();
     const { deps, configCalls } = makeStubs();

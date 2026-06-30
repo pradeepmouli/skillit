@@ -80,7 +80,7 @@ export function buildGenCommand(deps: GenDeps = {}): Command {
     )
     .action(async (opts: GenCommandOpts) => {
       const cwd = process.cwd();
-      const outDir = join(cwd, opts.out);
+      const outDir = isAbsolute(opts.out) ? opts.out : join(cwd, opts.out);
 
       // Detect the project nature at most once (it can spawn the project's CLI
       // bin). Only needed to auto-route when --source is omitted.
