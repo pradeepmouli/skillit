@@ -282,4 +282,16 @@ describe('readJsDocTags', () => {
       expect(readJsDocTags(src, 'f')).toEqual({ [tag]: content });
     }
   });
+
+  it('treats @never as an alias for pitfalls', () => {
+    const src = `/**\n * @never NEVER run this in production\n */\ninterface DeployOptions {}\n`;
+    expect(readJsDocTags(src, 'DeployOptions')).toEqual({
+      pitfalls: 'NEVER run this in production'
+    });
+  });
+
+  it('@never and @pitfalls both map to the same pitfalls key — last one wins', () => {
+    const src = `/**\n * @never first\n * @pitfalls second\n */\nexport function f() {}\n`;
+    expect(readJsDocTags(src, 'f')).toEqual({ pitfalls: 'second' });
+  });
 });

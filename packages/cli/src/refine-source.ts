@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { glob, readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import {
   findNearestPackageDir,
@@ -10,16 +10,18 @@ import {
   type ExtractedSkill,
   type PackageMetadata,
   type RefineSource,
-  type RefineTag,
   type TargetLocation
 } from '@skillit/core';
 import { Command } from 'commander';
 import { extractCliSkill } from './extract.js';
 import { introspectCommander } from './introspect-commander.js';
 import { applyNpxMode, type CliInvocationMode } from './npx-mode.js';
-import { readOptionsTags } from './options-jsdoc.js';
-
-const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.cache']);
+import {
+  fileDeclaresInterface,
+  interfaceNameCandidates,
+  readSources,
+  readTagsAcross
+} from './source-scan.js';
 
 export interface CliRefineSourceOptions {
   /** Commander program to introspect. */
@@ -48,29 +50,9 @@ export class CliRefineSource implements RefineSource {
 
   constructor(private readonly opts: CliRefineSourceOptions) {}
 
-  /**
-   * Candidate option-interface names for a command, in priority order.
-   *
-   * The documented convention is `<Command>Options` (e.g. `add-remote` →
-   * `AddRemoteOptions`, `db:migrate` → `DbMigrateOptions`), but real consumers —
-   * including skillit's own CLI — commonly name these `<Command>Opts` or
-   * `<Command>CommandOpts` (e.g. `init` → `InitOpts`, `refine` →
-   * `RefineCommandOpts`). We probe all three and use the first that a source
-   * file actually declares, so a non-conventional consumer still gets matched
-   * instead of silently skipped (or colliding with an unrelated `XOptions`).
-   */
-  private interfaceNameCandidates(command: string): string[] {
-    const pascal = command
-      .split(/[-_:.\s]+/)
-      .filter((part) => part.length > 0)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('');
-    return [`${pascal}Options`, `${pascal}Opts`, `${pascal}CommandOpts`];
-  }
-
   async extract(): Promise<ExtractedSkill> {
     const surfaces = introspectCommander(this.opts.program);
-    const sources = await this.readSources();
+    const sources = await readSources(this.opts.sourceGlob);
 
     // Load package metadata (package.json + README) from cwd; its fields are
     // written onto the IR below so the audit reads them directly from the skill.
@@ -79,8 +61,8 @@ export class CliRefineSource implements RefineSource {
 
     const configSurfaces: ExtractedConfigSurface[] = [];
     for (const surface of surfaces) {
-      const candidates = this.interfaceNameCandidates(surface.name);
-      const tags = this.readTagsAcross(candidates, sources);
+      const candidates = interfaceNameCandidates(surface.name);
+      const tags = readTagsAcross(candidates, sources);
 
       // Key the correlation-input surface by the COMMAND name (not the
       // interface name) so `extractCliSkill`'s `<command>`/`<command>options`
@@ -156,24 +138,24 @@ export class CliRefineSource implements RefineSource {
     kind: string;
     file?: string;
   }): Promise<TargetLocation | undefined> {
-    const sources = await this.readSources();
-    const candidates = this.interfaceNameCandidates(target.name);
+    const sources = await readSources(this.opts.sourceGlob);
+    const candidates = interfaceNameCandidates(target.name);
     for (const iface of candidates) {
-      const file = this.findInterfaceFile(iface, sources);
+      const file = findInterfaceFile(iface, sources);
       if (file) return { file, declName: iface };
     }
     return undefined;
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {
-    const sources = await this.readSources();
+    const sources = await readSources(this.opts.sourceGlob);
 
     for (const fix of fixes) {
-      const candidates = this.interfaceNameCandidates(fix.toolName);
+      const candidates = interfaceNameCandidates(fix.toolName);
       let iface: string | undefined;
       let file: string | undefined;
       for (const candidate of candidates) {
-        const found = this.findInterfaceFile(candidate, sources);
+        const found = findInterfaceFile(candidate, sources);
         if (found) {
           iface = candidate;
           file = found;
@@ -196,61 +178,18 @@ export class CliRefineSource implements RefineSource {
       }
     }
   }
-
-  /**
-   * Reads tags for the first candidate interface that a globbed source file
-   * declares with at least one tag. Candidates are tried in priority order so
-   * the documented `<Command>Options` name wins over the `Opts`/`CommandOpts`
-   * fallbacks when more than one is present.
-   */
-  private readTagsAcross(
-    candidates: string[],
-    sources: Map<string, string>
-  ): Partial<Record<RefineTag, string>> {
-    for (const iface of candidates) {
-      for (const src of sources.values()) {
-        if (!fileDeclaresInterface(src, iface)) {
-          continue;
-        }
-        const tags = readOptionsTags(iface, src);
-        if (Object.keys(tags).length > 0) {
-          return tags;
-        }
-      }
-    }
-    return {};
-  }
-
-  /** Globs the source files once and returns a file → contents map. */
-  private async readSources(): Promise<Map<string, string>> {
-    const sources = new Map<string, string>();
-    for await (const file of glob(this.opts.sourceGlob, {
-      exclude: (f) => f.endsWith('.d.ts') || f.split(/[\\/]/).some((seg) => EXCLUDED_DIRS.has(seg))
-    })) {
-      sources.set(file, await readFile(file, 'utf8'));
-    }
-    return sources;
-  }
-
-  private findInterfaceFile(iface: string, sources: Map<string, string>): string | undefined {
-    for (const [file, contents] of sources) {
-      if (fileDeclaresInterface(contents, iface)) {
-        return file;
-      }
-    }
-    return undefined;
-  }
 }
 
 /**
- * Returns whether `src` declares the interface named exactly `iface`.
- *
- * Matches on identifier boundaries so the probe for `GenOptions` does not
- * spuriously match `interface GenOptionsExtra`. Shared by file-selection
- * (`findInterfaceFile`) and tag-reading (`readTagsAcross`) so both agree on
- * what counts as the interface.
+ * Returns the file path from `sources` that declares the interface `iface`,
+ * or `undefined` if none does. Used by `resolveTargetLocation` and
+ * `applyFixes` to locate the file to edit.
  */
-function fileDeclaresInterface(src: string, iface: string): boolean {
-  const escaped = iface.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return src.match(new RegExp(String.raw`\binterface\s+${escaped}\b`)) !== null;
+function findInterfaceFile(iface: string, sources: Map<string, string>): string | undefined {
+  for (const [file, contents] of sources) {
+    if (fileDeclaresInterface(contents, iface)) {
+      return file;
+    }
+  }
+  return undefined;
 }

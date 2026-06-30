@@ -31,3 +31,9 @@ export { CliRefineSource } from './refine-source.js';
 export type { CliRefineSourceOptions } from './refine-source.js';
 export { applyNpxMode, resolveInvocationMode } from './npx-mode.js';
 export type { CliInvocationMode } from './npx-mode.js';
+export {
+  interfaceNameCandidates,
+  fileDeclaresInterface,
+  readTagsAcross,
+  readSources
+} from './source-scan.js';

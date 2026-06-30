@@ -1,7 +1,7 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Command } from 'commander';
 import { extractCliSkill, writeCliSkill } from '../src/extract.js';
 
@@ -207,5 +207,194 @@ describe('extractCliSkill', () => {
       rmSync(outDir, { recursive: true, force: true });
       rmSync(installDir, { recursive: true, force: true });
     }
+  });
+
+  describe('JSDoc correlation via sourceGlob', () => {
+    let tmpDir: string;
+
+    afterEach(() => {
+      if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it('emits a warning to stderr when CLI surfaces are present but no JSDoc correlation source is provided', async () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      try {
+        const program = new Command().name('tool');
+        program.command('build').option('--watch', 'Watch mode');
+
+        await extractCliSkill({ program, metadata: { name: 'tool' } });
+
+        expect(stderrSpy).toHaveBeenCalledWith(
+          expect.stringContaining('[skillit] extractCliSkill: no JSDoc correlation source provided')
+        );
+      } finally {
+        stderrSpy.mockRestore();
+      }
+    });
+
+    it('does not emit a warning when configSurfaces is explicitly provided (even if empty)', async () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      try {
+        const program = new Command().name('tool');
+        program.command('build').option('--watch', 'Watch mode');
+
+        await extractCliSkill({ program, metadata: { name: 'tool' }, configSurfaces: [] });
+
+        expect(stderrSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('[skillit] extractCliSkill: no JSDoc correlation source provided')
+        );
+      } finally {
+        stderrSpy.mockRestore();
+      }
+    });
+
+    it('does not emit a warning when sourceGlob is provided', async () => {
+      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-srcglob-'));
+      writeFileSync(
+        path.join(tmpDir, 'build.ts'),
+        '/** @useWhen You want to build */\ninterface BuildOptions {}\n'
+      );
+
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      try {
+        const program = new Command().name('tool');
+        program.command('build').option('--watch', 'Watch mode');
+
+        await extractCliSkill({
+          program,
+          metadata: { name: 'tool' },
+          sourceGlob: path.join(tmpDir, '*.ts')
+        });
+
+        expect(stderrSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('[skillit] extractCliSkill: no JSDoc correlation source provided')
+        );
+      } finally {
+        stderrSpy.mockRestore();
+      }
+    });
+
+    it('does not emit a warning when no CLI surfaces are extracted (no program or helpTexts)', async () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      try {
+        await extractCliSkill({ metadata: { name: 'empty' } });
+
+        expect(stderrSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('[skillit] extractCliSkill: no JSDoc correlation source provided')
+        );
+      } finally {
+        stderrSpy.mockRestore();
+      }
+    });
+
+    it('auto-correlates @useWhen from interface via sourceGlob', async () => {
+      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-srcglob-'));
+      writeFileSync(
+        path.join(tmpDir, 'options.ts'),
+        [
+          '/**',
+          ' * @useWhen You want to watch file changes',
+          ' * @avoidWhen Running in CI',
+          ' */',
+          'interface BuildOptions {',
+          '  watch?: boolean;',
+          '}'
+        ].join('\n')
+      );
+
+      const program = new Command().name('tool');
+      program.command('build').option('--watch', 'Watch mode');
+
+      const skill = await extractCliSkill({
+        program,
+        metadata: { name: 'tool' },
+        sourceGlob: path.join(tmpDir, '*.ts')
+      });
+
+      const buildSurface = skill.configSurfaces?.find((s) => s.name === 'build');
+      expect(buildSurface).toBeDefined();
+      expect(buildSurface!.useWhen).toContain('You want to watch file changes');
+      expect(buildSurface!.avoidWhen).toContain('Running in CI');
+    });
+
+    it('auto-correlates @never (pitfalls) from interface via sourceGlob', async () => {
+      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-srcglob-'));
+      writeFileSync(
+        path.join(tmpDir, 'options.ts'),
+        [
+          '/**',
+          ' * @never NEVER use watch mode in production',
+          ' */',
+          'interface BuildOptions {',
+          '  watch?: boolean;',
+          '}'
+        ].join('\n')
+      );
+
+      const program = new Command().name('tool');
+      program.command('build').option('--watch', 'Watch mode');
+
+      const skill = await extractCliSkill({
+        program,
+        metadata: { name: 'tool' },
+        sourceGlob: path.join(tmpDir, '*.ts')
+      });
+
+      const buildSurface = skill.configSurfaces?.find((s) => s.name === 'build');
+      expect(buildSurface).toBeDefined();
+      expect(buildSurface!.pitfalls).toContain('NEVER use watch mode in production');
+    });
+
+    it('sourceGlob is ignored when configSurfaces is explicitly provided', async () => {
+      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-srcglob-'));
+      writeFileSync(
+        path.join(tmpDir, 'options.ts'),
+        '/** @useWhen From sourceGlob */\ninterface BuildOptions {}\n'
+      );
+
+      const program = new Command().name('tool');
+      program.command('build').option('--watch', 'Watch mode');
+
+      const skill = await extractCliSkill({
+        program,
+        metadata: { name: 'tool' },
+        sourceGlob: path.join(tmpDir, '*.ts'),
+        configSurfaces: [
+          {
+            name: 'build',
+            description: '',
+            sourceType: 'cli',
+            options: [],
+            useWhen: ['From configSurfaces']
+          }
+        ]
+      });
+
+      const buildSurface = skill.configSurfaces?.find((s) => s.name === 'build');
+      expect(buildSurface).toBeDefined();
+      expect(buildSurface!.useWhen).toContain('From configSurfaces');
+      expect(buildSurface!.useWhen).not.toContain('From sourceGlob');
+    });
+
+    it('matches <Command>Opts interface name convention via sourceGlob', async () => {
+      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'skillit-srcglob-'));
+      writeFileSync(
+        path.join(tmpDir, 'options.ts'),
+        '/** @useWhen You need to deploy */\ninterface DeployOpts {}\n'
+      );
+
+      const program = new Command().name('tool');
+      program.command('deploy').option('--env <env>', 'Target environment');
+
+      const skill = await extractCliSkill({
+        program,
+        metadata: { name: 'tool' },
+        sourceGlob: path.join(tmpDir, '*.ts')
+      });
+
+      const deploySurface = skill.configSurfaces?.find((s) => s.name === 'deploy');
+      expect(deploySurface).toBeDefined();
+      expect(deploySurface!.useWhen).toContain('You need to deploy');
+    });
   });
 });

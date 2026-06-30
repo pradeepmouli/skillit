@@ -13,6 +13,7 @@ import { introspectCommander } from './introspect-commander.js';
 import { parseHelpOutput } from './help-parser.js';
 import { correlateFlags } from './correlator.js';
 import { runCliAudit } from './audit.js';
+import { interfaceNameCandidates, readSources, readTagsAcross } from './source-scan.js';
 
 export interface CliExtractionOptions {
   /** Commander program object (preferred) */
@@ -27,8 +28,30 @@ export interface CliExtractionOptions {
     repository?: string;
     author?: string;
   };
-  /** Config surfaces from TypeDoc for JSDoc correlation */
+  /**
+   * Config surfaces from TypeDoc for JSDoc correlation.
+   *
+   * Supply these when you have already run a TypeDoc pass and want to thread
+   * the extracted config-surface metadata (e.g. `@never`, `@useWhen`,
+   * `@avoidWhen`) into the skill.  Mutually exclusive with `sourceGlob` —
+   * when both are provided, `configSurfaces` takes precedence and
+   * `sourceGlob` is ignored.
+   */
   configSurfaces?: ExtractedConfigSurface[];
+  /**
+   * Glob pattern for the TypeScript source files that declare typed option
+   * interfaces (e.g. `"src/**\/*.ts"`).
+   *
+   * When provided and `configSurfaces` is not supplied, `extractCliSkill`
+   * automatically scans the matching files for JSDoc block tags
+   * (`@useWhen`, `@avoidWhen`, `@never`/`@pitfalls`, `@remarks`, `@example`)
+   * on `<Command>Options` / `<Command>Opts` / `<Command>CommandOpts`
+   * interfaces and correlates them into the generated skill — without
+   * requiring a separate TypeDoc pass.
+   *
+   * @example "src/**\/*.ts"
+   */
+  sourceGlob?: string;
 }
 
 export interface CliWriteOptions
@@ -54,10 +77,11 @@ export interface CliWriteOptions
  * - Your CLI is built with a framework other than Commander — use parseHelpOutput directly instead
  * @never
  * - NEVER pass both `program` and `helpTexts` — program takes precedence and helpTexts is silently ignored
- * - NEVER forget to pass configSurfaces when you have typed option interfaces — JSDoc metadata won't be correlated
+ * - NEVER omit both `configSurfaces` and `sourceGlob` when your commands have typed option interfaces — JSDoc metadata (@never/@useWhen/@avoidWhen) will not be correlated and the generated skill will be missing its guidance sections
  */
 export async function extractCliSkill(options: CliExtractionOptions): Promise<ExtractedSkill> {
-  const { program, helpTexts, metadata = {}, configSurfaces = [] } = options;
+  const { program, helpTexts, metadata = {}, sourceGlob } = options;
+  let configSurfaces = options.configSurfaces ?? [];
 
   // Extract command structure (introspection or help)
   let cliSurfaces: ExtractedConfigSurface[] = [];
@@ -67,6 +91,49 @@ export async function extractCliSkill(options: CliExtractionOptions): Promise<Ex
   } else if (helpTexts !== undefined) {
     cliSurfaces = Object.entries(helpTexts).map(([commandName, text]) =>
       parseHelpOutput(text, commandName)
+    );
+  }
+
+  // Auto-scan source files for JSDoc tags when sourceGlob is provided but
+  // explicit configSurfaces were not. Reads @useWhen/@avoidWhen/@never/@remarks
+  // from <Command>Options / <Command>Opts / <Command>CommandOpts interfaces
+  // without requiring a TypeDoc pass.
+  if (sourceGlob !== undefined && options.configSurfaces === undefined && cliSurfaces.length > 0) {
+    const sources = await readSources(sourceGlob);
+    const autoSurfaces: ExtractedConfigSurface[] = [];
+    for (const cliSurface of cliSurfaces) {
+      const candidates = interfaceNameCandidates(cliSurface.name);
+      const tags = readTagsAcross(candidates, sources);
+      if (Object.keys(tags).length === 0) continue;
+
+      const autoSurface: ExtractedConfigSurface = {
+        name: cliSurface.name,
+        description: '',
+        sourceType: 'cli',
+        options: []
+      };
+      if (tags['useWhen'] !== undefined) autoSurface.useWhen = [tags['useWhen']];
+      if (tags['avoidWhen'] !== undefined) autoSurface.avoidWhen = [tags['avoidWhen']];
+      if (tags['pitfalls'] !== undefined) autoSurface.pitfalls = [tags['pitfalls']];
+      if (tags['remarks'] !== undefined) autoSurface.remarks = tags['remarks'];
+      if (tags['example'] !== undefined) autoSurface.usage = tags['example'];
+      autoSurfaces.push(autoSurface);
+    }
+    configSurfaces = autoSurfaces;
+  }
+
+  // Warn when CLI surfaces were extracted but no JSDoc correlation source was
+  // provided. The generated skill will be missing its NEVER/useWhen sections
+  // if typed option interfaces carry those tags.
+  if (
+    cliSurfaces.length > 0 &&
+    options.configSurfaces === undefined &&
+    options.sourceGlob === undefined
+  ) {
+    process.stderr.write(
+      '[skillit] extractCliSkill: no JSDoc correlation source provided — ' +
+        '@never/@useWhen/@avoidWhen from typed option interfaces will not appear in the generated skill. ' +
+        'Pass `sourceGlob` (e.g. "src/**/*.ts") to auto-detect, or supply `configSurfaces` manually.\n'
     );
   }
 

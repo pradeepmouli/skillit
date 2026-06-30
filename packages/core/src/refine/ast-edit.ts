@@ -28,6 +28,16 @@ const _exhaustive: never = undefined as MissingTags;
 void _exhaustive;
 
 /**
+ * JSDoc tag aliases: non-canonical tags that map to their canonical RefineTag
+ * counterpart. `@never` is the primary authoring alias for `@pitfalls` — the
+ * TypeDoc extractor already handles this mapping, and this table keeps the
+ * text-based reader (`readJsDocTags`) symmetric with it.
+ */
+const TAG_ALIASES: Record<string, RefineTag> = {
+  never: 'pitfalls'
+};
+
+/**
  * True when `node` is a top-level declaration named `declName`.
  * Handles: function_declaration, class_declaration, abstract_class_declaration,
  * interface_declaration, enum_declaration, type_alias_declaration, and
@@ -334,7 +344,9 @@ export function readJsDocTags(
   let current: RefineTag | undefined;
   for (const line of innerLines) {
     const tagMatch = line.match(/^@(\w+)\s?(.*)$/);
-    const matchedTag = tagMatch ? REFINE_TAGS.find((t) => t === tagMatch[1]) : undefined;
+    const matchedTag = tagMatch
+      ? (REFINE_TAGS.find((t) => t === tagMatch[1]) ?? TAG_ALIASES[tagMatch[1]])
+      : undefined;
     if (matchedTag) {
       current = matchedTag;
       collected[current] = [tagMatch![2] ?? ''];
