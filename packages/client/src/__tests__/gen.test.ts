@@ -120,10 +120,11 @@ describe('buildGenCommand', () => {
   });
 
   it('honours an absolute --out path as-is', async () => {
-    await writeCliFixture();
+    const dir = await writeCliFixture();
+    const absoluteOut = join(dir, 'skillit-abs-out');
     const { deps, cliCalls } = makeStubs();
-    await run(deps, ['--source', 'cli', '--out', '/tmp/skillit-abs-out']);
-    expect(cliCalls[0]!.outDir).toBe('/tmp/skillit-abs-out');
+    await run(deps, ['--source', 'cli', '--out', absoluteOut]);
+    expect(cliCalls[0]!.outDir).toBe(absoluteOut);
   });
 
   it('uses skillDir from skillit.config.ts when --out is omitted', async () => {

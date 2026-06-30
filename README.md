@@ -50,10 +50,11 @@ README, examples, package.json) until the skill hits its grade target — you
 never hand-edit a `SKILL.md`.
 
 ```bash
-# Install the bundled skill into your agent root (one time)
-cp -R node_modules/@skillit/client/skills/skillit-bootstrap .claude/skills/
-cp -R node_modules/@skillit/client/skills/skillit-bootstrap .github/skills/
-cp -R node_modules/@skillit/client/skills/skillit-bootstrap .codex/skills/
+# Install the bundled skill into your user skill roots (one time)
+mkdir -p ~/.claude/skills ~/.copilot/skills ~/.agents/skills
+cp -R node_modules/@skillit/client/skills/skillit-bootstrap ~/.claude/skills/
+cp -R node_modules/@skillit/client/skills/skillit-bootstrap ~/.copilot/skills/
+cp -R node_modules/@skillit/client/skills/skillit-bootstrap ~/.agents/skills/
 
 # Then, in your agent:
 /skillit-bootstrap --source cli --program ./dist/cli.js#program
