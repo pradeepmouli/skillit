@@ -344,12 +344,13 @@ export function readJsDocTags(
   let current: RefineTag | undefined;
   for (const line of innerLines) {
     const tagMatch = line.match(/^@(\w+)\s?(.*)$/);
-    const matchedTag = tagMatch
-      ? (REFINE_TAGS.find((t) => t === tagMatch[1]) ?? TAG_ALIASES[tagMatch[1]])
+    const rawTag: string | undefined = tagMatch?.[1];
+    const matchedTag: RefineTag | undefined = rawTag
+      ? (REFINE_TAGS.find((t) => t === rawTag) ?? TAG_ALIASES[rawTag])
       : undefined;
     if (matchedTag) {
       current = matchedTag;
-      collected[current] = [tagMatch![2] ?? ''];
+      collected[matchedTag] = [tagMatch![2] ?? ''];
     } else if (current) {
       collected[current]!.push(line);
     }
