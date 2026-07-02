@@ -29,7 +29,7 @@ function makeConfigOption(overrides: Partial<ExtractedConfigOption> = {}): Extra
     remarks: 'Takes precedence over tsconfig outDir',
     useWhen: ['Targeting a custom output location'],
     avoidWhen: ['Using defaults — omit to inherit from tsconfig'],
-    pitfalls: ['Must be a relative path'],
+    never: ['Must be a relative path'],
     category: 'Output',
     ...overrides
   };
@@ -55,7 +55,7 @@ function makeConfigSurface(
     options: [makeConfigOption()],
     useWhen: ['You need to produce production artifacts'],
     avoidWhen: ['Running in CI with pre-built artifacts'],
-    pitfalls: ['Always clean dist/ before building'],
+    never: ['Always clean dist/ before building'],
     remarks: 'Requires Node >=18',
     ...overrides
   };
@@ -72,7 +72,7 @@ describe('correlateFlags — basic merging', () => {
     expect(opt.remarks).toBe('Takes precedence over tsconfig outDir');
     expect(opt.useWhen).toEqual(['Targeting a custom output location']);
     expect(opt.avoidWhen).toEqual(['Using defaults — omit to inherit from tsconfig']);
-    expect(opt.pitfalls).toEqual(['Must be a relative path']);
+    expect(opt.never).toEqual(['Must be a relative path']);
     expect(opt.category).toBe('Output');
   });
 
@@ -107,7 +107,7 @@ describe('correlateFlags — command-level tag merging', () => {
     const result = correlateFlags(cli, makeConfigSurface());
     expect(result.useWhen).toEqual(['You need to produce production artifacts']);
     expect(result.avoidWhen).toEqual(['Running in CI with pre-built artifacts']);
-    expect(result.pitfalls).toEqual(['Always clean dist/ before building']);
+    expect(result.never).toEqual(['Always clean dist/ before building']);
     expect(result.remarks).toBe('Requires Node >=18');
   });
 
@@ -115,13 +115,13 @@ describe('correlateFlags — command-level tag merging', () => {
     const cli = makeCLISurface({
       useWhen: ['CLI-specific use case'],
       avoidWhen: ['CLI-specific avoid'],
-      pitfalls: ['CLI-specific pitfall'],
+      never: ['CLI-specific pitfall'],
       remarks: 'CLI-specific remarks'
     });
     const result = correlateFlags(cli, makeConfigSurface());
     expect(result.useWhen).toEqual(['CLI-specific use case']);
     expect(result.avoidWhen).toEqual(['CLI-specific avoid']);
-    expect(result.pitfalls).toEqual(['CLI-specific pitfall']);
+    expect(result.never).toEqual(['CLI-specific pitfall']);
     expect(result.remarks).toBe('CLI-specific remarks');
   });
 });

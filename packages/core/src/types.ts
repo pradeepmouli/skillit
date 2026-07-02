@@ -77,7 +77,7 @@ export interface ExtractedSkill {
     sourceDescription?: string;
   }>;
   /** Aggregated @never from all exports */
-  pitfalls?: string[];
+  never?: string[];
   /** Configuration surfaces (CLI commands, config files) */
   configSurfaces?: ExtractedConfigSurface[];
   /** Features section from README — rendered inline in SKILL.md */
@@ -325,7 +325,7 @@ export interface ExtractedFunctionMcpMetadata {
   readonly skillit?: {
     readonly useWhen?: readonly string[];
     readonly avoidWhen?: readonly string[];
-    readonly pitfalls?: readonly string[];
+    readonly never?: readonly string[];
     readonly malformedReason?: string;
   };
   /** Schema-introspection failures that MCP audit rules should surface. */

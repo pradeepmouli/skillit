@@ -273,9 +273,9 @@ function targetsForMissingTag(
     .map((f) => ({ file: fileForModule(f.sourceModule), name: f.name, kind: 'function' }));
 
   // CLI command surfaces and config options also carry useWhen / avoidWhen /
-  // pitfalls. Only emit targets for the tags that the surface model holds.
-  const SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'pitfalls'] as const);
-  type SurfaceTag = 'useWhen' | 'avoidWhen' | 'pitfalls';
+  // never. Only emit targets for the tags that the surface model holds.
+  const SURFACE_TAGS = new Set(['useWhen', 'avoidWhen', 'never'] as const);
+  type SurfaceTag = 'useWhen' | 'avoidWhen' | 'never';
 
   // CLI surfaces are tagged at the surface (command) level: the target is the
   // command name, which the CliRefineSource maps to its `<Command>Options`
@@ -308,7 +308,7 @@ function targetsForMissingTag(
  */
 function configOptionTargetsForTag(
   skill: ExtractedSkill,
-  tag: 'useWhen' | 'avoidWhen' | 'pitfalls'
+  tag: 'useWhen' | 'avoidWhen' | 'never'
 ): ImprovementTarget[] {
   return (skill.configSurfaces ?? [])
     .filter((s) => s.sourceType === 'config')
@@ -424,11 +424,11 @@ function buildImprovements(
   // D3: highest gain is W9 (+8)
   if (dims.d3 < MAX_D3 * 0.8) {
     if (!passes(audit, 'W9')) {
-      const targets = skill ? targetsForMissingTag(skill, 'pitfalls') : undefined;
+      const targets = skill ? targetsForMissingTag(skill, 'never') : undefined;
       suggestions.push({
         gain: 8,
         imp: {
-          suggestion: 'Add @pitfalls (never-do) annotation to key exports (+8 on D3)',
+          suggestion: 'Add @never (never-do) annotation to key exports (+8 on D3)',
           points: 8,
           dimension: 'D3',
           targets: targets && targets.length > 0 ? targets : undefined
@@ -686,8 +686,8 @@ function buildImprovements(
   // tag — OUTSIDE the top-3 cap — carrying every still-untagged option, so the
   // loop documents the whole surface, not just enough to clear the rubric.
   if (skill) {
-    const ROUTING: ReadonlyArray<{ tag: 'pitfalls' | 'useWhen' | 'avoidWhen'; points: number }> = [
-      { tag: 'pitfalls', points: 3 },
+    const ROUTING: ReadonlyArray<{ tag: 'never' | 'useWhen' | 'avoidWhen'; points: number }> = [
+      { tag: 'never', points: 3 },
       { tag: 'useWhen', points: 2 },
       { tag: 'avoidWhen', points: 2 }
     ];
@@ -697,7 +697,7 @@ function buildImprovements(
         top.push({
           suggestion: `Add @${tag} to every config option for full per-option coverage`,
           points,
-          dimension: tag === 'pitfalls' ? 'D3' : 'D2',
+          dimension: tag === 'never' ? 'D3' : 'D2',
           targets
         });
       }

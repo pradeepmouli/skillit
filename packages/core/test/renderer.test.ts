@@ -1602,10 +1602,10 @@ describe('renderSkill — Documentation section in SKILL.md', () => {
 });
 
 describe('renderSkill — @never in SKILL.md', () => {
-  it('renders NEVER section when pitfalls are present', () => {
+  it('renders NEVER section when never is present', () => {
     const skill: ExtractedSkill = {
       ...minimalSkill,
-      pitfalls: ['Forgetting to await async calls', 'Not handling null returns']
+      never: ['Forgetting to await async calls', 'Not handling null returns']
     };
 
     const { skill: s } = renderSkill(skill);
@@ -1614,7 +1614,7 @@ describe('renderSkill — @never in SKILL.md', () => {
     expect(s.content).toContain('- Not handling null returns');
   });
 
-  it('omits NEVER section when pitfalls is empty/absent', () => {
+  it('omits NEVER section when never is empty/absent', () => {
     const { skill: s } = renderSkill(minimalSkill);
     expect(s.content).not.toContain('## NEVER');
   });
@@ -1634,16 +1634,16 @@ describe('renderSkill — @never in SKILL.md', () => {
           tags: {}
         }
       ],
-      pitfalls: ['Watch out for this']
+      never: ['Watch out for this']
     };
 
     const { skill: s } = renderSkill(skill);
     const content = s.content;
     const whenIdx = content.indexOf('## When to Use');
-    const pitfallsIdx = content.indexOf('## NEVER');
+    const neverIdx = content.indexOf('## NEVER');
     const quickRefIdx = content.indexOf('## Quick Reference');
-    expect(whenIdx).toBeLessThan(pitfallsIdx);
-    expect(pitfallsIdx).toBeLessThan(quickRefIdx);
+    expect(whenIdx).toBeLessThan(neverIdx);
+    expect(neverIdx).toBeLessThan(quickRefIdx);
   });
 });
 
@@ -1898,16 +1898,16 @@ describe('renderSkill — readmeTroubleshooting in SKILL.md', () => {
           tags: {}
         }
       ],
-      pitfalls: ['Watch out'],
+      never: ['Watch out'],
       readmeTroubleshooting: 'TROUBLESHOOTING_CONTENT'
     };
 
     const { skill: s } = renderSkill(skill);
     const content = s.content;
-    const pitfallsIdx = content.indexOf('**NEVER:**');
+    const neverIdx = content.indexOf('**NEVER:**');
     const troubleshootingIdx = content.indexOf('## Troubleshooting');
     const quickRefIdx = content.indexOf('## Quick Reference');
-    expect(pitfallsIdx).toBeLessThan(troubleshootingIdx);
+    expect(neverIdx).toBeLessThan(troubleshootingIdx);
     expect(troubleshootingIdx).toBeLessThan(quickRefIdx);
   });
 });

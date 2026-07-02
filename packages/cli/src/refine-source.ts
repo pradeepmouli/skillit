@@ -102,8 +102,8 @@ export class CliRefineSource implements RefineSource {
         configSurface.avoidWhen = [tags.avoidWhen];
         hasContent = true;
       }
-      if (tags.pitfalls !== undefined) {
-        configSurface.pitfalls = [tags.pitfalls];
+      if (tags.never !== undefined) {
+        configSurface.never = [tags.never];
         hasContent = true;
       }
       if (tags.remarks !== undefined) {

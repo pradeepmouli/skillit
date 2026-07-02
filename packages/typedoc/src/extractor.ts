@@ -687,12 +687,12 @@ function extractConfigOption(decl: DeclarationReflection): ExtractedConfigOption
   const comment = decl.comment;
   const useWhenTag = comment?.getTag('@useWhen');
   const avoidWhenTag = comment?.getTag('@avoidWhen');
-  const pitfallsTag = comment?.getTag('@never');
+  const neverTag = comment?.getTag('@never');
   const remarksTag = comment?.getTag('@remarks');
 
   const useWhenText = useWhenTag?.content.map((p) => p.text).join('') ?? '';
   const avoidWhenText = avoidWhenTag?.content.map((p) => p.text).join('') ?? '';
-  const pitfallsText = pitfallsTag?.content.map((p) => p.text).join('') ?? '';
+  const neverText = neverTag?.content.map((p) => p.text).join('') ?? '';
   const remarksText =
     remarksTag?.content
       .map((p) => p.text)
@@ -701,7 +701,7 @@ function extractConfigOption(decl: DeclarationReflection): ExtractedConfigOption
 
   const useWhen = useWhenText ? parseBulletList(useWhenText) : undefined;
   const avoidWhen = avoidWhenText ? parseBulletList(avoidWhenText) : undefined;
-  const pitfalls = pitfallsText ? parseBulletList(pitfallsText) : undefined;
+  const never = neverText ? parseBulletList(neverText) : undefined;
 
   return {
     name: decl.name,
@@ -710,7 +710,7 @@ function extractConfigOption(decl: DeclarationReflection): ExtractedConfigOption
     required: !decl.flags.isOptional,
     ...(useWhen && useWhen.length > 0 ? { useWhen } : {}),
     ...(avoidWhen && avoidWhen.length > 0 ? { avoidWhen } : {}),
-    ...(pitfalls && pitfalls.length > 0 ? { pitfalls } : {}),
+    ...(never && never.length > 0 ? { never } : {}),
     ...(remarksText ? { remarks: remarksText } : {}),
     category: getCategory(comment)
   };
@@ -730,12 +730,12 @@ function extractConfigSurface(decl: DeclarationReflection): ExtractedConfigSurfa
   const comment = decl.comment;
   const useWhenTag = comment?.getTag('@useWhen');
   const avoidWhenTag = comment?.getTag('@avoidWhen');
-  const pitfallsTag = comment?.getTag('@never');
+  const neverTag = comment?.getTag('@never');
   const remarksTag = comment?.getTag('@remarks');
 
   const useWhenText = useWhenTag?.content.map((p) => p.text).join('') ?? '';
   const avoidWhenText = avoidWhenTag?.content.map((p) => p.text).join('') ?? '';
-  const pitfallsText = pitfallsTag?.content.map((p) => p.text).join('') ?? '';
+  const neverText = neverTag?.content.map((p) => p.text).join('') ?? '';
   const remarksText =
     remarksTag?.content
       .map((p) => p.text)
@@ -744,7 +744,7 @@ function extractConfigSurface(decl: DeclarationReflection): ExtractedConfigSurfa
 
   const useWhen = useWhenText ? parseBulletList(useWhenText) : undefined;
   const avoidWhen = avoidWhenText ? parseBulletList(avoidWhenText) : undefined;
-  const pitfalls = pitfallsText ? parseBulletList(pitfallsText) : undefined;
+  const never = neverText ? parseBulletList(neverText) : undefined;
 
   return {
     name: decl.name,
@@ -753,7 +753,7 @@ function extractConfigSurface(decl: DeclarationReflection): ExtractedConfigSurfa
     options,
     ...(useWhen && useWhen.length > 0 ? { useWhen } : {}),
     ...(avoidWhen && avoidWhen.length > 0 ? { avoidWhen } : {}),
-    ...(pitfalls && pitfalls.length > 0 ? { pitfalls } : {}),
+    ...(never && never.length > 0 ? { never } : {}),
     ...(remarksText ? { remarks: remarksText } : {})
   };
 }
@@ -806,7 +806,7 @@ function aggregateSkillTags(skill: ExtractedSkill): void {
     sourceKind: string;
     sourceDescription?: string;
   }> = [];
-  const pitfalls: string[] = [];
+  const never: string[] = [];
 
   // Collect from functions
   for (const fn of skill.functions) {
@@ -834,7 +834,7 @@ function aggregateSkillTags(skill: ExtractedSkill): void {
         });
       }
     }
-    if (fn.tags['never']) pitfalls.push(...parseBulletList(fn.tags['never']));
+    if (fn.tags['never']) never.push(...parseBulletList(fn.tags['never']));
   }
 
   // Collect from classes
@@ -863,12 +863,12 @@ function aggregateSkillTags(skill: ExtractedSkill): void {
         });
       }
     }
-    if (cls.tags['never']) pitfalls.push(...parseBulletList(cls.tags['never']));
+    if (cls.tags['never']) never.push(...parseBulletList(cls.tags['never']));
   }
 
   if (useWhen.length > 0) skill.useWhen = useWhen;
   if (useWhenSources.length > 0) skill.useWhenSources = useWhenSources;
   if (avoidWhen.length > 0) skill.avoidWhen = avoidWhen;
   if (avoidWhenSources.length > 0) skill.avoidWhenSources = avoidWhenSources;
-  if (pitfalls.length > 0) skill.pitfalls = pitfalls;
+  if (never.length > 0) skill.never = never;
 }

@@ -95,7 +95,7 @@ Pass ${SOURCE_FORM} to choose one.`
 
 /**
  * Parsed options for the `refine` action / {@link runRefineCommand}.
- * @pitfalls - **`introspectCommander`** — Never pass a Commander program before its subcommands have been registered; the result will be an empty array with no warning, silently producing a skill with no commands.
+ * @never - **`introspectCommander`** — Never pass a Commander program before its subcommands have been registered; the result will be an empty array with no warning, silently producing a skill with no commands.
  * - **`introspectCommander`** — Never use with yargs, oclif, minimist, or other non-Commander frameworks; it reads Commander's internal `.commands` array which does not exist on other program objects.
  * - **`parseHelpOutput`** — Never use when you have access to the Commander program object; help-text parsing is lossy — default values, variadic flags, and required/optional distinctions are inferred heuristically and may be wrong.
  * - **`parseHelpOutput`** — Never expect multi-line option descriptions to be captured; the parser treats the first indented line as the full description and silently discards continuation lines.

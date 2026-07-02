@@ -1,7 +1,7 @@
 // packages/core/src/refine/types.ts
 import type { ExtractedSkill, SkillJudgeEstimate, ActionableImprovement } from '../index.js';
 
-export type RefineTag = 'useWhen' | 'avoidWhen' | 'pitfalls' | 'remarks' | 'example';
+export type RefineTag = 'useWhen' | 'avoidWhen' | 'never' | 'remarks' | 'example';
 
 export interface DraftRequest {
   toolName: string;

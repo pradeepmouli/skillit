@@ -16,7 +16,7 @@ import type { RefineTag } from './types.js';
 const REFINE_TAGS = [
   'useWhen',
   'avoidWhen',
-  'pitfalls',
+  'never',
   'remarks',
   'example'
 ] as const satisfies readonly RefineTag[];
@@ -231,7 +231,7 @@ function upsertTagOnAnchor(
 const REFINE_TAG_SET: ReadonlySet<string> = new Set(REFINE_TAGS);
 
 /**
- * Remove the refine-managed tag spans (`@useWhen`, `@avoidWhen`, `@pitfalls`,
+ * Remove the refine-managed tag spans (`@useWhen`, `@avoidWhen`, `@never`,
  * `@remarks`, `@example` — see {@link REFINE_TAGS}) from every JSDoc block in
  * `source`, leaving each block's prose description and any non-refine tags
  * intact.
@@ -322,7 +322,7 @@ export function readJsDocTags(
   // prefixes), then walk them: a known `@tag` line opens a capture and the
   // following non-tag lines are its continuation. This keeps multi-line tag
   // content (e.g. bullet lists) intact instead of truncating at the first
-  // newline — otherwise a refined `@pitfalls` with several bullets would lose
+  // newline — otherwise a refined `@never` with several bullets would lose
   // everything past line one when re-extracted into SKILL.md.
   const innerLines = block
     .replace(/^\/\*\*/, '')
