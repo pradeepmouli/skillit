@@ -93,6 +93,10 @@ export async function correlateConfigSurfaces(
   surfaces: readonly { name: string }[],
   sourceGlob: string
 ): Promise<ExtractedConfigSurface[]> {
+  if (surfaces.length === 0) {
+    return [];
+  }
+
   const sources = await readSources(sourceGlob);
   const configSurfaces: ExtractedConfigSurface[] = [];
 
