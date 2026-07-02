@@ -51,7 +51,7 @@ export function runM3(skill: ExtractedSkill): AuditIssue[] {
   // into a summary issue without distorting the order of the kept ones.
   const missingTools: string[] = [];
   for (const fn of skill.functions) {
-    const useWhen = fn.mcpMetadata?.toSkills?.useWhen;
+    const useWhen = fn.mcpMetadata?.skillit?.useWhen;
     const hasUseWhen =
       (useWhen !== undefined && useWhen.some((entry) => entry.trim().length > 0)) ||
       (fn.tags['useWhen'] !== undefined && fn.tags['useWhen'].trim().length > 0);

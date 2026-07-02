@@ -21,7 +21,7 @@ export interface McpToolListEntry {
   inputSchema?: unknown;
   /**
    * Server-supplied metadata. The MCP spec reserves the `_meta` envelope for
-   * extension namespaces such as `_meta.toSkills` (see US7).
+   * extension fields such as the flat `_meta.useWhen` string skillit reads (see US7).
    */
   _meta?: Record<string, unknown>;
 }

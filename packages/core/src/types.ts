@@ -321,8 +321,8 @@ export interface ExtractedParameter {
 }
 
 export interface ExtractedFunctionMcpMetadata {
-  /** Structured `_meta.toSkills` metadata extracted from MCP tool annotations. */
-  readonly toSkills?: {
+  /** Structured metadata extracted from flat `_meta` MCP tool annotations. */
+  readonly skillit?: {
     readonly useWhen?: readonly string[];
     readonly avoidWhen?: readonly string[];
     readonly pitfalls?: readonly string[];

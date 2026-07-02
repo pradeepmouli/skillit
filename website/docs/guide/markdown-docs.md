@@ -97,16 +97,15 @@ The markdown parser extracts structured data from each file:
 For projects using VitePress (like this documentation site), the `@skillit/vitepress` package provides a Vite plugin that integrates with your existing build:
 
 ```typescript
-// vite.config.ts (or .vitepress/config.ts)
-import { toSkillsVitePlugin } from '@skillit/vitepress';
+// .vitepress/config.mts
+import { defineConfig } from 'vitepress';
+import { skillit } from '@skillit/vitepress';
 
-export default {
-  plugins: [
-    toSkillsVitePlugin({
-      docsDir: 'docs'
-    })
-  ]
-};
+export default defineConfig({
+  vite: {
+    plugins: [skillit({ skillsOutDir: 'skills' })]
+  }
+});
 ```
 
 The plugin reads VitePress conventions: sidebar configuration, frontmatter ordering, and directory structure.

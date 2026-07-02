@@ -2,7 +2,7 @@
 name: skillit-docs
 description: 'Documentation conventions for generating high-quality AI agent skills from TypeScript source. Use when preparing a library for skill generation, auditing JSDoc quality, fixing audit warnings, writing @useWhen/@avoidWhen/@never tags, or asking about documentation conventions for skills.'
 version: 1.3.0
-toSkills:
+skillit:
   managed: bundled-guidance
 ---
 
