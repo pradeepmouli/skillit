@@ -1,6 +1,6 @@
 {
   "name": "@skillit/typedoc",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "TypeDoc plugin that generates AI agent skills (SKILL.md) from TypeScript API documentation",
   "keywords": [
     "agent-skills",

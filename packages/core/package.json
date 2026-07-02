@@ -1,6 +1,6 @@
 {
   "name": "@skillit/core",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Shared types, SKILL.md renderer, and token budgeting for skillit plugins",
   "keywords": [
     "agent-skills",
