@@ -2,8 +2,9 @@ import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { generateConfigSkill } from '../generate.js';
+import { generateCliSkill, generateConfigSkill } from '../generate.js';
 
 let tmpDir: string;
 
@@ -34,5 +35,38 @@ describe('generateConfigSkill', () => {
     expect(existsSync(join(outDir, 'my-lib', 'SKILL.md'))).toBe(true);
     const md = await readFile(join(outDir, 'my-lib', 'SKILL.md'), 'utf8');
     expect(md).toContain('my-lib');
+  });
+});
+
+describe('generateCliSkill', () => {
+  it('correlates @never JSDoc from a <Command>Options interface into the generated skill', async () => {
+    const programPath = fileURLToPath(
+      new URL('./fixtures/cli-with-greet-command.mjs', import.meta.url)
+    );
+    tmpDir = await mkdtemp(join(tmpdir(), 'gen-cli-never-'));
+    await writeFile(
+      join(tmpDir, 'command-options.ts'),
+      [
+        '/**',
+        ' * @useWhen - Server advertises the capability',
+        ' * @never - NEVER call this without checking capabilities first. Fix: probe with --help',
+        ' */',
+        'export interface GreetOptions {}'
+      ].join('\n'),
+      'utf8'
+    );
+    const outDir = join(tmpDir, 'skills');
+
+    await generateCliSkill({
+      program: `${programPath}#program`,
+      cwd: tmpDir,
+      nature: 'cli',
+      name: 'greet-cli',
+      outDir
+    });
+
+    const skillMd = await readFile(join(outDir, 'greet-cli', 'SKILL.md'), 'utf8');
+    expect(skillMd).toContain('**Never:**');
+    expect(skillMd).toContain('NEVER call this without checking capabilities first');
   });
 });

@@ -1,7 +1,9 @@
 // packages/client/src/generate.ts
 import {
   applyNpxMode,
+  correlateConfigSurfaces,
   extractCliSkill,
+  introspectCommander,
   loadProgram,
   writeCliSkill,
   type CliInvocationMode
@@ -131,7 +133,14 @@ export async function generateMcpSkill(opts: GenerateMcpSkillOpts): Promise<void
 /** CLI-path skill generation: loadProgram → extractCliSkill → applyNpxMode → writeCliSkill. */
 export async function generateCliSkill(opts: GenerateSkillOpts): Promise<void> {
   const program = await loadProgram({ program: opts.program, cwd: opts.cwd });
-  const skill = await extractCliSkill({ program, metadata: { name: opts.name } });
+  const surfaces = introspectCommander(program);
+  const sourceGlob = join(opts.cwd, '**', '*.ts');
+  const configSurfaces = await correlateConfigSurfaces(surfaces, sourceGlob);
+  const skill = await extractCliSkill({
+    program,
+    metadata: { name: opts.name },
+    ...(configSurfaces.length > 0 ? { configSurfaces } : {})
+  });
   const pkgDir = await findNearestPackageDir(opts.cwd);
   const meta = pkgDir ? await readPackageMetadata(pkgDir) : {};
   applyNpxMode(skill, meta, opts.invocationMode);

@@ -27,6 +27,7 @@ export type { CliAuditIssue } from './audit.js';
 export { loadProgram } from './program-loader.js';
 export type { LoadProgramOptions } from './program-loader.js';
 export { readOptionsTags } from './options-jsdoc.js';
+export { correlateConfigSurfaces } from './config-surface-correlation.js';
 export { CliRefineSource } from './refine-source.js';
 export type { CliRefineSourceOptions } from './refine-source.js';
 export { applyNpxMode, resolveInvocationMode } from './npx-mode.js';
