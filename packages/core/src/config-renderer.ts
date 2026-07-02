@@ -97,7 +97,7 @@ function renderCommandsSection(
 
     if (surface.never && surface.never.length > 0) {
       lines.push('');
-      lines.push('**Pitfalls:**');
+      lines.push('**Never:**');
       for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
@@ -111,7 +111,7 @@ function renderConfigSection(surfaces: ExtractedConfigSurface[]): string {
   const lines: string[] = ['## Configuration'];
 
   // Config tables always go in references/config.md — SKILL.md gets a compact pointer.
-  // A single config surface: show name + description + option count + pitfalls.
+  // A single config surface: show name + description + option count + never rules.
   // Multiple config surfaces: just point to the reference file.
   if (surfaces.length === 1) {
     const s = surfaces[0]!;
@@ -121,7 +121,7 @@ function renderConfigSection(surfaces: ExtractedConfigSurface[]): string {
 
     if (s.never && s.never.length > 0) {
       lines.push('');
-      lines.push('**Pitfalls:**');
+      lines.push('**Never:**');
       for (const item of s.never) {
         lines.push(`- ${item}`);
       }
@@ -372,7 +372,7 @@ function renderOptionDetail(opt: ExtractedConfigOption, lines: string[]): void {
 
   if (opt.never && opt.never.length > 0) {
     lines.push('');
-    lines.push('**Pitfalls:**');
+    lines.push('**Never:**');
     for (const item of opt.never) {
       lines.push(`- ${item}`);
     }

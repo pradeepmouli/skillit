@@ -23,7 +23,7 @@ Extracted API surface for a single package/module
 - `examples: string[]` — Usage examples from
 - `useWhen: string[]` (optional) — Aggregated
 - `avoidWhen: string[]` (optional) — Aggregated
-- `pitfalls: string[]` (optional) — Aggregated
+- `never: string[]` (optional) — Aggregated
 - `configSurfaces: ExtractedConfigSurface[]` (optional) — Configuration surfaces (CLI commands, config files)
 
 ### `ExtractedFunction`
@@ -53,7 +53,7 @@ Extracted API surface for a single package/module
 - `methods: ExtractedFunction[]`
 - `properties: ExtractedProperty[]`
 - `examples: string[]`
-- `tags: Record<string, string>` — JSDoc block tags (e.g. @deprecated, @since, @useWhen, @pitfalls)
+- `tags: Record<string, string>` — JSDoc block tags (e.g. @deprecated, @since, @useWhen, @never)
 - `extends: string` (optional) — Base class name (from `extends`)
 - `implements: string[]` (optional) — Implemented interface names (from `implements`)
 - `sourceModule: string` (optional) — Source module name derived from file path (e.g. "renderer", "tokens")
@@ -248,7 +248,7 @@ or environment-variable group that an agent may need to invoke or populate.
   Mirrors the
 - `avoidWhen: string[]` (optional) — Conditions under which an agent should avoid this surface.
   Mirrors the
-- `pitfalls: string[]` (optional) — Known pitfalls, footguns, or common mistakes for this surface.
+- `never: string[]` (optional) — Known footguns or common mistakes for this surface.
   Mirrors the
 - `remarks: string` (optional) — Extended expert notes about this surface — edge cases, interaction effects,
   or nuances not captured by the description. Mirrors the
@@ -280,7 +280,7 @@ or an environment variable (or any combination of the three).
   Mirrors the
 - `avoidWhen: string[]` (optional) — Conditions under which an agent should avoid setting this option.
   Mirrors the
-- `pitfalls: string[]` (optional) — Known pitfalls or common mistakes when using this option.
+- `never: string[]` (optional) — Known footguns or common mistakes when using this option.
   Mirrors the
 - `category: string` (optional) — Logical grouping label for this option (e.g. "Output", "Performance").
   Agents can use this to cluster related options in generated documentation.

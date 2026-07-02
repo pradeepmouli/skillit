@@ -3,7 +3,7 @@
   "tagDefinitions": [
     { "tagName": "@useWhen", "syntaxKind": "block" },
     { "tagName": "@avoidWhen", "syntaxKind": "block" },
-    { "tagName": "@pitfalls", "syntaxKind": "block" },
+    { "tagName": "@never", "syntaxKind": "block" },
     { "tagName": "@config", "syntaxKind": "modifier" },
     { "tagName": "@category", "syntaxKind": "block" }
   ]

@@ -44,7 +44,7 @@ Maximum approximate token budget per skill file
 
 **Type:** `number`
 
-**Pitfalls:**
+**Never:**
 
 - NEVER set below 500 — reference files become truncated mid-signature, producing broken code blocks
 
@@ -100,7 +100,7 @@ Fail build on fatal or error severity audit issues
 
 - CI enforcement — block PRs with undocumented exports
 
-**Pitfalls:**
+**Never:**
 
 - NEVER enable during local development — it blocks all typedoc output on audit failures
 

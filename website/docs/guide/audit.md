@@ -99,7 +99,7 @@ PASSING (14 checks)
 | W6   | README `## Pitfalls`      | Expert "NEVER do X because Y" knowledge                           |
 | W7   | `@useWhen` presence       | At least one export has a `@useWhen` tag                          |
 | W8   | `@avoidWhen` presence     | At least one export has an `@avoidWhen` tag                       |
-| W9   | `@pitfalls` presence      | At least one export has a `@pitfalls` tag                         |
+| W9   | `@never` presence         | At least one export has a `@never` tag                            |
 | W10  | `@remarks` on complex fns | Functions with 3+ parameters have extended descriptions           |
 | W11  | `@category` usage         | Exports use `@category` for intentional grouping                  |
 

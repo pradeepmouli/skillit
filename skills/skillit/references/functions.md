@@ -46,7 +46,7 @@ option metadata extracted from commander/--help output.
 
 The CLI surface is treated as authoritative for structural fields (flags,
 description, required, defaultValue). The config surface contributes rich
-JSDoc metadata (remarks, useWhen, avoidWhen, pitfalls, category) that the
+JSDoc metadata (remarks, useWhen, avoidWhen, never, category) that the
 CLI help text does not capture.
 
 ```ts

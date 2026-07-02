@@ -52,7 +52,7 @@ export interface ExtractedConfigSurface {
   avoidWhen?: string[];
 
   /**
-   * Known pitfalls, footguns, or common mistakes for this surface.
+   * Known footguns or common mistakes for this surface.
    * Mirrors the @never JSDoc pattern used elsewhere in ExtractedSkill.
    */
   never?: string[];
@@ -133,7 +133,7 @@ export interface ExtractedConfigOption {
   avoidWhen?: string[];
 
   /**
-   * Known pitfalls or common mistakes when using this option.
+   * Known footguns or common mistakes when using this option.
    * Mirrors the @never JSDoc pattern.
    */
   never?: string[];

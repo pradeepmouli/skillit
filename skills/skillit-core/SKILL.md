@@ -37,7 +37,7 @@ Shared types, SKILL.md renderer, and token budgeting for skillit plugins
 - Your examples are embedded as
 - API surface: 18 functions, 25 types
 
-## Pitfalls
+## NEVER
 
 - NEVER set maxTokens below 500 — reference files become truncated mid-signature, producing broken code blocks that confuse LLMs
 - NEVER pass skills with empty `name` — the output directory becomes a bare `/` path

@@ -132,7 +132,7 @@ describe('renderConfigSurfaceSection — CLI surfaces', () => {
     expect(result).toContain('Running in watch mode with --watch already active');
   });
 
-  it('renders pitfalls section', () => {
+  it('renders never section', () => {
     const result = renderConfigSurfaceSection([makeCliSurface()]);
     expect(result).toContain('Always clean dist/ before building');
   });

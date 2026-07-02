@@ -24,7 +24,7 @@ Add options to your `typedoc.json`:
   "skillsOutDir": "skills",
   "skillsPerPackage": true,
   "skillsAudit": true,
-  "blockTags": ["@useWhen", "@avoidWhen", "@pitfalls", "@config"]
+  "blockTags": ["@useWhen", "@avoidWhen", "@never", "@config"]
 }
 ```
 

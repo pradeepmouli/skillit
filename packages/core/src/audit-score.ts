@@ -35,7 +35,7 @@ export interface SkillJudgeEstimate {
     d1_knowledgeDelta: number;
     /** /15 — Quality of usage procedures and conditions */
     d2_procedures: number;
-    /** /15 — Coverage of known pitfalls and anti-patterns */
+    /** /15 — Coverage of known footguns and anti-patterns */
     d3_antiPatterns: number;
     /** /15 — Clarity and completeness of descriptions */
     d4_description: number;

@@ -661,9 +661,9 @@ function checkW8(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // W9: @never on at least one export
 // ---------------------------------------------------------------------------
 function checkW9(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
-  const hasPitfalls = hasRoutingTag(skill, 'never');
+  const hasNever = hasRoutingTag(skill, 'never');
 
-  if (!hasPitfalls) {
+  if (!hasNever) {
     issues.push(
       issue(
         'warning',
