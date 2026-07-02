@@ -1,5 +1,21 @@
 # @to-skills/target-mcpc
 
+## 1.0.0
+
+### Major Changes
+
+- [#95](https://github.com/pradeepmouli/skillit/pull/95) [`1121aaf`](https://github.com/pradeepmouli/skillit/commit/1121aaf9da3f4f2609165b9a8d30af173cc45a97) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - - Fix PR review issues in config loading and init guidance
+  - Address remaining PR review suggestions
+  - Address follow-up PR review nits
+  - Address PR comment code cleanup
+  - Add defineConfig alias for skillit config helper
+
+### Patch Changes
+
+- Updated dependencies [[`1121aaf`](https://github.com/pradeepmouli/skillit/commit/1121aaf9da3f4f2609165b9a8d30af173cc45a97), [`a1c6af7`](https://github.com/pradeepmouli/skillit/commit/a1c6af7249054dc6ab8ebf99c2a6b9bfc8bee93c)]:
+  - @skillit/core@3.0.0
+  - @skillit/mcp@1.0.0
+
 ## 0.3.3
 
 ### Patch Changes
