@@ -5,7 +5,7 @@
 '@skillit/cli': patch
 '@skillit/client': patch
 '@skillit/typedoc': patch
-'@skillit/typedoc-plugin': patch
+'typedoc-plugin-skillit': patch
 ---
 
 DRY cleanup for the dep-skill wiring, and a sweep of leftover pre-rebrand `toSkills` naming.
