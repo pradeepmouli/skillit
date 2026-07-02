@@ -20,7 +20,7 @@ Use this skill when documenting command-line programs for `@skillit/cli`.
 
 ## Routing Tags via Option Interfaces
 
-For routing tags (`@useWhen`, `@avoidWhen`, `@pitfalls`), add them as JSDoc on
+For routing tags (`@useWhen`, `@avoidWhen`, `@never`), add them as JSDoc on
 a `<PascalCommandName>Options` interface in a TypeScript source file.
 The interface needs no properties — only the JSDoc block matters:
 
