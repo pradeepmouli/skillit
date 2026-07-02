@@ -17,17 +17,21 @@
 
 ---
 
-### Task 1: Rename `RefineTag`'s `'pitfalls'` member to `'never'`
+### Task 1: Rename `pitfalls` to `never` across `RefineTag` and the IR fields
+
+**Note:** This task merges what was originally drafted as two separate tasks (`RefineTag`'s tag name and the `ExtractedConfigSurface`/`ExtractedConfigOption`/`ExtractedSkill` IR fields). They are not independently completable with a green build in between — the tag-name rename and the field-name rename are two halves of the same assignment (`configSurface.never = [tags.never]` requires both renamed at once). Do all of Task 1 before committing.
 
 **Files:**
 
-- Modify: `packages/core/src/refine/types.ts:4`
-- Modify (compiler-driven fixes): `packages/core/src/refine/ast-edit.ts`, `packages/core/src/refine/select-targets.ts`, `packages/core/src/refine/config-source.ts`, `packages/core/src/refine/loop.ts`, `packages/cli/src/options-jsdoc.ts`, `packages/cli/src/refine-source.ts`, `packages/cli/src/correlator.ts`, `packages/client/src/commands/refine.ts`
-- Test (compiler-driven fixes): `packages/core/src/refine/__tests__/ast-edit.test.ts`, `packages/core/src/refine/__tests__/select-targets.test.ts`, `packages/core/src/refine/__tests__/config-source.test.ts`
+- Modify: `packages/core/src/refine/types.ts:4` (`RefineTag`)
+- Modify: `packages/core/src/config-types.ts:58` (`ExtractedConfigSurface.pitfalls`), `packages/core/src/config-types.ts:139` (`ExtractedConfigOption.pitfalls`)
+- Modify: `packages/core/src/types.ts:80` (`ExtractedSkill.pitfalls`)
+- Modify (compiler-driven fixes): `packages/core/src/refine/ast-edit.ts`, `packages/core/src/refine/select-targets.ts`, `packages/core/src/refine/config-source.ts`, `packages/core/src/refine/loop.ts`, `packages/cli/src/options-jsdoc.ts`, `packages/cli/src/refine-source.ts`, `packages/cli/src/correlator.ts`, `packages/client/src/commands/refine.ts`, `packages/core/src/renderer.ts`, `packages/core/src/audit.ts`, `packages/core/src/audit-score.ts`, `packages/core/src/config-extract.ts`, `packages/core/src/config-renderer.ts`, `packages/typedoc/src/extractor.ts`, `packages/typedoc/src/plugin.ts`
+- Test (compiler-driven fixes): `packages/core/src/refine/__tests__/ast-edit.test.ts`, `packages/core/src/refine/__tests__/select-targets.test.ts`, `packages/core/src/refine/__tests__/config-source.test.ts`, `packages/core/src/__tests__/config-extract.test.ts`
 
 **Interfaces:**
 
-- Produces: `RefineTag = 'useWhen' | 'avoidWhen' | 'never' | 'remarks' | 'example'` — every later task's `readJsDocTags`/`readOptionsTags` calls rely on this union including `'never'`.
+- Produces: `RefineTag = 'useWhen' | 'avoidWhen' | 'never' | 'remarks' | 'example'`, `ExtractedSkill.never?: string[]`, `ExtractedConfigSurface.never?: string[]`, `ExtractedConfigOption.never?: string[]` — every later task's `readJsDocTags`/`readOptionsTags` calls and Task 5's new `correlateConfigSurfaces` helper rely on these.
 
 - [ ] **Step 1: Rename the `RefineTag` union member**
 
@@ -119,7 +123,7 @@ if (tags.never !== undefined) {
 }
 ```
 
-(Note: `configSurface.pitfalls` here will _also_ need renaming as part of Task 2 below — if Task 2 hasn't landed yet, this specific line will still show a type error until both renames are applied. That's expected; leave it and continue — Task 2 fixes it.)
+(`configSurface.pitfalls` here is the same IR field this task renames in Step 6 below — since both renames happen within this one task before its single commit, do not worry about intermediate red states between steps; only the state after Step 10 needs to be green.)
 
 Then:
 
@@ -147,30 +151,7 @@ pnpm --filter @skillit/core exec vitest run src/refine/__tests__/ast-edit.test.t
 
 Expected initially: failures or type errors referencing `'pitfalls'`/`.pitfalls`. Open each failing test and apply the same mechanical rule to test fixtures and assertions (e.g., `expect(tags.pitfalls).toBe(...)` → `expect(tags.never).toBe(...)`, JSDoc comment fixtures like `` `@pitfalls foo` `` inside test source strings → `` `@never foo` ``). Re-run until all pass.
 
-- [ ] **Step 6: Commit**
-
-```bash
-git add packages/core/src/refine packages/cli/src/options-jsdoc.ts packages/cli/src/refine-source.ts packages/cli/src/correlator.ts packages/client/src/commands/refine.ts
-git commit -m "refactor(core): rename RefineTag 'pitfalls' member to 'never'"
-```
-
----
-
-### Task 2: Rename `ExtractedConfigSurface.pitfalls`, `ExtractedConfigOption.pitfalls`, and `ExtractedSkill.pitfalls` to `.never`
-
-**Files:**
-
-- Modify: `packages/core/src/config-types.ts:58` (`ExtractedConfigSurface.pitfalls`), `packages/core/src/config-types.ts:139` (`ExtractedConfigOption.pitfalls`)
-- Modify: `packages/core/src/types.ts:80` (`ExtractedSkill.pitfalls`)
-- Modify (compiler-driven fixes): `packages/core/src/renderer.ts`, `packages/core/src/audit.ts`, `packages/core/src/audit-score.ts`, `packages/core/src/config-extract.ts`, `packages/core/src/config-renderer.ts`, `packages/typedoc/src/extractor.ts`, `packages/typedoc/src/plugin.ts`
-- Test (compiler-driven fixes): `packages/core/src/__tests__/config-extract.test.ts`
-
-**Interfaces:**
-
-- Consumes: `RefineTag` from Task 1 (already includes `'never'`).
-- Produces: `ExtractedSkill.never?: string[]`, `ExtractedConfigSurface.never?: string[]`, `ExtractedConfigOption.never?: string[]` — consumed by `renderNeverRules()` (Task 2 itself) and by Task 6's new `correlateConfigSurfaces` helper.
-
-- [ ] **Step 1: Rename the three IR field declarations**
+- [ ] **Step 6: Rename the three IR field declarations**
 
 In `packages/core/src/config-types.ts`, change (line 54-58):
 
@@ -226,7 +207,7 @@ to:
   never?: string[];
 ```
 
-- [ ] **Step 2: Fix `renderer.ts`'s `renderNeverRules`**
+- [ ] **Step 7: Fix `renderer.ts`'s `renderNeverRules`**
 
 `packages/core/src/renderer.ts` around line 1335-1341 currently reads:
 
@@ -254,7 +235,7 @@ function renderNeverRules(skill: ExtractedSkill): string {
 }
 ```
 
-- [ ] **Step 3: Run type-check and fix every reported error in `@skillit/core`**
+- [ ] **Step 8: Run type-check and fix every reported error in `@skillit/core`**
 
 ```bash
 pnpm --filter @skillit/core run type-check 2>&1 | head -150
@@ -302,7 +283,7 @@ type SurfaceTag = 'useWhen' | 'avoidWhen' | 'never';
 
 Apply the same rename to every other `'useWhen' | 'avoidWhen' | 'pitfalls'` type annotation and `'pitfalls'` literal argument in that file (the `ROUTING` array around line 689-690, `configOptionTargetsForTag`'s parameter type, and the `+8 on D3` suggestion string mentioning `@pitfalls` — change that user-facing message to say `@never` too).
 
-- [ ] **Step 4: Run type-check and fix `@skillit/typedoc`**
+- [ ] **Step 9: Run type-check and fix `@skillit/typedoc`**
 
 ```bash
 pnpm --filter @skillit/typedoc run type-check 2>&1 | head -100
@@ -334,7 +315,7 @@ Change each `@pitfalls` tag name (not the bullet content) to `@never`:
 
 There are three occurrences in this file (lines ~44, ~56, ~100 as of this writing) — find them all with `rg -n "@pitfalls" packages/typedoc/src/plugin.ts` and fix each.
 
-- [ ] **Step 5: Fix the test file**
+- [ ] **Step 10: Fix the test file**
 
 ```bash
 pnpm --filter @skillit/core exec vitest run src/__tests__/config-extract.test.ts 2>&1 | tail -60
@@ -342,25 +323,25 @@ pnpm --filter @skillit/core exec vitest run src/__tests__/config-extract.test.ts
 
 Apply the mechanical rule to any `.pitfalls` assertions or fixtures. Re-run until green.
 
-- [ ] **Step 6: Full core+typedoc build and test**
+- [ ] **Step 11: Full build and test across every package this task touched**
 
 ```bash
-pnpm --filter @skillit/core --filter @skillit/typedoc run build
-pnpm --filter @skillit/core --filter @skillit/typedoc exec vitest run
+pnpm --filter @skillit/core --filter @skillit/typedoc --filter @skillit/cli --filter @skillit/client run build
+pnpm --filter @skillit/core --filter @skillit/typedoc --filter @skillit/cli --filter @skillit/client exec vitest run
 ```
 
-Expected: both build clean, all tests pass.
+Expected: all four packages build clean, all tests pass. This is the task's actual completion gate — everything before this step may have transient red states between individual file edits, but this command must be fully green before Step 12.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
-git add packages/core packages/typedoc
-git commit -m "refactor(core,typedoc): rename ExtractedSkill/ExtractedConfigSurface/ExtractedConfigOption .pitfalls to .never"
+git add packages/core packages/typedoc packages/cli/src/options-jsdoc.ts packages/cli/src/refine-source.ts packages/cli/src/correlator.ts packages/client/src/commands/refine.ts
+git commit -m "refactor(core,cli,typedoc): rename pitfalls tag/field family to never (RefineTag + IR fields)"
 ```
 
 ---
 
-### Task 3: Rename MCP's flat wire convention `_meta.pitfalls` to `_meta.never`
+### Task 2: Rename MCP's flat wire convention `_meta.pitfalls` to `_meta.never`
 
 **Files:**
 
@@ -371,7 +352,7 @@ git commit -m "refactor(core,typedoc): rename ExtractedSkill/ExtractedConfigSurf
 
 **Interfaces:**
 
-- Consumes: `ExtractedSkill.never`/`ExtractedConfigSurface.never` from Task 2.
+- Consumes: `ExtractedSkill.never`/`ExtractedConfigSurface.never` from Task 1.
 - Produces: `ExtractedFunctionMcpMetadata.skillit.never?: readonly string[]` — the flat MCP `_meta` field name authors write is `never` (unchanged from before this task in the sense that it was never `never` before; this is the actual rename target).
 
 - [ ] **Step 1: Rename the nested type field**
@@ -527,7 +508,7 @@ pnpm --filter @skillit/mcp run build
 pnpm --filter @skillit/mcp exec vitest run tests/unit
 ```
 
-Expected: build clean, all unit tests pass. (Integration tests are covered in Task 7's final verification.)
+Expected: build clean, all unit tests pass. (Integration tests are covered in Task 6's final verification.)
 
 - [ ] **Step 6: Commit**
 
@@ -538,7 +519,7 @@ git commit -m "refactor(mcp): rename _meta.pitfalls wire convention to _meta.nev
 
 ---
 
-### Task 4: Sweep remaining `pitfalls` references not caught by the compiler
+### Task 3: Sweep remaining `pitfalls` references not caught by the compiler
 
 **Files:**
 
@@ -568,7 +549,7 @@ For any surviving hit, read the surrounding context and apply the mechanical rul
 rg -ln "\bpitfalls\b" -i . -g '!node_modules' -g '!*/dist/*' -g '!pnpm-lock.yaml' -g '!docs/superpowers/**' -g '!specs/**' -g '!drafts/**' -g '!**/CHANGELOG.md' -g '!*.ts'
 ```
 
-This intentionally excludes `.ts` files (already covered by Steps 1-2) and historical docs (specs/plans/changelogs — those describe what was true when written; leave them). Expect hits in `packages/cli/skills/skillit-cli-docs/SKILL.md` (fixed in Task 5) and possibly `packages/mcp/skills/skillit-mcp-docs/SKILL.md` (should already be clean from Task 3 Step 3 — if it still shows up here, you missed a spot; fix it now). Fix any other hit the same way.
+This intentionally excludes `.ts` files (already covered by Steps 1-2) and historical docs (specs/plans/changelogs — those describe what was true when written; leave them). Expect hits in `packages/cli/skills/skillit-cli-docs/SKILL.md` (fixed in Task 4) and possibly `packages/mcp/skills/skillit-mcp-docs/SKILL.md` (should already be clean from Task 2 Step 3 — if it still shows up here, you missed a spot; fix it now). Fix any other hit the same way.
 
 - [ ] **Step 4: Commit (only if Step 2 or 3 found anything)**
 
@@ -581,7 +562,7 @@ If nothing was found in Steps 2-3, skip this commit — there's nothing to commi
 
 ---
 
-### Task 5: Fix the self-contradictory `skillit-cli-docs` bundled doc
+### Task 4: Fix the self-contradictory `skillit-cli-docs` bundled doc
 
 **Files:**
 
@@ -624,7 +605,7 @@ git commit -m "docs(cli): fix skillit-cli-docs prose/example contradiction on th
 
 ---
 
-### Task 6: Close skillit#87 — extract shared correlation logic, wire it into `generateCliSkill`
+### Task 5: Close skillit#87 — extract shared correlation logic, wire it into `generateCliSkill`
 
 **Files:**
 
@@ -1000,7 +981,7 @@ git commit -m "feat(cli,client): correlate @never/@useWhen JSDoc in generateCliS
 
 ---
 
-### Task 7: Final full verification and changeset
+### Task 6: Final full verification and changeset
 
 **Files:**
 
@@ -1021,7 +1002,7 @@ Expected: all 12 packages build clean, no errors.
 pnpm test
 ```
 
-Expected: all test files pass (compare the total count against the pre-change baseline — it should be equal to the prior total plus 1, for the new regression test added in Task 6).
+Expected: all test files pass (compare the total count against the pre-change baseline — it should be equal to the prior total plus 1, for the new regression test added in Task 5).
 
 - [ ] **Step 3: Full monorepo type-check**
 
@@ -1099,12 +1080,12 @@ git commit -m "chore: add changeset for never-tag standardization + skillit#87 f
 
 **Spec coverage:**
 
-- Goal 1 (one tag name, `@never`, everywhere) → Tasks 1, 2, 3, 4, 5.
-- Goal 2 (`gen`/`refine` symmetry) → Task 6.
+- Goal 1 (one tag name, `@never`, everywhere) → Tasks 1, 2, 3, 4.
+- Goal 2 (`gen`/`refine` symmetry) → Task 5.
 - Non-goals explicitly excluded, no tasks touch them.
 - Rename mechanics (lsproxy for same-package, compiler-driven for the rest) → reflected in every task's "run type-check, fix errors" pattern rather than hand-written diffs for all ~130 occurrences; `lsproxy` itself is not scripted into a task because the compiler-driven loop is strictly more exhaustive for this codebase's typed-access pattern (verified during plan-writing: `REFINE_TAGS`'s `satisfies`/exhaustiveness guard and the `SurfaceTag`-typed indexed accesses mean nearly every occurrence is compiler-checked). An implementer who prefers to use `lsproxy textDocument rename --dry-run` on the same-package declarations first (as the design doc describes) may do so before Step 3 of each task — the compiler-driven fix loop is the completeness backstop either way.
 - Changeset levels match the design doc exactly.
 
 **Placeholder scan:** No TBD/TODO; every step gives either exact before/after code or an exact command + exact expected output + a stated mechanical transformation rule for the remaining occurrences a full code dump would be redundant to enumerate given the compiler catches them.
 
-**Type consistency:** `correlateConfigSurfaces(surfaces: readonly { name: string }[], sourceGlob: string): Promise<ExtractedConfigSurface[]>` (Task 6) is used identically in both its `CliRefineSource.extract()` call site and its `generateCliSkill` call site. `RefineTag`'s `'never'` member (Task 1) is the type every later task's `.never` field rename assumes.
+**Type consistency:** `correlateConfigSurfaces(surfaces: readonly { name: string }[], sourceGlob: string): Promise<ExtractedConfigSurface[]>` (Task 5) is used identically in both its `CliRefineSource.extract()` call site and its `generateCliSkill` call site. `RefineTag`'s `'never'` member (Task 1) is the type every later task's `.never` field rename assumes.
