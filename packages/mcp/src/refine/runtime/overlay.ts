@@ -4,7 +4,7 @@ import type { DraftedFix } from '@skillit/core';
 export interface OverlayAnnotations {
   useWhen?: string;
   avoidWhen?: string;
-  pitfalls?: string;
+  never?: string;
   remarks?: string;
   example?: string;
 }

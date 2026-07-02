@@ -26,7 +26,7 @@ import { resolveSchema } from './schema.js';
  * `parameters` without an error — the absence of a schema is a valid signal
  * that the tool takes no input.
  *
- * Tool metadata: flat string fields (`useWhen`, `avoidWhen`, `pitfalls`,
+ * Tool metadata: flat string fields (`useWhen`, `avoidWhen`, `never`,
  * `remarks`, `example`) are read directly from each tool's `_meta` envelope
  * and stored in `ExtractedFunction.mcpMetadata.skillit` as single-element
  * arrays. For compatibility with existing renderer paths they are also
@@ -128,7 +128,7 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
 }
 
 /**
- * Read flat string fields (`useWhen`, `avoidWhen`, `pitfalls`, `remarks`,
+ * Read flat string fields (`useWhen`, `avoidWhen`, `never`, `remarks`,
  * `example`) directly from `tool._meta` and return structured MCP metadata
  * plus a compatibility tag projection.
  *
@@ -153,12 +153,12 @@ function readToolMetadata(tool: McpToolListEntry): {
   const skillit: {
     useWhen?: string[];
     avoidWhen?: string[];
-    pitfalls?: string[];
+    never?: string[];
     remarks?: string[];
     example?: string[];
   } = {};
 
-  for (const key of ['useWhen', 'avoidWhen', 'pitfalls', 'remarks', 'example'] as const) {
+  for (const key of ['useWhen', 'avoidWhen', 'never', 'remarks', 'example'] as const) {
     const val = (meta as Record<string, unknown>)[key];
     if (typeof val !== 'string' || !val.trim()) continue;
     tags[key] = val;

@@ -3,7 +3,7 @@
 // for Phase 9 / US7 integration tests.
 //
 // Mirrors fake-server-package/dist/server.js but adds:
-//  - server-level `_meta` (remarks + useWhen + avoidWhen + pitfalls
+//  - server-level `_meta` (remarks + useWhen + avoidWhen + never
 //    + packageDescription) on the Implementation passed to `new Server()`
 //  - per-tool `_meta` on a single `compute` tool
 //
@@ -29,7 +29,7 @@ const server = new Server(
       packageDescription: 'Demo server for annotation enrichment.',
       useWhen: 'Need to demo annotation enrichment',
       avoidWhen: 'Production workloads — this is a demo fixture only',
-      pitfalls: 'NEVER ship this fixture to end users'
+      never: 'NEVER ship this fixture to end users'
     }
   },
   { capabilities: { tools: {} } }
@@ -48,7 +48,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       _meta: {
         useWhen: 'Computing a value from a string input',
         avoidWhen: 'Inputs longer than 1KB — use bulk-compute instead',
-        pitfalls: 'NEVER pass binary data — compute expects UTF-8 text'
+        never: 'NEVER pass binary data — compute expects UTF-8 text'
       }
     }
   ]

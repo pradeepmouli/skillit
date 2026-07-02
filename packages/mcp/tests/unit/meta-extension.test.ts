@@ -3,7 +3,7 @@
 // Two-layer coverage:
 //
 //  1. `listTools` (tools.ts) — reads each tool's flat `_meta.{useWhen,
-//     avoidWhen, pitfalls}` string fields and projects them onto
+//     avoidWhen, never}` string fields and projects them onto
 //     `ExtractedFunction.tags`. Tested with the same mock-client pattern
 //     used in `introspect-tools.test.ts`.
 //
@@ -56,7 +56,7 @@ describe('listTools — _meta (per-tool)', () => {
         _meta: {
           useWhen: 'use this for X',
           avoidWhen: 'avoid for Z',
-          pitfalls: 'NEVER pass a regex with backreferences'
+          never: 'NEVER pass a regex with backreferences'
         }
       }
     ]);
@@ -65,11 +65,11 @@ describe('listTools — _meta (per-tool)', () => {
     expect(fns).toHaveLength(1);
     expect(fns[0]!.tags.useWhen).toBe('use this for X');
     expect(fns[0]!.tags.avoidWhen).toBe('avoid for Z');
-    expect(fns[0]!.tags.pitfalls).toBe('NEVER pass a regex with backreferences');
+    expect(fns[0]!.tags.never).toBe('NEVER pass a regex with backreferences');
     expect(fns[0]!.mcpMetadata?.skillit).toEqual({
       useWhen: ['use this for X'],
       avoidWhen: ['avoid for Z'],
-      pitfalls: ['NEVER pass a regex with backreferences']
+      never: ['NEVER pass a regex with backreferences']
     });
     // Marker so audit rules can flag tools that emit metadata.
     expect(fns[0]!.tags.hasMetaSkillit).toBe('true');
@@ -293,13 +293,13 @@ describe('extractMcpSkill — server-level _meta', () => {
     expect(skill.useWhen).toEqual(['Server-wide trigger A', 'Tool-specific trigger C']);
   });
 
-  it('aggregates avoidWhen and pitfalls onto skill arrays', async () => {
+  it('aggregates avoidWhen and never onto skill arrays', async () => {
     state.serverInfo = {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
         avoidWhen: 'Avoid scenario X',
-        pitfalls: 'NEVER pass null'
+        never: 'NEVER pass null'
       }
     };
     state.listToolsImpl = async () => ({
@@ -310,7 +310,7 @@ describe('extractMcpSkill — server-level _meta', () => {
           inputSchema: { type: 'object' },
           _meta: {
             avoidWhen: 'Avoid Y for tool t1',
-            pitfalls: 'NEVER pass empty array to t1'
+            never: 'NEVER pass empty array to t1'
           }
         }
       ]
@@ -318,7 +318,7 @@ describe('extractMcpSkill — server-level _meta', () => {
 
     const skill = await extractMcpSkill(baseStdio);
     expect(skill.avoidWhen).toEqual(['Avoid scenario X', 'Avoid Y for tool t1']);
-    expect(skill.pitfalls).toEqual(['NEVER pass null', 'NEVER pass empty array to t1']);
+    expect(skill.never).toEqual(['NEVER pass null', 'NEVER pass empty array to t1']);
   });
 
   it('leaves IR fields unset when _meta is empty', async () => {
@@ -331,7 +331,7 @@ describe('extractMcpSkill — server-level _meta', () => {
     const skill = await extractMcpSkill(baseStdio);
     expect(skill.useWhen).toBeUndefined();
     expect(skill.avoidWhen).toBeUndefined();
-    expect(skill.pitfalls).toBeUndefined();
+    expect(skill.never).toBeUndefined();
     expect(skill.remarks).toBeUndefined();
     expect(skill.packageDescription).toBeUndefined();
   });
@@ -369,6 +369,6 @@ describe('extractMcpSkill — server-level _meta', () => {
     const skill = await extractMcpSkill(baseStdio);
     expect(skill.useWhen).toBeUndefined();
     expect(skill.avoidWhen).toBeUndefined();
-    expect(skill.pitfalls).toBeUndefined();
+    expect(skill.never).toBeUndefined();
   });
 });

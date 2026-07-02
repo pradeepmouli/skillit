@@ -19,7 +19,7 @@ const baseSkill = (): ExtractedSkill =>
     functions: [{ name: 'list_files', description: '', parameters: [], tags: {} }],
     useWhen: [],
     avoidWhen: [],
-    pitfalls: []
+    never: []
   }) as unknown as ExtractedSkill;
 
 describe('McpRefineSource', () => {
@@ -42,9 +42,9 @@ describe('McpRefineSource', () => {
     const overlayPath = join(tmp, 'overlay.json');
     const source = new McpRefineSource({ overlayPath, extract: async () => baseSkill(), cwd: tmp });
     await source.applyFixes([
-      { toolName: 'tool_a', tag: 'pitfalls', value: 'Do not call in parallel' }
+      { toolName: 'tool_a', tag: 'never', value: 'Do not call in parallel' }
     ]);
     const written = JSON.parse(readFileSync(overlayPath, 'utf8'));
-    expect(written.tools.tool_a.pitfalls).toBe('Do not call in parallel');
+    expect(written.tools.tool_a.never).toBe('Do not call in parallel');
   });
 });

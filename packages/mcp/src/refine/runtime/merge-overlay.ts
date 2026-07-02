@@ -21,7 +21,7 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: SkillitOverlay): Ex
           ...fn.mcpMetadata?.skillit,
           ...(ann.useWhen !== undefined && { useWhen: [ann.useWhen] }),
           ...(ann.avoidWhen !== undefined && { avoidWhen: [ann.avoidWhen] }),
-          ...(ann.pitfalls !== undefined && { pitfalls: [ann.pitfalls] })
+          ...(ann.never !== undefined && { never: [ann.never] })
         }
       }
     };
@@ -30,14 +30,14 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: SkillitOverlay): Ex
   // Step 2: derive skill-level aggregates from the overlay (separate concern from the map above)
   const useWhen = [...(skill.useWhen ?? [])];
   const avoidWhen = [...(skill.avoidWhen ?? [])];
-  const pitfalls = [...(skill.pitfalls ?? [])];
+  const never = [...(skill.never ?? [])];
   for (const fn of functions) {
     const ann = overlay.tools[fn.name];
     if (!ann) continue;
     if (ann.useWhen !== undefined) useWhen.push(ann.useWhen);
     if (ann.avoidWhen !== undefined) avoidWhen.push(ann.avoidWhen);
-    if (ann.pitfalls !== undefined) pitfalls.push(ann.pitfalls);
+    if (ann.never !== undefined) never.push(ann.never);
   }
 
-  return { ...skill, functions, useWhen, avoidWhen, pitfalls };
+  return { ...skill, functions, useWhen, avoidWhen, never };
 }
