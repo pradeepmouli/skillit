@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { toSkills } from '../src/index.js';
+import { skillit } from '../src/index.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,25 +52,25 @@ afterEach(() => {
 
 // ─── Plugin shape ─────────────────────────────────────────────────────────────
 
-describe('toSkills() plugin shape', () => {
+describe('skillit() plugin shape', () => {
   it('returns a Vite Plugin object with name skillit-vitepress', () => {
-    const plugin = toSkills();
+    const plugin = skillit();
     expect(plugin).toBeDefined();
     expect(plugin.name).toBe('skillit-vitepress');
   });
 
   it('has enforce: post', () => {
-    const plugin = toSkills();
+    const plugin = skillit();
     expect(plugin.enforce).toBe('post');
   });
 
   it('has a config hook', () => {
-    const plugin = toSkills();
+    const plugin = skillit();
     expect(typeof plugin.config).toBe('function');
   });
 
   it('has a closeBundle hook', () => {
-    const plugin = toSkills();
+    const plugin = skillit();
     expect(typeof plugin.closeBundle).toBe('function');
   });
 });
@@ -80,7 +80,7 @@ describe('toSkills() plugin shape', () => {
 describe('config hook', () => {
   it('captures site title from vitepress config', () => {
     // We test indirectly by running the full pipeline with a mock
-    const plugin = toSkills();
+    const plugin = skillit();
 
     const srcDir = tmpDir;
     write(srcDir, 'intro.md', '# Introduction\n\nWelcome.');
@@ -91,7 +91,7 @@ describe('config hook', () => {
   });
 
   it('uses options.name over vitepress site title', () => {
-    const plugin = toSkills({ name: 'Custom Name' });
+    const plugin = skillit({ name: 'Custom Name' });
     const srcDir = tmpDir;
     const mockConfig = makeMockVitepressConfig(srcDir);
     // No throw — just verifying it accepts the override
@@ -99,7 +99,7 @@ describe('config hook', () => {
   });
 
   it('handles missing vitepress context gracefully', () => {
-    const plugin = toSkills();
+    const plugin = skillit();
     // Should not throw when vitepress config is absent
     expect(() => (plugin.config as Function)({}, {})).not.toThrow();
     expect(() => (plugin.config as Function)({ vitepress: {} }, {})).not.toThrow();
@@ -110,14 +110,14 @@ describe('config hook', () => {
 
 describe('closeBundle hook', () => {
   it('does nothing when srcDir is not set', () => {
-    const plugin = toSkills();
+    const plugin = skillit();
     // No config call — srcDir will be empty string
     expect(() => (plugin.closeBundle as Function)()).not.toThrow();
   });
 
   it('does nothing when sidebar is empty', () => {
     const srcDir = tmpDir;
-    const plugin = toSkills({ skillsOutDir: join(tmpDir, 'skills') });
+    const plugin = skillit({ skillsOutDir: join(tmpDir, 'skills') });
 
     const mockConfig = {
       vitepress: {
@@ -154,7 +154,7 @@ describe('integration: config + closeBundle generates skill files', () => {
       '# Installation\n\nInstall via npm.\n\n## Requirements\n\nNode 18+.'
     );
 
-    const plugin = toSkills({ skillsOutDir, name: 'Test Docs' });
+    const plugin = skillit({ skillsOutDir, name: 'Test Docs' });
 
     const mockConfig = {
       vitepress: {
@@ -191,7 +191,7 @@ describe('integration: config + closeBundle generates skill files', () => {
     // Create an index.md variant instead of the flat .md
     write(srcDir, 'guide/index.md', '# Guide\n\nThe guide content.');
 
-    const plugin = toSkills({ skillsOutDir, name: 'Index Docs' });
+    const plugin = skillit({ skillsOutDir, name: 'Index Docs' });
 
     const mockConfig = {
       vitepress: {
@@ -220,7 +220,7 @@ describe('integration: config + closeBundle generates skill files', () => {
 
     write(srcDir, 'guide.md', '# Guide\n\nGuide content.');
 
-    const plugin = toSkills({ skillsOutDir, name: 'Api Exclude Test' });
+    const plugin = skillit({ skillsOutDir, name: 'Api Exclude Test' });
 
     const mockConfig = {
       vitepress: {
@@ -251,7 +251,7 @@ describe('integration: config + closeBundle generates skill files', () => {
     write(srcDir, 'guide.md', '# Guide\n\nGuide content.');
     write(srcDir, 'api/reference.md', '# API Reference\n\nReference content.');
 
-    const plugin = toSkills({ skillsOutDir, name: 'No Exclude Test', excludeApi: false });
+    const plugin = skillit({ skillsOutDir, name: 'No Exclude Test', excludeApi: false });
 
     const mockConfig = {
       vitepress: {
@@ -285,7 +285,7 @@ describe('integration: config + closeBundle generates skill files', () => {
     write(srcDir, 'intro.md', '# Introduction\n\nWelcome.');
     // 'missing' does not exist
 
-    const plugin = toSkills({ skillsOutDir, name: 'Partial Docs' });
+    const plugin = skillit({ skillsOutDir, name: 'Partial Docs' });
 
     const mockConfig = {
       vitepress: {

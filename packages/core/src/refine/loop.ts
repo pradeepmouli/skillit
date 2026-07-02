@@ -91,7 +91,7 @@ export async function refineSkill(
       if (fn) {
         const tag = item.tag;
         if (tag === 'useWhen' || tag === 'avoidWhen' || tag === 'pitfalls') {
-          currentValue = fn.mcpMetadata?.toSkills?.[tag]?.[0];
+          currentValue = fn.mcpMetadata?.skillit?.[tag]?.[0];
         } else {
           currentValue = fn.tags[tag] as string | undefined;
         }

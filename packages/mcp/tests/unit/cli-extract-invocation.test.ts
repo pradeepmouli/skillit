@@ -167,7 +167,7 @@ describe('extract --invocation flag', () => {
         '---',
         'name: skillit-mcp-docs',
         'version: 0.7.0',
-        'toSkills:',
+        'skillit:',
         '  managed: bundled-guidance',
         '---',
         '# Existing bundled guidance'

@@ -279,7 +279,7 @@ describe('extract --config <path>', () => {
         '---',
         'name: skillit-mcp-docs',
         'version: 0.7.0',
-        'toSkills:',
+        'skillit:',
         '  managed: bundled-guidance',
         '---',
         '# Existing bundled guidance'

@@ -20,7 +20,7 @@ describe('mergeOverlay', () => {
     expect(s.functions[0]!.tags).toEqual({});
   });
 
-  it('sets mcpMetadata.toSkills on matched function', () => {
+  it('sets mcpMetadata.skillit on matched function', () => {
     const s = skill([{ name: 'list_files' }]);
     const overlay = {
       version: 1 as const,
@@ -30,8 +30,8 @@ describe('mergeOverlay', () => {
     };
     const result = mergeOverlay(s, overlay);
     const fn = result.functions.find((f) => f.name === 'list_files')!;
-    expect(fn.mcpMetadata?.toSkills?.useWhen).toEqual(['When listing directory contents']);
-    expect(fn.mcpMetadata?.toSkills?.pitfalls).toEqual(['Avoid on Windows']);
+    expect(fn.mcpMetadata?.skillit?.useWhen).toEqual(['When listing directory contents']);
+    expect(fn.mcpMetadata?.skillit?.pitfalls).toEqual(['Avoid on Windows']);
   });
 
   it('leaves unmatched functions unchanged', () => {

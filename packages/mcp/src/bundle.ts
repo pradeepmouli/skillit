@@ -26,7 +26,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { discoverDepSkills, renderSkill, writeSkills } from '@skillit/core';
+import { attachDepSkills, renderSkill, writeSkills } from '@skillit/core';
 import type { ExtractedSkill, RenderedSkill } from '@skillit/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import { runMcpAudit, worstSeverityOf } from './audit/rules.js';
@@ -161,8 +161,7 @@ async function processEntry(
     return;
   }
 
-  skill.rootDir = ctx.packageRoot;
-  skill.seeAlso = await discoverDepSkills(ctx.packageRoot);
+  attachDepSkills(skill, ctx.packageRoot);
 
   // Run the audit ONCE per entry — the IR is target-agnostic so M1–M4 are
   // identical across targets. (M5 freshness is per-target but isn't checkable

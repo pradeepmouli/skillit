@@ -1,7 +1,7 @@
 import type { ExtractedSkill } from '@skillit/core';
-import type { ToSkillsOverlay } from './overlay.js';
+import type { SkillitOverlay } from './overlay.js';
 
-export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): ExtractedSkill {
+export function mergeOverlay(skill: ExtractedSkill, overlay: SkillitOverlay): ExtractedSkill {
   // Step 1: transform functions (pure map — no aggregation side-effects)
   const functions = skill.functions.map((fn) => {
     const ann = overlay.tools[fn.name];
@@ -9,7 +9,7 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): E
     return {
       ...fn,
       // remarks/example go into fn.tags (read by the refine loop drafter + scorer);
-      // they are not present on ExtractedFunctionMcpMetadata.toSkills
+      // they are not present on ExtractedFunctionMcpMetadata.skillit
       tags: {
         ...fn.tags,
         ...(ann.remarks !== undefined && { remarks: ann.remarks }),
@@ -17,8 +17,8 @@ export function mergeOverlay(skill: ExtractedSkill, overlay: ToSkillsOverlay): E
       },
       mcpMetadata: {
         ...fn.mcpMetadata,
-        toSkills: {
-          ...fn.mcpMetadata?.toSkills,
+        skillit: {
+          ...fn.mcpMetadata?.skillit,
           ...(ann.useWhen !== undefined && { useWhen: [ann.useWhen] }),
           ...(ann.avoidWhen !== undefined && { avoidWhen: [ann.avoidWhen] }),
           ...(ann.pitfalls !== undefined && { pitfalls: [ann.pitfalls] })

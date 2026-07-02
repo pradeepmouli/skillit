@@ -2,7 +2,7 @@
 name: skillit-bootstrap
 description: 'Bootstrap an AI-agent skill from a TypeScript codebase by running the deterministic skillit generate/audit loop and enriching repo source (JSDoc, README, config-type properties, MCP tool annotations, examples, package.json) until the skill reaches its grade target. Use for cli, typedoc, config, or mcp (build-mode) projects; never edit SKILL.md/references directly.'
 version: 0.1.0
-toSkills:
+skillit:
   managed: bundled-orchestrator
 ---
 

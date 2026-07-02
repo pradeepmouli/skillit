@@ -464,7 +464,7 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
  * The unit tests bypass the SDK via vi.mock, so they exercise both layers.
  *
  * Per-tool meta is aggregated on top via `pushLines`. The primary path reads
- * `fn.mcpMetadata.toSkills.{useWhen,avoidWhen,pitfalls}` (each a
+ * `fn.mcpMetadata.skillit.{useWhen,avoidWhen,pitfalls}` (each a
  * single-element `string[]` set by `readToolMetadata` in tools.ts). The
  * fallback path splits `fn.tags[key]` on `\n` for compatibility with older
  * ExtractedFunction producers that never set `mcpMetadata`.
@@ -512,9 +512,9 @@ function collectMetaEnrichment(
   // Per-tool aggregation. Typed MCP metadata is preferred; tags stay as a
   // compatibility fallback for older ExtractedFunction producers.
   for (const fn of functions) {
-    pushLines(useWhen, fn.mcpMetadata?.toSkills?.useWhen, fn.tags['useWhen']);
-    pushLines(avoidWhen, fn.mcpMetadata?.toSkills?.avoidWhen, fn.tags['avoidWhen']);
-    pushLines(pitfalls, fn.mcpMetadata?.toSkills?.pitfalls, fn.tags['pitfalls']);
+    pushLines(useWhen, fn.mcpMetadata?.skillit?.useWhen, fn.tags['useWhen']);
+    pushLines(avoidWhen, fn.mcpMetadata?.skillit?.avoidWhen, fn.tags['avoidWhen']);
+    pushLines(pitfalls, fn.mcpMetadata?.skillit?.pitfalls, fn.tags['pitfalls']);
   }
 
   if (useWhen.length > 0) enrichment.useWhen = useWhen;

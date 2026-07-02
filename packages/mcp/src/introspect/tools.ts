@@ -28,10 +28,10 @@ import { resolveSchema } from './schema.js';
  *
  * Tool metadata: flat string fields (`useWhen`, `avoidWhen`, `pitfalls`,
  * `remarks`, `example`) are read directly from each tool's `_meta` envelope
- * and stored in `ExtractedFunction.mcpMetadata.toSkills` as single-element
+ * and stored in `ExtractedFunction.mcpMetadata.skillit` as single-element
  * arrays. For compatibility with existing renderer paths they are also
  * projected onto `ExtractedFunction.tags` as plain strings plus a
- * `hasMetaToSkills` marker. Skill-level aggregation (`ExtractedSkill.useWhen`
+ * `hasMetaSkillit` marker. Skill-level aggregation (`ExtractedSkill.useWhen`
  * etc.) happens in `extract.ts`, which also reads server-level `_meta`.
  *
  * @param client structural MCP client (real SDK `Client` or a test mock)
@@ -140,7 +140,7 @@ async function mapTool(tool: McpToolListEntry): Promise<ExtractedFunction> {
  * We do NOT throw — this is an additive feature and a healthy extract must
  * never crash because of bad annotation data.
  *
- * `hasMetaToSkills='true'` is set when at least one valid field was populated.
+ * `hasMetaSkillit='true'` is set when at least one valid field was populated.
  */
 function readToolMetadata(tool: McpToolListEntry): {
   tags: Record<string, string>;
@@ -150,7 +150,7 @@ function readToolMetadata(tool: McpToolListEntry): {
   const meta = tool._meta;
   if (!isPlainObject(meta)) return { tags }; // absence (or non-object) is fine
 
-  const toSkills: {
+  const skillit: {
     useWhen?: string[];
     avoidWhen?: string[];
     pitfalls?: string[];
@@ -162,16 +162,16 @@ function readToolMetadata(tool: McpToolListEntry): {
     const val = (meta as Record<string, unknown>)[key];
     if (typeof val !== 'string' || !val.trim()) continue;
     tags[key] = val;
-    toSkills[key] = [val];
+    skillit[key] = [val];
   }
 
-  if (Object.keys(toSkills).length > 0) {
-    tags['hasMetaToSkills'] = 'true';
+  if (Object.keys(skillit).length > 0) {
+    tags['hasMetaSkillit'] = 'true';
   }
 
   return {
     tags,
-    ...(Object.keys(toSkills).length > 0 ? { mcpMetadata: { toSkills } } : {})
+    ...(Object.keys(skillit).length > 0 ? { mcpMetadata: { skillit } } : {})
   };
 }
 

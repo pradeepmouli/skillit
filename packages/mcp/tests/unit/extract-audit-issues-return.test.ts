@@ -127,7 +127,7 @@ describe('extractMcpSkill — auditIssues return value (US3, FR-H006)', () => {
     // All metadata is well-formed:
     //   M1 — description is non-empty
     //   M2 — schema is valid (no `tags.schemaError` will be set)
-    //   M3 — `_meta.toSkills.useWhen` provides a discovery trigger
+    //   M3 — `_meta.useWhen` provides a discovery trigger
     //   M4 — name is not in the generic-name set
     state.listToolsImpl = async () => ({
       tools: [

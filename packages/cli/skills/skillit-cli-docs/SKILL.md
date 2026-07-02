@@ -2,7 +2,7 @@
 name: skillit-cli-docs
 description: 'CLI documentation conventions for generated skills. Use when improving Commander descriptions, help text, positional argument docs, and config-surface correlation.'
 version: 0.3.13
-toSkills:
+skillit:
   managed: bundled-guidance
 ---
 

@@ -126,8 +126,8 @@ describe('listTools — flat _meta string reading (new format)', () => {
     expect(fns).toHaveLength(1);
     expect(fns[0]!.tags.useWhen).toBe('use when searching');
     expect(fns[0]!.tags['metaToSkillsMalformed']).toBeUndefined();
-    expect(fns[0]!.tags.hasMetaToSkills).toBe('true');
-    expect(fns[0]!.mcpMetadata?.toSkills?.useWhen).toEqual(['use when searching']);
+    expect(fns[0]!.tags.hasMetaSkillit).toBe('true');
+    expect(fns[0]!.mcpMetadata?.skillit?.useWhen).toEqual(['use when searching']);
   });
 
   it('silently skips non-string values for known fields (no sentinel in new format)', async () => {
@@ -144,7 +144,7 @@ describe('listTools — flat _meta string reading (new format)', () => {
     const fns = await listTools(client);
     expect(fns[0]!.tags['metaToSkillsMalformed']).toBeUndefined();
     expect(fns[0]!.tags.useWhen).toBeUndefined();
-    expect(fns[0]!.tags.hasMetaToSkills).toBeUndefined();
+    expect(fns[0]!.tags.hasMetaSkillit).toBeUndefined();
   });
 
   it('silently skips array values for known fields (no sentinel in new format)', async () => {
@@ -181,8 +181,8 @@ describe('listTools — flat _meta string reading (new format)', () => {
     expect(fns[0]!.tags.useWhen).toBe('Use when X');
     expect(fns[0]!.tags.avoidWhen).toBeUndefined();
     expect(fns[0]!.tags['metaToSkillsMalformed']).toBeUndefined();
-    // hasMetaToSkills fires because at least one valid field was read.
-    expect(fns[0]!.tags.hasMetaToSkills).toBe('true');
+    // hasMetaSkillit fires because at least one valid field was read.
+    expect(fns[0]!.tags.hasMetaSkillit).toBe('true');
   });
 
   it('end-to-end: tool with flat useWhen has no M3 malformed warning via runM3', async () => {

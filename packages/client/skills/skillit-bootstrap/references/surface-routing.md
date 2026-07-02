@@ -88,8 +88,8 @@ _headline judgment_ of the skill lives in a kind-specific surface:
     `config-extract` reads), NOT `@never` (the typedoc/JSDoc surface's tag — see
     spec §4.2 naming note). On a config option, `@never` is silently ignored.
     `@category` is likewise not scored on config options — don't chase it there.
-- **mcp (build mode)** — JSDoc on the tool-handler symbols **plus**
-  `_meta.toSkills.{useWhen,avoidWhen,pitfalls}` annotations in your TS server
+- **mcp (build mode)** — JSDoc on the tool-handler symbols **plus** flat
+  `_meta.{useWhen,avoidWhen,pitfalls}` string annotations in your TS server
   source. `resolveTargetLocation` resolves a tool to its `{ file, declName }`.
   Writeback: `upsertJsDocTag`. (`gen`/`audit --source mcp --mode build`.)
 - **mcp (runtime mode)** — the server source is **not** editable, so the only

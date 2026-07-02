@@ -1,6 +1,6 @@
 import { dirname, join } from 'node:path';
 import type { RefineSource } from '@skillit/core';
-import { discoverDepSkills, findNearestPackageDir } from '@skillit/core';
+import { attachDepSkills, findNearestPackageDir } from '@skillit/core';
 import { renderAndWriteMcpSkill } from '../bundle.js';
 import { readMcpConfigFile } from '../config/file-reader.js';
 import { extractMcpSkill } from '../extract.js';
@@ -133,10 +133,7 @@ export async function generateMcpSkill(opts: GenerateMcpSkillOptions): Promise<v
   const entry = selectServerEntry(entries, opts.serverName);
   const skill = await extractMcpSkill({ transport: entry.transport });
   const pkgDir = await findNearestPackageDir(dirname(opts.mcpPath));
-  if (pkgDir) {
-    skill.rootDir = pkgDir;
-    skill.seeAlso = await discoverDepSkills(pkgDir);
-  }
+  if (pkgDir) attachDepSkills(skill, pkgDir);
   // renderAndWriteMcpSkill is synchronous (writeSkills is sync), so no await.
   renderAndWriteMcpSkill(skill, opts.outDir, opts.maxTokens);
 }

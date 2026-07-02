@@ -15,11 +15,11 @@ pnpm add -D @skillit/vitepress
 ```typescript
 // .vitepress/config.mts
 import { defineConfig } from 'vitepress'
-import { toSkills } from '@skillit/vitepress'
+import { skillit } from '@skillit/vitepress'
 
 export default defineConfig({
   vite: {
-    plugins: [toSkills({ skillsOutDir: 'skills' })]
+    plugins: [skillit({ skillsOutDir: 'skills' })]
   },
   themeConfig: { sidebar: [...] }
 })

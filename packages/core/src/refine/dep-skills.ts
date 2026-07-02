@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import type { Dirent } from 'node:fs';
 import { join } from 'node:path';
-import type { DepSkillRef } from '../types.js';
+import type { DepSkillRef, ExtractedSkill } from '../types.js';
 
 function extractFrontmatterField(
   content: string,
@@ -93,4 +93,10 @@ export function discoverDepSkillsSync(pkgDir: string): DepSkillRef[] {
 
 export async function discoverDepSkills(pkgDir: string): Promise<DepSkillRef[]> {
   return discoverDepSkillsSync(pkgDir);
+}
+
+/** Set `skill.rootDir` and discover+attach `skill.seeAlso` from `pkgDir`'s dependencies. */
+export function attachDepSkills(skill: ExtractedSkill, pkgDir: string): void {
+  skill.rootDir = pkgDir;
+  skill.seeAlso = discoverDepSkillsSync(pkgDir);
 }
