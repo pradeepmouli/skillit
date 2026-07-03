@@ -1,6 +1,6 @@
 {
   "name": "@skillit/vitepress",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "VitePress plugin for AI agent skill generation — uses sidebar for document ordering",
   "keywords": [
     "agent-skills",
