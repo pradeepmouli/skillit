@@ -9,7 +9,7 @@ this table is the quick reference. (Source: skillit architecture spec §2.3/§4.
 | F4                 | Symbol JSDoc summary               | `/** … */` on the function/class/type/enum/variable                        |
 | E1, E2             | `@param` / `@returns` prose        | on parameters and non-void returns                                         |
 | E3                 | Interface/type property JSDoc      | `/** … */` on each property                                                |
-| W7, W8, W9         | Routing tags                       | `@useWhen` / `@avoidWhen` / `@never` (render as pitfalls)                  |
+| W7, W8, W9         | Routing tags                       | `@useWhen` / `@avoidWhen` / `@never`                                       |
 | W10, W11, W3       | Depth tags                         | `@remarks` (complex fns), `@category`, `@since`/`@throws`/`@see`           |
 | W1, W5             | Module docs                        | `@packageDocumentation` summary + `@remarks`                               |
 | E4, W2             | Examples                           | sibling `*.example.ts` / `examples/*`, or `@example` blocks on key exports |
@@ -80,16 +80,14 @@ _headline judgment_ of the skill lives in a kind-specific surface:
   - For an adapter-model CLI (no static command tree), enrich the stable exported
     symbols together with `@packageDocumentation` instead.
 - **config** — **per-property** JSDoc on the config type's properties:
-  `@useWhen`/`@avoidWhen`/`@pitfalls`/`@remarks` on each option, plus a sibling
+  `@useWhen`/`@avoidWhen`/`@never`/`@remarks` on each option, plus a sibling
   `<config>.example.ts` (written only if absent — never clobbered) for the
   example finding. Findings carry a dot-path `configKey`; `resolveTargetLocation`
   returns `{ file, declName, propertyPath }`. Writeback: `upsertPropertyJsDocTag`.
-  - **Tag note:** the config surface authors pitfalls as **`@pitfalls`** (what
-    `config-extract` reads), NOT `@never` (the typedoc/JSDoc surface's tag — see
-    spec §4.2 naming note). On a config option, `@never` is silently ignored.
-    `@category` is likewise not scored on config options — don't chase it there.
+  - **Tag note:** `@category` is not scored on config options — don't chase it
+    there.
 - **mcp (build mode)** — JSDoc on the tool-handler symbols **plus** flat
-  `_meta.{useWhen,avoidWhen,pitfalls}` string annotations in your TS server
+  `_meta.{useWhen,avoidWhen,never}` string annotations in your TS server
   source. `resolveTargetLocation` resolves a tool to its `{ file, declName }`.
   Writeback: `upsertJsDocTag`. (`gen`/`audit --source mcp --mode build`.)
 - **mcp (runtime mode)** — the server source is **not** editable, so the only

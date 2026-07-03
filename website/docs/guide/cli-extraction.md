@@ -11,7 +11,7 @@ Many libraries have a CLI that users interact with more than the programmatic AP
 
 ## How It Works
 
-The `@skillit/cli` package extracts CLI command structure via runtime introspection or `--help` parsing, then correlates CLI flags with your typed TypeScript interfaces. The result: each flag gets both its commander metadata (flag syntax, defaults, required) and your JSDoc expert knowledge (`@useWhen`, `@pitfalls`, `@remarks`).
+The `@skillit/cli` package extracts CLI command structure via runtime introspection or `--help` parsing, then correlates CLI flags with your typed TypeScript interfaces. The result: each flag gets both its commander metadata (flag syntax, defaults, required) and your JSDoc expert knowledge (`@useWhen`, `@never`, `@remarks`).
 
 ```
 CLI entry point ─── introspect commander/yargs ───┐
@@ -90,7 +90,7 @@ Declare the `@config` tag in `typedoc.json`:
 
 ```json
 {
-  "blockTags": ["@useWhen", "@avoidWhen", "@pitfalls", "@config"]
+  "blockTags": ["@useWhen", "@avoidWhen", "@never", "@config"]
 }
 ```
 
@@ -119,7 +119,7 @@ export interface GenerateOptions {
    * - First time running against a new config --- verify output paths
    * - CI validation --- ensure generation succeeds without modifying the repo
    *
-   * @pitfalls
+   * @never
    * - NEVER rely on dry-run output matching real output exactly ---
    *   skips post-processing
    *
@@ -166,14 +166,14 @@ Generate form components from Zod schemas
 | `--out <path>`    | string  | no       | `./src/components` | Output directory       |
 | `--dry-run`       | boolean | no       | `false`            | Preview without writes |
 
-**Pitfalls:**
+**Never:**
 
 - NEVER run without --config --- defaults to config.ts which may not exist
 ```
 
 ### In Reference Files
 
-Detailed per-option documentation goes in `references/commands.md` with full `@useWhen`, `@avoidWhen`, `@pitfalls`, and `@remarks` for each option.
+Detailed per-option documentation goes in `references/commands.md` with full `@useWhen`, `@avoidWhen`, `@never`, and `@remarks` for each option.
 
 ## Integration with TypeDoc Plugin
 

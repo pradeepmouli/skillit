@@ -373,7 +373,7 @@ function renderRouterSkill(
       remarks: s.remarks || '',
       useWhens: s.useWhen ?? [],
       avoidWhens: s.avoidWhen ?? [],
-      nevers: s.pitfalls ?? [],
+      nevers: s.never ?? [],
       keyExports: [...topClasses, ...topFunctions].slice(0, 5)
     };
   });
@@ -1333,9 +1333,9 @@ function renderWhenToUse(skill: ExtractedSkill): string {
 }
 
 function renderNeverRules(skill: ExtractedSkill): string {
-  if (!skill.pitfalls || skill.pitfalls.length === 0) return '';
+  if (!skill.never || skill.never.length === 0) return '';
   const lines: string[] = [];
-  for (const item of skill.pitfalls) {
+  for (const item of skill.never) {
     lines.push(`- ${item}`);
   }
   return '## NEVER\n\n' + lines.join('\n');

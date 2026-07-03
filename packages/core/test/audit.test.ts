@@ -1163,21 +1163,21 @@ describe('W8: @avoidWhen on at least one export', () => {
 // ---------------------------------------------------------------------------
 
 describe('W9: @never on at least one export', () => {
-  it('fails when skill.pitfalls is undefined', () => {
-    const issues = getIssues(makeSkill({ pitfalls: undefined }), makeContext(), 'W9');
+  it('fails when skill.never is undefined', () => {
+    const issues = getIssues(makeSkill({ never: undefined }), makeContext(), 'W9');
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('warning');
     expect(issues[0].message).toContain('@never');
   });
 
-  it('fails when skill.pitfalls is an empty array', () => {
-    const issues = getIssues(makeSkill({ pitfalls: [] }), makeContext(), 'W9');
+  it('fails when skill.never is an empty array', () => {
+    const issues = getIssues(makeSkill({ never: [] }), makeContext(), 'W9');
     expect(issues).toHaveLength(1);
   });
 
-  it('passes when skill.pitfalls has at least one entry', () => {
+  it('passes when skill.never has at least one entry', () => {
     const passing = getPassing(
-      makeSkill({ pitfalls: ['mutates the original array'] }),
+      makeSkill({ never: ['mutates the original array'] }),
       makeContext(),
       'W9'
     );
@@ -1186,24 +1186,24 @@ describe('W9: @never on at least one export', () => {
 
   it('passes with multiple pitfall entries', () => {
     const passing = getPassing(
-      makeSkill({ pitfalls: ['pitfall A', 'pitfall B'] }),
+      makeSkill({ never: ['pitfall A', 'pitfall B'] }),
       makeContext(),
       'W9'
     );
     expect(passing).toHaveLength(1);
   });
 
-  it('passes when a configSurface carries pitfalls (no top-level pitfalls)', () => {
+  it('passes when a configSurface carries never (no top-level never)', () => {
     const passing = getPassing(
       makeSkill({
-        pitfalls: undefined,
+        never: undefined,
         configSurfaces: [
           {
             name: 'build',
             description: 'Build the project',
             sourceType: 'cli',
             options: [],
-            pitfalls: ['never run with --force in CI']
+            never: ['never run with --force in CI']
           }
         ]
       }),
@@ -1213,17 +1213,17 @@ describe('W9: @never on at least one export', () => {
     expect(passing).toHaveLength(1);
   });
 
-  it('fails when neither top-level nor configSurface carries pitfalls', () => {
+  it('fails when neither top-level nor configSurface carries never', () => {
     const issues = getIssues(
       makeSkill({
-        pitfalls: undefined,
+        never: undefined,
         configSurfaces: [
           {
             name: 'build',
             description: 'Build the project',
             sourceType: 'cli',
             options: [],
-            pitfalls: []
+            never: []
           }
         ]
       }),

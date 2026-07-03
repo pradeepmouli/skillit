@@ -95,10 +95,10 @@ function renderCommandsSection(
       }
     }
 
-    if (surface.pitfalls && surface.pitfalls.length > 0) {
+    if (surface.never && surface.never.length > 0) {
       lines.push('');
-      lines.push('**Pitfalls:**');
-      for (const item of surface.pitfalls) {
+      lines.push('**Never:**');
+      for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -111,7 +111,7 @@ function renderConfigSection(surfaces: ExtractedConfigSurface[]): string {
   const lines: string[] = ['## Configuration'];
 
   // Config tables always go in references/config.md — SKILL.md gets a compact pointer.
-  // A single config surface: show name + description + option count + pitfalls.
+  // A single config surface: show name + description + option count + never rules.
   // Multiple config surfaces: just point to the reference file.
   if (surfaces.length === 1) {
     const s = surfaces[0]!;
@@ -119,10 +119,10 @@ function renderConfigSection(surfaces: ExtractedConfigSurface[]): string {
     lines.push('');
     lines.push(`**${s.name}**${desc} (${s.options.length} options — see references/config.md)`);
 
-    if (s.pitfalls && s.pitfalls.length > 0) {
+    if (s.never && s.never.length > 0) {
       lines.push('');
-      lines.push('**Pitfalls:**');
-      for (const item of s.pitfalls) {
+      lines.push('**Never:**');
+      for (const item of s.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -267,10 +267,10 @@ function renderCommandsReference(
       }
     }
 
-    if (surface.pitfalls && surface.pitfalls.length > 0) {
+    if (surface.never && surface.never.length > 0) {
       lines.push('');
       lines.push('### NEVER');
-      for (const item of surface.pitfalls) {
+      for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -315,10 +315,10 @@ function renderConfigDetailReference(surfaces: ExtractedConfigSurface[]): string
       }
     }
 
-    if (surface.pitfalls && surface.pitfalls.length > 0) {
+    if (surface.never && surface.never.length > 0) {
       lines.push('');
       lines.push('### NEVER');
-      for (const item of surface.pitfalls) {
+      for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -370,10 +370,10 @@ function renderOptionDetail(opt: ExtractedConfigOption, lines: string[]): void {
     }
   }
 
-  if (opt.pitfalls && opt.pitfalls.length > 0) {
+  if (opt.never && opt.never.length > 0) {
     lines.push('');
-    lines.push('**Pitfalls:**');
-    for (const item of opt.pitfalls) {
+    lines.push('**Never:**');
+    for (const item of opt.never) {
       lines.push(`- ${item}`);
     }
   }

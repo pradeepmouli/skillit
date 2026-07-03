@@ -285,12 +285,12 @@ describe('ConfigRefineSource.applyFixes', () => {
 }`);
     const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
     await source.applyFixes([
-      { toolName: 'components.prefix', tag: 'pitfalls', value: 'must be a valid identifier' }
+      { toolName: 'components.prefix', tag: 'never', value: 'must be a valid identifier' }
     ]);
 
     const written = readFileSync(file, 'utf8');
-    expect(written).toContain('@pitfalls must be a valid identifier');
-    expect(written.indexOf('@pitfalls')).toBeLessThan(written.indexOf('prefix'));
+    expect(written).toContain('@never must be a valid identifier');
+    expect(written.indexOf('@never')).toBeLessThan(written.indexOf('prefix'));
   });
 
   it('leaves the file untouched when no fix applies', async () => {
@@ -305,12 +305,12 @@ describe('ConfigRefineSource.applyFixes', () => {
     const file = fixture(`export interface Cfg {\n  include?: string[];\n}`);
     const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
     await source.applyFixes([
-      { toolName: 'include', tag: 'pitfalls', value: 'avoid the `**/*.ts` glob — too broad' }
+      { toolName: 'include', tag: 'never', value: 'avoid the `**/*.ts` glob — too broad' }
     ]);
     // The type must still parse (an unescaped */ would have corrupted the file).
     const skill = await source.extract();
     const include = skill.configSurfaces![0]!.options.find((o) => o.name === 'include')!;
-    expect(include.pitfalls?.join(' ')).toContain('**/*.ts'); // round-trips unescaped
+    expect(include.never?.join(' ')).toContain('**/*.ts'); // round-trips unescaped
   });
 
   it('accumulates multiple fixes across properties in one pass', async () => {

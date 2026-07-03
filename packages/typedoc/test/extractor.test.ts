@@ -935,7 +935,7 @@ describe('extractSkills — @useWhen/@avoidWhen/@never aggregation', () => {
     expect(skill.avoidWhen).toEqual(['Performance critical', 'Already validated']);
   });
 
-  it('aggregates @never from function tags into skill.pitfalls', () => {
+  it('aggregates @never from function tags into skill.never', () => {
     const blockTags = [
       { tag: '@never', content: [{ text: '- Forget to await\n- Null not handled' }] }
     ];
@@ -943,7 +943,7 @@ describe('extractSkills — @useWhen/@avoidWhen/@never aggregation', () => {
     const fn = mockDecl('fn', ReflectionKind.Function, { signatures: [sig] });
     const project = mockProject([fn]);
     const [skill] = extractSkills(project, false);
-    expect(skill.pitfalls).toEqual(['Forget to await', 'Null not handled']);
+    expect(skill.never).toEqual(['Forget to await', 'Null not handled']);
   });
 
   it('aggregates useWhen across multiple functions', () => {
@@ -960,14 +960,14 @@ describe('extractSkills — @useWhen/@avoidWhen/@never aggregation', () => {
     expect(skill.useWhen).toEqual(['Case A', 'Case B']);
   });
 
-  it('leaves useWhen/avoidWhen/pitfalls undefined when no tags', () => {
+  it('leaves useWhen/avoidWhen/never undefined when no tags', () => {
     const sig = mockSig([], 'void', mockComment('Simple fn'));
     const fn = mockDecl('fn', ReflectionKind.Function, { signatures: [sig] });
     const project = mockProject([fn]);
     const [skill] = extractSkills(project, false);
     expect(skill.useWhen).toBeUndefined();
     expect(skill.avoidWhen).toBeUndefined();
-    expect(skill.pitfalls).toBeUndefined();
+    expect(skill.never).toBeUndefined();
   });
 });
 
@@ -1179,7 +1179,7 @@ describe('extractSkills — config interface detection', () => {
     const project = mockProject([iface]);
     const [skill] = extractSkills(project, false);
     const opt = skill.configSurfaces![0].options[0];
-    expect(opt.pitfalls).toEqual(['Can serve stale data', 'Requires manual invalidation']);
+    expect(opt.never).toEqual(['Can serve stale data', 'Requires manual invalidation']);
   });
 
   it('extracts @avoidWhen from config interface property', () => {
@@ -1212,7 +1212,7 @@ describe('extractSkills — config interface detection', () => {
     const [skill] = extractSkills(project, false);
     const surface = skill.configSurfaces![0];
     expect(surface.useWhen).toEqual(['Deploying to production']);
-    expect(surface.pitfalls).toEqual(['Missing env vars cause silent failures']);
+    expect(surface.never).toEqual(['Missing env vars cause silent failures']);
   });
 
   it('configSurfaces undefined when no config interfaces present', () => {

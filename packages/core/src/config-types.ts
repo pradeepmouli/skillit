@@ -52,10 +52,10 @@ export interface ExtractedConfigSurface {
   avoidWhen?: string[];
 
   /**
-   * Known pitfalls, footguns, or common mistakes for this surface.
+   * Known footguns or common mistakes for this surface.
    * Mirrors the @never JSDoc pattern used elsewhere in ExtractedSkill.
    */
-  pitfalls?: string[];
+  never?: string[];
 
   /**
    * Extended expert notes about this surface — edge cases, interaction effects,
@@ -133,10 +133,10 @@ export interface ExtractedConfigOption {
   avoidWhen?: string[];
 
   /**
-   * Known pitfalls or common mistakes when using this option.
+   * Known footguns or common mistakes when using this option.
    * Mirrors the @never JSDoc pattern.
    */
-  pitfalls?: string[];
+  never?: string[];
 
   /**
    * Logical grouping label for this option (e.g. "Output", "Performance").

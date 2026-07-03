@@ -35,7 +35,7 @@ function makeCliSurface(overrides: Partial<ExtractedConfigSurface> = {}): Extrac
     ],
     useWhen: ['You need to produce production artifacts'],
     avoidWhen: ['Running in watch mode with --watch already active'],
-    pitfalls: ['Always clean dist/ before building'],
+    never: ['Always clean dist/ before building'],
     ...overrides
   };
 }
@@ -132,7 +132,7 @@ describe('renderConfigSurfaceSection — CLI surfaces', () => {
     expect(result).toContain('Running in watch mode with --watch already active');
   });
 
-  it('renders pitfalls section', () => {
+  it('renders never section', () => {
     const result = renderConfigSurfaceSection([makeCliSurface()]);
     expect(result).toContain('Always clean dist/ before building');
   });
@@ -225,7 +225,7 @@ describe('renderConfigReference — CLI surfaces', () => {
       options: [
         makeOption({
           useWhen: ['Targeting ESM output'],
-          pitfalls: ['Cannot combine with --cjs flag']
+          never: ['Cannot combine with --cjs flag']
         })
       ]
     });

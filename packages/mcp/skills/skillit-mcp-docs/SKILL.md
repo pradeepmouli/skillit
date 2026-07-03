@@ -13,7 +13,7 @@ Use this skill when documenting MCP servers for `@skillit/mcp`.
 ## Focus Areas
 
 - Tool descriptions that explain purpose and invocation scenarios
-- Flat `_meta` string fields — `useWhen`, `avoidWhen`, `pitfalls`, `remarks`, `example`
+- Flat `_meta` string fields — `useWhen`, `avoidWhen`, `never`, `remarks`, `example`
 - Parameter and schema descriptions that explain valid inputs and effects
 - Stable, specific tool names instead of generic verbs
 

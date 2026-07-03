@@ -41,7 +41,7 @@ export interface SkillsPluginOptions {
   /** Output directory for generated skill files
    * @defaultValue "skills"
    * @category Output
-   * @pitfalls
+   * @never
    * - NEVER point this inside a tracked source directory (e.g. `src/`) — `skillit gen` rewrites the whole output tree every build and would clobber hand-written files
    */
   skillsOutDir?: string;
@@ -53,7 +53,7 @@ export interface SkillsPluginOptions {
    * - You want generated skills copied into an agent's discovery path (e.g. `.claude/skills`) so they load without a manual copy step
    * @avoidWhen
    * - You only consume the canonical `skillsOutDir` copy — install targets duplicate every skill into each listed directory
-   * @pitfalls
+   * @never
    * - A non-existent or unwritable target directory fails the build mid-generation — ensure each path exists and is writable in CI
    */
   skillsInstallTargets?: string[];
@@ -97,7 +97,7 @@ export interface SkillsPluginOptions {
    * @category Output
    * @useWhen
    * - Several packages would otherwise generate same-named skills that collide in a shared install target
-   * @pitfalls
+   * @never
    * - NEVER include path separators or spaces — the prefix becomes part of the skill's directory name
    */
   skillsNamePrefix?: string;

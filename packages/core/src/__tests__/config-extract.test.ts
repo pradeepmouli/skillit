@@ -41,16 +41,16 @@ describe('extractConfigSurface', () => {
     expect(nested.required).toBe(true);
   });
 
-  it('captures routing tags (@useWhen/@avoidWhen/@pitfalls) from property JSDoc', () => {
+  it('captures routing tags (@useWhen/@avoidWhen/@never) from property JSDoc', () => {
     const src = `export interface Cfg {
   /** Enable SSR.
    * @useWhen targeting a server runtime
-   * @pitfalls breaks static export */
+   * @never breaks static export */
   ssr?: boolean;
 }`;
     const ssr = extractConfigSurface(src, 'Cfg')!.options.find((o) => o.name === 'ssr')!;
     expect(ssr.useWhen).toEqual(['targeting a server runtime']);
-    expect(ssr.pitfalls).toEqual(['breaks static export']);
+    expect(ssr.never).toEqual(['breaks static export']);
   });
 
   it('supports an object-type `type` alias', () => {

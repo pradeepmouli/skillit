@@ -11,7 +11,7 @@ export function parseTag(suggestion: string): RefineTag | undefined {
   const valid: ReadonlySet<RefineTag> = new Set([
     'useWhen',
     'avoidWhen',
-    'pitfalls',
+    'never',
     'remarks',
     'example'
   ]);
@@ -40,7 +40,7 @@ export function selectWorkItems(
   // Round-robin across groups rather than draining the highest-points group
   // first: take the Nth target of every group before any (N+1)th. A bounded
   // iteration then spreads across ALL still-failing tags, so a tag with many
-  // completeness targets (e.g. `@pitfalls` on a wide config surface) can't
+  // completeness targets (e.g. `@never` on a wide config surface) can't
   // monopolize the slice and starve `@useWhen`/`@avoidWhen` — which, before the
   // first of those is ever drafted, let the loop's score plateau stop early with
   // those dimensions still failing. With one target per group this is identical

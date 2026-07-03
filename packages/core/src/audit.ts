@@ -576,7 +576,7 @@ function checkW5(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 function checkW6(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
   if (!skill.readme?.troubleshooting?.trim()) {
-    const hasNever = (skill.pitfalls ?? []).length > 0;
+    const hasNever = (skill.never ?? []).length > 0;
     issues.push(
       issue(
         'warning',
@@ -600,9 +600,9 @@ function checkW6(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // (MCP/TypeDoc skills) OR on a configSurface — either on the surface itself
 // (CLI skills correlate them onto `configSurfaces[].useWhen` etc.) or on an
 // individual option (config skills carry per-key routing on each option's
-// `useWhen`/`avoidWhen`/`pitfalls`). Credit guidance found in any of those.
+// `useWhen`/`avoidWhen`/`never`). Credit guidance found in any of those.
 // ---------------------------------------------------------------------------
-function hasRoutingTag(skill: ExtractedSkill, tag: 'useWhen' | 'avoidWhen' | 'pitfalls'): boolean {
+function hasRoutingTag(skill: ExtractedSkill, tag: 'useWhen' | 'avoidWhen' | 'never'): boolean {
   if ((skill[tag] ?? []).length > 0) return true;
   return (skill.configSurfaces ?? []).some(
     (surface) =>
@@ -661,9 +661,9 @@ function checkW8(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // W9: @never on at least one export
 // ---------------------------------------------------------------------------
 function checkW9(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
-  const hasPitfalls = hasRoutingTag(skill, 'pitfalls');
+  const hasNever = hasRoutingTag(skill, 'never');
 
-  if (!hasPitfalls) {
+  if (!hasNever) {
     issues.push(
       issue(
         'warning',

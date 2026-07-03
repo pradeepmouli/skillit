@@ -275,7 +275,7 @@ Accepted heading variants (case-insensitive):
 
 Generated skills are evaluated on 8 dimensions. The biggest gaps without conventions:
 
-- **Knowledge Delta**: Function signatures are things Claude already knows. The value comes from @param prose, @returns meaning, @throws conditions, and Pitfalls.
+- **Knowledge Delta**: Function signatures are things Claude already knows. The value comes from @param prose, @returns meaning, @throws conditions, and @never entries.
 - **Anti-Patterns**: Without a ## Troubleshooting section, skills score ~2/15 on anti-pattern quality.
 - **Description**: Without proper package.json description + keywords, skills never trigger.
 

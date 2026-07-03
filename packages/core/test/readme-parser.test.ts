@@ -119,6 +119,30 @@ describe('parseReadme – troubleshooting', () => {
     const result = parseReadme(md);
     expect(result.troubleshooting).toBe('Be aware of W.');
   });
+
+  it('accepts "Pitfalls" as variant', () => {
+    const md = `# Pkg\n\n## Pitfalls\n\nNever do V.\n\n## Usage\n\nUsage.`;
+    const result = parseReadme(md);
+    expect(result.troubleshooting).toBe('Never do V.');
+  });
+
+  it('accepts "Common Mistakes" as variant', () => {
+    const md = `# Pkg\n\n## Common Mistakes\n\nAvoid U.\n\n## Usage\n\nUsage.`;
+    const result = parseReadme(md);
+    expect(result.troubleshooting).toBe('Avoid U.');
+  });
+
+  it('accepts "Gotchas" as variant', () => {
+    const md = `# Pkg\n\n## Gotchas\n\nWatch for T.\n\n## Usage\n\nUsage.`;
+    const result = parseReadme(md);
+    expect(result.troubleshooting).toBe('Watch for T.');
+  });
+
+  it('accepts "Caveats" as variant', () => {
+    const md = `# Pkg\n\n## Caveats\n\nMind S.\n\n## Usage\n\nUsage.`;
+    const result = parseReadme(md);
+    expect(result.troubleshooting).toBe('Mind S.');
+  });
 });
 
 // ─── Edge cases ───────────────────────────────────────────────────────────────

@@ -253,7 +253,7 @@ When an agent updates your code, inline docs update atomically. There's no separ
  * - Loading config from user-provided paths
  * - Dynamic config resolution at startup
  *
- * @pitfalls
+ * @never
  * - NEVER trust user paths without sanitization — resolves relative to cwd
  *
  * @param path Path to the config file
@@ -333,10 +333,10 @@ We forked [PixiJS](https://github.com/pixijs/pixijs) and bootstrapped skillit to
 
 ### Results
 
-| Phase                       | Score   | Grade | What Changed                                                 | Agent Cost  |
-| --------------------------- | ------- | ----- | ------------------------------------------------------------ | ----------- |
-| **Install + generate**      | 84/120  | B-    | `npm install typedoc-plugin-skillit && pnpm typedoc`         | 0 tokens    |
-| **After JSDoc conventions** | 113/120 | A     | `@useWhen`/`@pitfalls` on 7 key classes (110 lines of JSDoc) | ~80K tokens |
+| Phase                       | Score   | Grade | What Changed                                              | Agent Cost  |
+| --------------------------- | ------- | ----- | --------------------------------------------------------- | ----------- |
+| **Install + generate**      | 84/120  | B-    | `npm install typedoc-plugin-skillit && pnpm typedoc`      | 0 tokens    |
+| **After JSDoc conventions** | 113/120 | A     | `@useWhen`/`@never` on 7 key classes (110 lines of JSDoc) | ~80K tokens |
 
 **B- → A with 110 lines of JSDoc annotations.** The generator handles structure, progressive disclosure, config detection, and reference splitting automatically. The annotations add the expert knowledge — when to use each class, what to never do, and why.
 
@@ -351,7 +351,7 @@ We forked [PixiJS](https://github.com/pixijs/pixijs) and bootstrapped skillit to
  * @avoidWhen
  * - Drawing dynamic shapes — use Graphics instead
  * - Rendering text — use Text or BitmapText
- * @pitfalls
+ * @never
  * - NEVER create Sprites from unloaded textures — always Assets.load() first
  * - NEVER use Sprite.from() in hot loops — it creates new textures each call
  */
