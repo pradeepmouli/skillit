@@ -202,7 +202,7 @@ Structured representation of key sections extracted from a package README.
 - `firstParagraph: string` (optional) — First prose paragraph after any heading or blockquote
 - `quickStart: string` (optional) — Quick-start or getting-started section content
 - `features: string` (optional) — Features or capabilities section content
-- `troubleshooting: string` (optional) — Troubleshooting, common issues, or FAQ section content
+- `troubleshooting: string` (optional) — Troubleshooting, common issues, FAQ, or pitfalls/gotchas/caveats section content
 
 ### `AuditResult`
 

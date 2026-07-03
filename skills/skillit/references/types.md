@@ -201,7 +201,7 @@ Structured representation of key sections extracted from a package README.
 - `firstParagraph: string` (optional) — First prose paragraph after any heading or blockquote
 - `quickStart: string` (optional) — Quick-start or getting-started section content
 - `features: string` (optional) — Features or capabilities section content
-- `pitfalls: string` (optional) — Pitfalls, caveats, or anti-patterns section content (maps to skill-judge D3)
+- `troubleshooting: string` (optional) — Troubleshooting, common issues, FAQ, or pitfalls/gotchas/caveats section content
 
 ### `AuditResult`
 

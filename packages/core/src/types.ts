@@ -12,7 +12,7 @@ export interface ParsedReadme {
   quickStart?: string;
   /** Features or capabilities section content */
   features?: string;
-  /** Troubleshooting, common issues, or FAQ section content */
+  /** Troubleshooting, common issues, FAQ, or pitfalls/gotchas/caveats section content */
   troubleshooting?: string;
 }
 
