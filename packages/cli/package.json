@@ -1,6 +1,6 @@
 {
   "name": "@skillit/cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Extract CLI command structure from commander/yargs for AI agent skill generation",
   "keywords": [
     "agent-skills",

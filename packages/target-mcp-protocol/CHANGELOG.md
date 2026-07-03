@@ -1,5 +1,13 @@
 # @to-skills/target-mcp-protocol
 
+## 5.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`6952e4a`](https://github.com/pradeepmouli/skillit/commit/6952e4ab788e3173b790ab73eb0aa85f89d0d0d7)]:
+  - @skillit/core@4.0.0
+  - @skillit/mcp@2.0.0
+
 ## 4.0.0
 
 ### Major Changes
