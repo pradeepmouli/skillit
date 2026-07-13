@@ -266,7 +266,9 @@ export function renderSkill(
     const configSurfaces = skill.configSurfaces.filter((s) => s.sourceType !== 'cli');
 
     if (cliSurfaces.length > 0) {
-      const content = renderConfigReference(cliSurfaces);
+      const content = renderConfigReference(cliSurfaces, {
+        invocationPrefix: skill.cliInvocationPrefix
+      });
       references.push({
         filename: `${basePath}/references/commands.md`,
         content: truncateToTokenBudget(content, opts.maxTokens),
@@ -367,11 +369,11 @@ function renderRouterSkill(
     return {
       short: s.name.replace(/^@[^/]+\//, ''),
       peerName: toSkillName(s.name),
-      desc: s.packageDescription || s.description || '',
+      desc: s.description || s.packageDescription || '',
       remarks: s.remarks || '',
       useWhens: s.useWhen ?? [],
       avoidWhens: s.avoidWhen ?? [],
-      nevers: s.pitfalls ?? [],
+      nevers: s.never ?? [],
       keyExports: [...topClasses, ...topFunctions].slice(0, 5)
     };
   });
@@ -526,11 +528,14 @@ function renderSkillMd(
 
   sections.push(`# ${skill.name}`);
 
-  // Package description as body intro
-  if (skill.packageDescription) {
-    sections.push(skill.packageDescription);
-  } else if (skill.description) {
+  // Surface description as body intro. `description` is the skill's render
+  // headline (a config source puts its config-specific blurb here); the literal
+  // package.json `packageDescription` is audit-only metadata, used here only as
+  // a last-resort fallback.
+  if (skill.description) {
     sections.push(skill.description);
+  } else if (skill.packageDescription) {
+    sections.push(skill.packageDescription);
   }
 
   // @remarks from @packageDocumentation — architectural context, trade-offs, mental models
@@ -576,12 +581,17 @@ function renderSkillMd(
   const neverRules = renderNeverRules(skill);
   if (neverRules) sections.push(neverRules);
 
+  const seeAlso = renderSeeAlso(skill);
+  if (seeAlso) sections.push(seeAlso);
+
   // Troubleshooting section from README — inline in SKILL.md
   if (skill.readmeTroubleshooting) {
     sections.push('## Troubleshooting\n\n' + skill.readmeTroubleshooting);
   }
 
-  const configSection = renderConfigSurfaceSection(skill.configSurfaces);
+  const configSection = renderConfigSurfaceSection(skill.configSurfaces, {
+    invocationPrefix: skill.cliInvocationPrefix
+  });
   if (configSection) sections.push(configSection);
 
   const quickRef = renderQuickReference(skill);
@@ -1049,8 +1059,10 @@ function buildRefManifest(basePath: string, references: RenderedFile[]): RefMani
 }
 
 function buildDescription(skill: ExtractedSkill): string {
-  // Description = package.json tagline + short WHEN clause + domain keywords.
-  const desc = skill.packageDescription || skill.description || `API reference for ${skill.name}`;
+  // Description = surface tagline + short WHEN clause + domain keywords. Prefer
+  // the render headline (`description`); `packageDescription` is audit-only and
+  // serves only as a fallback.
+  const desc = skill.description || skill.packageDescription || `API reference for ${skill.name}`;
   const parts: string[] = [desc];
 
   // Add a short scenario-based WHEN from @useWhen (first item only, truncated to 80 chars)
@@ -1321,12 +1333,22 @@ function renderWhenToUse(skill: ExtractedSkill): string {
 }
 
 function renderNeverRules(skill: ExtractedSkill): string {
-  if (!skill.pitfalls || skill.pitfalls.length === 0) return '';
+  if (!skill.never || skill.never.length === 0) return '';
   const lines: string[] = [];
-  for (const item of skill.pitfalls) {
+  for (const item of skill.never) {
     lines.push(`- ${item}`);
   }
   return '## NEVER\n\n' + lines.join('\n');
+}
+
+function renderSeeAlso(skill: ExtractedSkill): string {
+  if (!skill.seeAlso || skill.seeAlso.length === 0) return '';
+  const lines = ['## See Also\n'];
+  for (const ref of skill.seeAlso) {
+    const desc = ref.description ? ` — ${ref.description}` : '';
+    lines.push(`- **${ref.name}** (\`${ref.path}\`)${desc}`);
+  }
+  return lines.join('\n');
 }
 
 /** Extract the first sentence (or first meaningful phrase) from a description */

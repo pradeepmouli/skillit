@@ -2,6 +2,8 @@
  * Rough token estimate: ~4 chars per token for English/code.
  * Not exact, but good enough for budgeting skill file sizes.
  *
+ * @param text - The string to estimate; its character length drives the result.
+ * @returns The estimated token count (`ceil(text.length / 4)`).
  * @category Token Management
  */
 export function estimateTokens(text: string): number {

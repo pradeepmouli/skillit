@@ -15,7 +15,7 @@ These three tags close the biggest quality gaps in generated skills: decision pr
 
 ```json
 {
-  "blockTags": ["@useWhen", "@avoidWhen", "@pitfalls"]
+  "blockTags": ["@useWhen", "@avoidWhen", "@never"]
 }
 ```
 
@@ -27,7 +27,7 @@ And in `tsdoc.json` (if your project uses one):
   "tagDefinitions": [
     { "tagName": "@useWhen", "syntaxKind": "block" },
     { "tagName": "@avoidWhen", "syntaxKind": "block" },
-    { "tagName": "@pitfalls", "syntaxKind": "block" }
+    { "tagName": "@never", "syntaxKind": "block" }
   ]
 }
 ```
@@ -58,13 +58,13 @@ Prevents misuse. Aggregated into SKILL.md "When to Use" as negative triggers. Kn
  */
 ```
 
-### `@pitfalls` --- Anti-patterns with reasoning
+### `@never` --- Anti-patterns with reasoning
 
 Use NEVER + BECAUSE format. This is the highest-leverage tag --- it directly provides expert knowledge that LLMs do not have from training data.
 
 ```typescript
 /**
- * @pitfalls
+ * @never
  * - NEVER pass functions as constructor arguments --- V8 serialization
  *   silently drops them, producing a proxy with undefined methods
  * - NEVER call $terminate() inside a proxied method --- creates an IPC
@@ -146,7 +146,7 @@ If you use the `@config` tag, declare it alongside the other custom tags:
 
 ```json
 {
-  "blockTags": ["@useWhen", "@avoidWhen", "@pitfalls", "@config"]
+  "blockTags": ["@useWhen", "@avoidWhen", "@never", "@config"]
 }
 ```
 
@@ -162,7 +162,7 @@ export interface GenerateOptions {
    * - First time running against a new config --- verify output paths
    * - CI validation --- ensure generation succeeds without modifying the repo
    *
-   * @pitfalls
+   * @never
    * - NEVER rely on dry-run output matching real output exactly ---
    *   skips post-processing
    *
@@ -193,7 +193,7 @@ All tags on one function:
  * - The class uses non-serializable state (closures, WeakMaps)
  * - You need sub-millisecond latency --- IPC adds ~1ms overhead
  *
- * @pitfalls
+ * @never
  * - NEVER pass functions as constructor args --- V8 serialization silently
  *   drops them
  * - NEVER call $terminate() inside a proxied method --- creates IPC deadlock

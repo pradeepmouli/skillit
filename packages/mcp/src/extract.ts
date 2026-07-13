@@ -384,7 +384,7 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
   const prompts = capabilities.prompts ? await listPrompts(introspectClient) : undefined;
 
   // Annotation enrichment via flat `_meta`. Server- and tool-level metadata
-  // in `_meta.{useWhen, avoidWhen, pitfalls, remarks, packageDescription}`
+  // in `_meta.{useWhen, avoidWhen, never, remarks, packageDescription}`
   // is read here and projected onto the skill so the core renderer's existing
   // "When to Use" / "NEVER" / remarks sections light up automatically.
   // Strictly additive: absent or wrong-type metadata leaves the skill unchanged.
@@ -451,7 +451,7 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
  *  - `packageDescription: string`  → `skill.packageDescription`
  *  - `useWhen: string`             → seeds `skill.useWhen`
  *  - `avoidWhen: string`           → seeds `skill.avoidWhen`
- *  - `pitfalls: string`            → seeds `skill.pitfalls`
+ *  - `never: string`               → seeds `skill.never`
  *
  * @remarks
  * **SDK 1.29.0 strips server-level `_meta`.** The SDK's `ImplementationSchema`
@@ -464,7 +464,7 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
  * The unit tests bypass the SDK via vi.mock, so they exercise both layers.
  *
  * Per-tool meta is aggregated on top via `pushLines`. The primary path reads
- * `fn.mcpMetadata.toSkills.{useWhen,avoidWhen,pitfalls}` (each a
+ * `fn.mcpMetadata.skillit.{useWhen,avoidWhen,never}` (each a
  * single-element `string[]` set by `readToolMetadata` in tools.ts). The
  * fallback path splits `fn.tags[key]` on `\n` for compatibility with older
  * ExtractedFunction producers that never set `mcpMetadata`.
@@ -476,11 +476,11 @@ async function introspect(client: Client, options: McpExtractOptions): Promise<E
 function collectMetaEnrichment(
   serverInfo: unknown,
   functions: ExtractedSkill['functions']
-): Pick<ExtractedSkill, 'avoidWhen' | 'packageDescription' | 'pitfalls' | 'remarks' | 'useWhen'> {
+): Pick<ExtractedSkill, 'avoidWhen' | 'never' | 'packageDescription' | 'remarks' | 'useWhen'> {
   const serverMeta = readServerMetaToSkills(serverInfo);
   const enrichment: Pick<
     ExtractedSkill,
-    'avoidWhen' | 'packageDescription' | 'pitfalls' | 'remarks' | 'useWhen'
+    'avoidWhen' | 'never' | 'packageDescription' | 'remarks' | 'useWhen'
   > = {};
 
   const remarks = serverMeta['remarks'];
@@ -494,7 +494,7 @@ function collectMetaEnrichment(
 
   const useWhen: string[] = [];
   const avoidWhen: string[] = [];
-  const pitfalls: string[] = [];
+  const never: string[] = [];
 
   const serverUseWhen = serverMeta['useWhen'];
   if (typeof serverUseWhen === 'string' && serverUseWhen.trim()) {
@@ -504,22 +504,22 @@ function collectMetaEnrichment(
   if (typeof serverAvoidWhen === 'string' && serverAvoidWhen.trim()) {
     avoidWhen.push(serverAvoidWhen);
   }
-  const serverPitfalls = serverMeta['pitfalls'];
-  if (typeof serverPitfalls === 'string' && serverPitfalls.trim()) {
-    pitfalls.push(serverPitfalls);
+  const serverNever = serverMeta['never'];
+  if (typeof serverNever === 'string' && serverNever.trim()) {
+    never.push(serverNever);
   }
 
   // Per-tool aggregation. Typed MCP metadata is preferred; tags stay as a
   // compatibility fallback for older ExtractedFunction producers.
   for (const fn of functions) {
-    pushLines(useWhen, fn.mcpMetadata?.toSkills?.useWhen, fn.tags['useWhen']);
-    pushLines(avoidWhen, fn.mcpMetadata?.toSkills?.avoidWhen, fn.tags['avoidWhen']);
-    pushLines(pitfalls, fn.mcpMetadata?.toSkills?.pitfalls, fn.tags['pitfalls']);
+    pushLines(useWhen, fn.mcpMetadata?.skillit?.useWhen, fn.tags['useWhen']);
+    pushLines(avoidWhen, fn.mcpMetadata?.skillit?.avoidWhen, fn.tags['avoidWhen']);
+    pushLines(never, fn.mcpMetadata?.skillit?.never, fn.tags['never']);
   }
 
   if (useWhen.length > 0) enrichment.useWhen = useWhen;
   if (avoidWhen.length > 0) enrichment.avoidWhen = avoidWhen;
-  if (pitfalls.length > 0) enrichment.pitfalls = pitfalls;
+  if (never.length > 0) enrichment.never = never;
   return enrichment;
 }
 

@@ -60,7 +60,7 @@ function writeBundledSkill(
   mkdirSync(skillDir, { recursive: true });
   const lineEnding = options.lineEnding ?? '\n';
   const versionLine = version ? `version: ${version}\n` : '';
-  const managedBlock = options.managed === false ? '' : `toSkills:\n  managed: bundled-guidance\n`;
+  const managedBlock = options.managed === false ? '' : `skillit:\n  managed: bundled-guidance\n`;
   writeFileSync(
     join(skillDir, 'SKILL.md'),
     [
@@ -269,7 +269,7 @@ describe('writeSkills', () => {
       {
         additionalFrontmatter: {
           version: '1.4.0',
-          toSkills: { managed: 'bundled-guidance' }
+          skillit: { managed: 'bundled-guidance' }
         }
       }
     );
@@ -298,7 +298,7 @@ describe('writeSkills', () => {
       {
         additionalFrontmatter: {
           version: '1.4.0',
-          toSkills: { managed: 'bundled-guidance' }
+          skillit: { managed: 'bundled-guidance' }
         }
       }
     );
@@ -308,6 +308,56 @@ describe('writeSkills', () => {
     expect(results.find((result) => result.root === installDir)).toMatchObject({
       action: 'preserved',
       preserveReason: 'bundled-newer-version'
+    });
+  });
+
+  it('recognizes the pre-rebrand toSkills: marker key on already-installed skills', () => {
+    // Simulates a skill installed by an older skillit version, before the
+    // toSkills: -> skillit: marker rename. Name deliberately does NOT start
+    // with "skillit-" so this only passes via the explicit legacy-key path,
+    // not the name-prefix fallback heuristic.
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    const skillDir = join(installDir, 'vendor-docs');
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(
+      join(skillDir, 'SKILL.md'),
+      [
+        '---',
+        'name: vendor-docs',
+        'description: Bundled guidance',
+        'toSkills:',
+        '  managed: bundled-guidance',
+        'version: 1.4.0',
+        '---',
+        '',
+        '# vendor-docs',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+
+    const bundled = renderSkill(
+      {
+        ...minimalSkill,
+        name: 'vendor-docs',
+        description: 'Bundled guidance skill',
+        functions: [],
+        examples: []
+      },
+      {
+        additionalFrontmatter: {
+          version: '1.4.0',
+          skillit: { managed: 'bundled-guidance' }
+        }
+      }
+    );
+
+    const results = writeSkills([bundled], { outDir, installTargets: [installDir] });
+
+    expect(results.find((result) => result.root === installDir)).toMatchObject({
+      action: 'preserved',
+      preserveReason: 'bundled-same-version'
     });
   });
 
@@ -327,7 +377,7 @@ describe('writeSkills', () => {
       {
         additionalFrontmatter: {
           version: '1.4.0',
-          toSkills: { managed: 'bundled-guidance' }
+          skillit: { managed: 'bundled-guidance' }
         }
       }
     );
@@ -357,7 +407,7 @@ describe('writeSkills', () => {
       {
         additionalFrontmatter: {
           version: '1.4.0',
-          toSkills: { managed: 'bundled-guidance' }
+          skillit: { managed: 'bundled-guidance' }
         }
       }
     );
@@ -413,7 +463,7 @@ describe('writeSkills', () => {
         '---',
         'name: skillit-docs',
         'description: [broken',
-        'toSkills:',
+        'skillit:',
         '  managed: bundled-guidance',
         '',
         'version: 9.9.9',
@@ -436,7 +486,7 @@ describe('writeSkills', () => {
       {
         additionalFrontmatter: {
           version: '1.4.0',
-          toSkills: { managed: 'bundled-guidance' }
+          skillit: { managed: 'bundled-guidance' }
         }
       }
     );

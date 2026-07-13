@@ -1,12 +1,22 @@
 {
   "name": "@skillit/client",
-  "version": "0.3.0",
-  "description": "Anthropic model client + skillit CLI (refine command)",
+  "version": "1.1.0",
+  "description": "The skillit CLI — generate, audit, and refine AI-agent skills from a TypeScript codebase, plus the Anthropic model client for the headless refine loop.",
   "license": "MIT",
   "author": "Pradeep Mouli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pradeepmouli/skillit.git",
+    "directory": "packages/client"
+  },
   "bin": {
     "skillit": "./dist/bin.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "skills"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,10 +32,12 @@
     "type-check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.100.1",
+    "@anthropic-ai/sdk": "^0.102.0",
     "@skillit/cli": "workspace:*",
     "@skillit/core": "workspace:*",
     "@skillit/mcp": "workspace:*",
-    "commander": "^15.0.0"
+    "@skillit/typedoc": "workspace:*",
+    "commander": "^15.0.0",
+    "typescript": "^6.0.3"
   }
 }

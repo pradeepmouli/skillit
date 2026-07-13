@@ -1,6 +1,6 @@
 {
   "name": "@skillit/target-mcpc",
-  "version": "0.3.2",
+  "version": "1.0.1",
   "description": "mcpc CLI-as-proxy invocation-target adapter for @skillit/mcp — emits shell-command skills consumable by any agent with a shell tool, via Apify's mcpc CLI",
   "keywords": [
     "agent-skills",
@@ -46,7 +46,7 @@
   "devDependencies": {
     "@types/json-schema": "^7.0.15",
     "@types/node": "^25.9.1",
-    "vitest": "^4.1.7",
+    "vitest": "^5.0.0-beta.4",
     "yaml": "^2.9.0"
   }
 }

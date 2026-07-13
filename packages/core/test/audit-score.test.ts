@@ -149,8 +149,8 @@ describe('missing @useWhen and @never', () => {
     expect(hasUseWhen).toBe(true);
   });
 
-  it('improvements list includes @pitfalls (never-do) suggestion', () => {
-    const hasNEVER = estimate.improvements.some((s) => s.suggestion.includes('@pitfalls'));
+  it('improvements list includes @never (never-do) suggestion', () => {
+    const hasNEVER = estimate.improvements.some((s) => s.suggestion.includes('@never'));
     expect(hasNEVER).toBe(true);
   });
 });
@@ -283,10 +283,10 @@ describe('improvements list', () => {
     const withoutNEVER = ALL_CODES.filter((c) => c !== 'W9');
     const audit = makeResult(withoutNEVER);
     const estimate = estimateSkillJudgeScore(audit);
-    // @pitfalls/never-do (+8) should appear in improvements if D3 is below 80%
+    // @never/never-do (+8) should appear in improvements if D3 is below 80%
     const d3max = 15;
     if (estimate.dimensions.d3_antiPatterns < d3max * 0.8) {
-      expect(estimate.improvements[0].suggestion).toContain('@pitfalls');
+      expect(estimate.improvements[0].suggestion).toContain('@never');
     }
   });
 

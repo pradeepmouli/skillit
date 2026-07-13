@@ -4,13 +4,21 @@ import type { ExtractedConfigSurface, ExtractedConfigOption } from './config-typ
 // Inline SKILL.md sections
 // ---------------------------------------------------------------------------
 
+export interface ConfigRenderOpts {
+  /** When set, CLI usage blocks are prefixed with this string (e.g. `npx @scope/pkg`). */
+  invocationPrefix?: string;
+}
+
 /**
  * Render ExtractedConfigSurface[] as SKILL.md inline sections.
  *
  * CLI surfaces → ## Commands
  * Config/env surfaces → ## Configuration
  */
-export function renderConfigSurfaceSection(surfaces: ExtractedConfigSurface[] | undefined): string {
+export function renderConfigSurfaceSection(
+  surfaces: ExtractedConfigSurface[] | undefined,
+  opts?: ConfigRenderOpts
+): string {
   if (!surfaces || surfaces.length === 0) return '';
 
   const cli = surfaces.filter((s) => s.sourceType === 'cli');
@@ -19,7 +27,7 @@ export function renderConfigSurfaceSection(surfaces: ExtractedConfigSurface[] | 
   const parts: string[] = [];
 
   if (cli.length > 0) {
-    parts.push(renderCommandsSection(cli));
+    parts.push(renderCommandsSection(cli, opts));
   }
 
   if (config.length > 0) {
@@ -29,7 +37,10 @@ export function renderConfigSurfaceSection(surfaces: ExtractedConfigSurface[] | 
   return parts.join('\n\n');
 }
 
-function renderCommandsSection(surfaces: ExtractedConfigSurface[]): string {
+function renderCommandsSection(
+  surfaces: ExtractedConfigSurface[],
+  opts?: ConfigRenderOpts
+): string {
   const lines: string[] = ['## Commands'];
 
   for (const surface of surfaces) {
@@ -42,10 +53,13 @@ function renderCommandsSection(surfaces: ExtractedConfigSurface[]): string {
     }
 
     if (surface.usage) {
+      const usageLine = opts?.invocationPrefix
+        ? `${opts.invocationPrefix} ${surface.name} ${surface.usage}`.trimEnd()
+        : surface.usage;
       lines.push('');
       lines.push('**Usage:**');
       lines.push('```');
-      lines.push(surface.usage);
+      lines.push(usageLine);
       lines.push('```');
     }
 
@@ -81,10 +95,10 @@ function renderCommandsSection(surfaces: ExtractedConfigSurface[]): string {
       }
     }
 
-    if (surface.pitfalls && surface.pitfalls.length > 0) {
+    if (surface.never && surface.never.length > 0) {
       lines.push('');
-      lines.push('**Pitfalls:**');
-      for (const item of surface.pitfalls) {
+      lines.push('**Never:**');
+      for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -97,7 +111,7 @@ function renderConfigSection(surfaces: ExtractedConfigSurface[]): string {
   const lines: string[] = ['## Configuration'];
 
   // Config tables always go in references/config.md — SKILL.md gets a compact pointer.
-  // A single config surface: show name + description + option count + pitfalls.
+  // A single config surface: show name + description + option count + never rules.
   // Multiple config surfaces: just point to the reference file.
   if (surfaces.length === 1) {
     const s = surfaces[0]!;
@@ -105,10 +119,10 @@ function renderConfigSection(surfaces: ExtractedConfigSurface[]): string {
     lines.push('');
     lines.push(`**${s.name}**${desc} (${s.options.length} options — see references/config.md)`);
 
-    if (s.pitfalls && s.pitfalls.length > 0) {
+    if (s.never && s.never.length > 0) {
       lines.push('');
-      lines.push('**Pitfalls:**');
-      for (const item of s.pitfalls) {
+      lines.push('**Never:**');
+      for (const item of s.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -159,7 +173,10 @@ function renderOptionsTable(options: ExtractedConfigOption[], mode: 'cli' | 'con
  * CLI surfaces → # Commands with ## commandName / #### --flag
  * Config/env surfaces → # Configuration with ## InterfaceName / #### propertyName
  */
-export function renderConfigReference(surfaces: ExtractedConfigSurface[] | undefined): string {
+export function renderConfigReference(
+  surfaces: ExtractedConfigSurface[] | undefined,
+  opts?: ConfigRenderOpts
+): string {
   if (!surfaces || surfaces.length === 0) return '';
 
   const cli = surfaces.filter((s) => s.sourceType === 'cli');
@@ -168,7 +185,7 @@ export function renderConfigReference(surfaces: ExtractedConfigSurface[] | undef
   const parts: string[] = [];
 
   if (cli.length > 0) {
-    parts.push(renderCommandsReference(cli));
+    parts.push(renderCommandsReference(cli, opts));
   }
 
   if (config.length > 0) {
@@ -178,7 +195,10 @@ export function renderConfigReference(surfaces: ExtractedConfigSurface[] | undef
   return parts.join('\n\n');
 }
 
-function renderCommandsReference(surfaces: ExtractedConfigSurface[]): string {
+function renderCommandsReference(
+  surfaces: ExtractedConfigSurface[],
+  opts?: ConfigRenderOpts
+): string {
   const lines: string[] = ['# Commands'];
 
   for (const surface of surfaces) {
@@ -191,9 +211,12 @@ function renderCommandsReference(surfaces: ExtractedConfigSurface[]): string {
     }
 
     if (surface.usage) {
+      const usageLine = opts?.invocationPrefix
+        ? `${opts.invocationPrefix} ${surface.name} ${surface.usage}`.trimEnd()
+        : surface.usage;
       lines.push('');
       lines.push('```');
-      lines.push(surface.usage);
+      lines.push(usageLine);
       lines.push('```');
     }
 
@@ -244,10 +267,10 @@ function renderCommandsReference(surfaces: ExtractedConfigSurface[]): string {
       }
     }
 
-    if (surface.pitfalls && surface.pitfalls.length > 0) {
+    if (surface.never && surface.never.length > 0) {
       lines.push('');
       lines.push('### NEVER');
-      for (const item of surface.pitfalls) {
+      for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -292,10 +315,10 @@ function renderConfigDetailReference(surfaces: ExtractedConfigSurface[]): string
       }
     }
 
-    if (surface.pitfalls && surface.pitfalls.length > 0) {
+    if (surface.never && surface.never.length > 0) {
       lines.push('');
       lines.push('### NEVER');
-      for (const item of surface.pitfalls) {
+      for (const item of surface.never) {
         lines.push(`- ${item}`);
       }
     }
@@ -347,10 +370,10 @@ function renderOptionDetail(opt: ExtractedConfigOption, lines: string[]): void {
     }
   }
 
-  if (opt.pitfalls && opt.pitfalls.length > 0) {
+  if (opt.never && opt.never.length > 0) {
     lines.push('');
-    lines.push('**Pitfalls:**');
-    for (const item of opt.pitfalls) {
+    lines.push('**Never:**');
+    for (const item of opt.never) {
       lines.push(`- ${item}`);
     }
   }

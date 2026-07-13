@@ -1,11 +1,6 @@
 import type { ExtractedSkill } from './types.js';
-import type {
-  AuditContext,
-  AuditIssue,
-  AuditPass,
-  AuditResult,
-  AuditSeverity
-} from './audit-types.js';
+import type { AuditIssue, AuditPass, AuditResult, AuditSeverity } from './audit-types.js';
+import { discoverDepSkillsSync } from './refine/dep-skills.js';
 
 const GENERIC_KEYWORDS = new Set([
   'typescript',
@@ -41,8 +36,8 @@ function pass(code: string, message: string, detail?: string): AuditPass {
 // ---------------------------------------------------------------------------
 // F1: package.json description must exist and be >10 chars
 // ---------------------------------------------------------------------------
-function checkF1(context: AuditContext, issues: AuditIssue[], passing: AuditPass[]): void {
-  const desc = context.packageDescription?.trim() ?? '';
+function checkF1(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  const desc = skill.packageDescription?.trim() ?? '';
   if (!desc || desc.length <= 10) {
     issues.push(
       issue(
@@ -65,8 +60,8 @@ function checkF1(context: AuditContext, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 // F2: keywords — 5+ entries, at least 3 non-generic
 // ---------------------------------------------------------------------------
-function checkF2(context: AuditContext, issues: AuditIssue[], passing: AuditPass[]): void {
-  const keywords = context.keywords ?? [];
+function checkF2(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  const keywords = skill.keywords ?? [];
   const domainKeywords = keywords.filter((k) => !GENERIC_KEYWORDS.has(k.toLowerCase()));
 
   if (keywords.length < 5 || domainKeywords.length < 3) {
@@ -97,8 +92,8 @@ function checkF2(context: AuditContext, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 // F3: README description — blockquote or firstParagraph must exist, >20 chars
 // ---------------------------------------------------------------------------
-function checkF3(context: AuditContext, issues: AuditIssue[], passing: AuditPass[]): void {
-  const readme = context.readme;
+function checkF3(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  const readme = skill.readme;
   const text = (readme?.blockquote?.trim() ?? '') || (readme?.firstParagraph?.trim() ?? '');
 
   if (!text || text.length <= 20) {
@@ -427,8 +422,8 @@ function checkE4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 // E5: Repository — context.repository must be non-empty
 // ---------------------------------------------------------------------------
-function checkE5(context: AuditContext, issues: AuditIssue[], passing: AuditPass[]): void {
-  if (!context.repository?.trim()) {
+function checkE5(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  if (!skill.repository?.trim()) {
     issues.push(
       issue(
         'error',
@@ -441,7 +436,7 @@ function checkE5(context: AuditContext, issues: AuditIssue[], passing: AuditPass
       )
     );
   } else {
-    passing.push(pass('E5', 'Repository URL is present', context.repository));
+    passing.push(pass('E5', 'Repository URL is present', skill.repository));
   }
 }
 
@@ -529,8 +524,8 @@ function checkW3(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 // W4: 10+ keywords — domain-specific keyword count >= 10
 // ---------------------------------------------------------------------------
-function checkW4(context: AuditContext, issues: AuditIssue[], passing: AuditPass[]): void {
-  const keywords = context.keywords ?? [];
+function checkW4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  const keywords = skill.keywords ?? [];
   const domainKeywords = keywords.filter((k) => !GENERIC_KEYWORDS.has(k.toLowerCase()));
 
   if (domainKeywords.length < 10) {
@@ -555,13 +550,8 @@ function checkW4(context: AuditContext, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 // W5: README Features — context.readme?.features must exist
 // ---------------------------------------------------------------------------
-function checkW5(
-  context: AuditContext,
-  skill: ExtractedSkill,
-  issues: AuditIssue[],
-  passing: AuditPass[]
-): void {
-  if (!context.readme?.features?.trim()) {
+function checkW5(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  if (!skill.readme?.features?.trim()) {
     const hasRemarks = !!skill.remarks;
     issues.push(
       issue(
@@ -584,14 +574,9 @@ function checkW5(
 // ---------------------------------------------------------------------------
 // W6: README Troubleshooting — context.readme?.troubleshooting must exist
 // ---------------------------------------------------------------------------
-function checkW6(
-  context: AuditContext,
-  skill: ExtractedSkill,
-  issues: AuditIssue[],
-  passing: AuditPass[]
-): void {
-  if (!context.readme?.troubleshooting?.trim()) {
-    const hasNever = (skill.pitfalls ?? []).length > 0;
+function checkW6(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  if (!skill.readme?.troubleshooting?.trim()) {
+    const hasNever = (skill.never ?? []).length > 0;
     issues.push(
       issue(
         'warning',
@@ -615,9 +600,9 @@ function checkW6(
 // (MCP/TypeDoc skills) OR on a configSurface — either on the surface itself
 // (CLI skills correlate them onto `configSurfaces[].useWhen` etc.) or on an
 // individual option (config skills carry per-key routing on each option's
-// `useWhen`/`avoidWhen`/`pitfalls`). Credit guidance found in any of those.
+// `useWhen`/`avoidWhen`/`never`). Credit guidance found in any of those.
 // ---------------------------------------------------------------------------
-function hasRoutingTag(skill: ExtractedSkill, tag: 'useWhen' | 'avoidWhen' | 'pitfalls'): boolean {
+function hasRoutingTag(skill: ExtractedSkill, tag: 'useWhen' | 'avoidWhen' | 'never'): boolean {
   if ((skill[tag] ?? []).length > 0) return true;
   return (skill.configSurfaces ?? []).some(
     (surface) =>
@@ -676,9 +661,9 @@ function checkW8(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // W9: @never on at least one export
 // ---------------------------------------------------------------------------
 function checkW9(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
-  const hasPitfalls = hasRoutingTag(skill, 'pitfalls');
+  const hasNever = hasRoutingTag(skill, 'never');
 
-  if (!hasPitfalls) {
+  if (!hasNever) {
     issues.push(
       issue(
         'warning',
@@ -752,10 +737,44 @@ function checkW11(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPas
 }
 
 // ---------------------------------------------------------------------------
+// W12: Dep-skill coverage — deps with skills should appear in ## See Also
+// ---------------------------------------------------------------------------
+function checkW12(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  if (!skill.rootDir) {
+    passing.push(pass('W12', 'No rootDir set — dep-skill check skipped'));
+    return;
+  }
+  const found = discoverDepSkillsSync(skill.rootDir);
+  if (found.length === 0) {
+    passing.push(pass('W12', 'No dep skills found'));
+    return;
+  }
+  const covered = new Set((skill.seeAlso ?? []).map((r) => r.name));
+  const missing = found.filter((r) => !covered.has(r.name));
+  if (missing.length === 0) {
+    passing.push(pass('W12', 'All dep skills referenced in ## See Also'));
+    return;
+  }
+  for (const ref of missing) {
+    issues.push(
+      issue(
+        'warning',
+        'W12',
+        'package.json',
+        null,
+        ref.name,
+        `Dep '${ref.name}' has a skill at '${ref.path}' but is missing from ## See Also`,
+        'Run `skillit gen` to populate the ## See Also section with dep skill references'
+      )
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // A1: Generic keywords — for each generic keyword present, emit alert
 // ---------------------------------------------------------------------------
-function checkA1(context: AuditContext, issues: AuditIssue[], passing: AuditPass[]): void {
-  const keywords = context.keywords ?? [];
+function checkA1(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  const keywords = skill.keywords ?? [];
   const genericFound = keywords.filter((k) => GENERIC_KEYWORDS.has(k.toLowerCase()));
 
   for (const kw of genericFound) {
@@ -890,13 +909,8 @@ function checkA3(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass
 // ---------------------------------------------------------------------------
 // A4: Quick Start quality — recommend @example when README fallback is too long
 // ---------------------------------------------------------------------------
-function checkA4(
-  context: AuditContext,
-  skill: ExtractedSkill,
-  issues: AuditIssue[],
-  passing: AuditPass[]
-): void {
-  const quickStart = context.readme?.quickStart;
+function checkA4(skill: ExtractedSkill, issues: AuditIssue[], passing: AuditPass[]): void {
+  const quickStart = skill.readme?.quickStart;
   const hasCodeExample = skill.functions.some((f) => f.examples.length > 0);
 
   // If README Quick Start is long and no @example exists, recommend the primary source
@@ -961,6 +975,10 @@ function checkA4(
  * Executes 20+ checks across fatal/error/warning/alert severity levels and returns
  * a structured result with issues, passing checks, and summary counts.
  *
+ * @param skill - The extracted skill (the IR) whose exports/JSDoc plus project
+ *   metadata (description, README, keywords, repository) are checked. The audit
+ *   is a pure function of this IR — no separate context channel.
+ * @returns The audit result: collected issues, passing checks, and summary counts.
  * @category Audit
  * @useWhen
  * - You want programmatic quality feedback on JSDoc coverage before publishing skills
@@ -968,14 +986,14 @@ function checkA4(
  * @avoidWhen
  * - Rapid local iteration where audit noise slows you down — use the skillsAudit: false option instead
  */
-export function auditSkill(skill: ExtractedSkill, context: AuditContext): AuditResult {
+export function auditSkill(skill: ExtractedSkill): AuditResult {
   const issues: AuditIssue[] = [];
   const passing: AuditPass[] = [];
 
   // Fatal checks
-  checkF1(context, issues, passing);
-  checkF2(context, issues, passing);
-  checkF3(context, issues, passing);
+  checkF1(skill, issues, passing);
+  checkF2(skill, issues, passing);
+  checkF3(skill, issues, passing);
   checkF4(skill, issues, passing);
 
   // Error checks
@@ -983,26 +1001,27 @@ export function auditSkill(skill: ExtractedSkill, context: AuditContext): AuditR
   checkE2(skill, issues, passing);
   checkE3(skill, issues, passing);
   checkE4(skill, issues, passing);
-  checkE5(context, issues, passing);
+  checkE5(skill, issues, passing);
 
   // Warning checks
   checkW1(skill, issues, passing);
   checkW2(skill, issues, passing);
   checkW3(skill, issues, passing);
-  checkW4(context, issues, passing);
-  checkW5(context, skill, issues, passing);
-  checkW6(context, skill, issues, passing);
+  checkW4(skill, issues, passing);
+  checkW5(skill, issues, passing);
+  checkW6(skill, issues, passing);
   checkW7(skill, issues, passing);
   checkW8(skill, issues, passing);
   checkW9(skill, issues, passing);
   checkW10(skill, issues, passing);
   checkW11(skill, issues, passing);
+  checkW12(skill, issues, passing);
 
   // Alert checks
-  checkA1(context, issues, passing);
+  checkA1(skill, issues, passing);
   checkA2(skill, issues, passing);
   checkA3(skill, issues, passing);
-  checkA4(context, skill, issues, passing);
+  checkA4(skill, issues, passing);
 
   const summary: Record<AuditSeverity, number> = { fatal: 0, error: 0, warning: 0, alert: 0 };
   for (const iss of issues) summary[iss.severity]++;

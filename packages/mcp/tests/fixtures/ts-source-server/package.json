@@ -1,0 +1,14 @@
+{
+  "name": "@fixture/ts-source-mcp-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Editable-source MCP server fixture for build-mode enrichment tests.",
+  "bin": "./dist/server.js",
+  "files": [
+    "dist",
+    "src",
+    "skills",
+    "README.md"
+  ],
+  "type": "module"
+}

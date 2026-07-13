@@ -6,3 +6,6 @@ export { insertJsDocTag } from './jsdoc-edit.js';
 export { upsertJsDocTag, upsertPropertyJsDocTag, readJsDocTags } from './ast-edit.js';
 export { ConfigRefineSource } from './config-source.js';
 export type { ConfigRefineSourceOptions } from './config-source.js';
+export { stripScope, findNearestPackageDir, readPackageMetadata } from './package-metadata.js';
+export type { PackageMetadata } from './package-metadata.js';
+export { attachDepSkills, discoverDepSkills, discoverDepSkillsSync } from './dep-skills.js';

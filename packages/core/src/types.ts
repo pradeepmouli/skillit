@@ -1,5 +1,31 @@
 import type { ExtractedConfigSurface } from './config-types.js';
 
+/**
+ * Structured representation of key sections extracted from a package README.
+ */
+export interface ParsedReadme {
+  /** Leading blockquote, often used as a one-liner summary */
+  blockquote?: string;
+  /** First prose paragraph after any heading or blockquote */
+  firstParagraph?: string;
+  /** Quick-start or getting-started section content */
+  quickStart?: string;
+  /** Features or capabilities section content */
+  features?: string;
+  /** Troubleshooting, common issues, FAQ, or pitfalls/gotchas/caveats section content */
+  troubleshooting?: string;
+}
+
+/** A cross-reference to a skill bundled inside a direct dependency. */
+export interface DepSkillRef {
+  /** Skill name from the dep's SKILL.md frontmatter `name:` field. */
+  name: string;
+  /** Agent-loadable path relative to the consuming project root (e.g. `node_modules/@lspeasy/core/skills/lspeasy-core`). */
+  path: string;
+  /** Description from the dep's SKILL.md frontmatter `description:` field, if present. */
+  description?: string;
+}
+
 /** Extracted API surface for a single package/module */
 export interface ExtractedSkill {
   /** Package or module name */
@@ -51,19 +77,35 @@ export interface ExtractedSkill {
     sourceDescription?: string;
   }>;
   /** Aggregated @never from all exports */
-  pitfalls?: string[];
+  never?: string[];
   /** Configuration surfaces (CLI commands, config files) */
   configSurfaces?: ExtractedConfigSurface[];
   /** Features section from README — rendered inline in SKILL.md */
   readmeFeatures?: string;
   /** Troubleshooting section from README — rendered inline in SKILL.md */
   readmeTroubleshooting?: string;
+  /**
+   * Parsed README sections (blockquote, first paragraph, features,
+   * troubleshooting, quick-start). The single source of project narrative
+   * metadata — the audit reads this directly; no separate AuditContext.
+   */
+  readme?: ParsedReadme;
+  /**
+   * Invocation prefix for CLI command examples, e.g. `npx @scope/pkg`.
+   * When set, command usage blocks are prefixed with this string.
+   * Absent for non-CLI extractors or when the package is installed globally.
+   */
+  cliInvocationPrefix?: string;
   /** MCP resources (empty/absent for non-MCP extractors). */
   resources?: ExtractedResource[];
   /** MCP prompts (empty/absent for non-MCP extractors). */
   prompts?: ExtractedPrompt[];
   /** Setup instructions emitted when the invocation target is CLI-based. */
   setup?: SkillSetup;
+  /** Skills from direct dependencies cross-referenced in ## See Also. */
+  seeAlso?: DepSkillRef[];
+  /** Absolute path to the package root — used by audit for dep-skill discovery. */
+  rootDir?: string;
   /**
    * Structured audit execution state for extractors that run an audit pipeline.
    *
@@ -279,11 +321,11 @@ export interface ExtractedParameter {
 }
 
 export interface ExtractedFunctionMcpMetadata {
-  /** Structured `_meta.toSkills` metadata extracted from MCP tool annotations. */
-  readonly toSkills?: {
+  /** Structured metadata extracted from flat `_meta` MCP tool annotations. */
+  readonly skillit?: {
     readonly useWhen?: readonly string[];
     readonly avoidWhen?: readonly string[];
-    readonly pitfalls?: readonly string[];
+    readonly never?: readonly string[];
     readonly malformedReason?: string;
   };
   /** Schema-introspection failures that MCP audit rules should surface. */

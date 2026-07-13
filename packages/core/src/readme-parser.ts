@@ -14,7 +14,11 @@ const TROUBLESHOOTING_HEADINGS = new Set([
   'troubleshooting',
   'common issues',
   'common errors',
-  'faq'
+  'faq',
+  'pitfalls',
+  'common mistakes',
+  'gotchas',
+  'caveats'
 ]);
 
 /** Return true if the line is a `## level-2` heading. */
@@ -53,7 +57,7 @@ function nonEmpty(s: string): string | undefined {
  * - **quickStart** – content under `## Quick Start`, `## Usage`, or `## Getting Started`.
  * - **features** – content under `## Features`, `## Key Features`, or `## Highlights`.
  * - **troubleshooting** – content under `## Troubleshooting`, `## Common Issues`, `## Common Errors`,
- *   or `## FAQ`.
+ *   `## FAQ`, `## Pitfalls`, `## Common Mistakes`, `## Gotchas`, or `## Caveats`.
  *
  * @category Parsing
  * @useWhen

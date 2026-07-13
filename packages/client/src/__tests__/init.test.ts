@@ -1,14 +1,8 @@
-import {
-  buildInitCommand,
-  type GenerateConfigSkillOpts,
-  type GenerateSkillOpts,
-  type InitDeps
-} from '../commands/init.js';
-import type { RefineCommandOpts } from '../commands/refine.js';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { buildInitCommand, type InitDeps } from '../commands/init.js';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 let tmpDir: string;
 let prevCwd: string;
@@ -22,30 +16,33 @@ afterEach(async () => {
   if (tmpDir) await rm(tmpDir, { recursive: true, force: true });
 });
 
-/**
- * A cli-nature project with a pnpm lockfile. Returns the realized cwd
- * (`process.cwd()` after chdir), since macOS resolves `/tmp` → `/private/tmp`.
- */
 async function writeCliFixture(): Promise<string> {
   tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
   await writeFile(
     join(tmpDir, 'package.json'),
-    JSON.stringify({ name: '@scope/my-tool', dependencies: { commander: '^14.0.0' } })
+    JSON.stringify({ name: '@scope/my-tool', dependencies: { commander: '^15.0.0' } })
   );
   await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
   process.chdir(tmpDir);
   return process.cwd();
 }
 
-/** An mcp-nature project (no commander/yargs, no loadable bin). */
 async function writeMcpFixture(): Promise<string> {
   tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
   await writeFile(
     join(tmpDir, 'package.json'),
-    JSON.stringify({
-      name: 'my-server',
-      dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' }
-    })
+    JSON.stringify({ name: 'my-server', dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' } })
+  );
+  await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+  process.chdir(tmpDir);
+  return process.cwd();
+}
+
+async function writeTypedocFixture(): Promise<string> {
+  tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
+  await writeFile(
+    join(tmpDir, 'package.json'),
+    JSON.stringify({ name: 'my-lib', dependencies: {} })
   );
   await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
   process.chdir(tmpDir);
@@ -61,46 +58,29 @@ interface InstallCall {
 function makeStubs(overrides?: Partial<InitDeps>): {
   deps: InitDeps;
   installCalls: InstallCall[];
-  generateCalls: GenerateSkillOpts[];
-  configGenerateCalls: GenerateConfigSkillOpts[];
-  refineCalls: unknown[];
 } {
   const installCalls: InstallCall[] = [];
-  const generateCalls: GenerateSkillOpts[] = [];
-  const configGenerateCalls: GenerateConfigSkillOpts[] = [];
-  const refineCalls: unknown[] = [];
   const deps: InitDeps = {
     runInstall: async (pkg, pm, cwd) => {
       installCalls.push({ pkg, pm, cwd });
     },
-    generateSkill: async (opts) => {
-      generateCalls.push(opts);
-    },
-    generateConfigSkill: async (opts) => {
-      configGenerateCalls.push(opts);
-    },
-    runRefine: async (opts) => {
-      refineCalls.push(opts);
-    },
     ...overrides
   };
-  return { deps, installCalls, generateCalls, configGenerateCalls, refineCalls };
+  return { deps, installCalls };
 }
 
-/** A config-nature project fixture with a declared config type. */
-async function writeConfigFixture(): Promise<string> {
-  tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
-  await writeFile(
-    join(tmpDir, 'package.json'),
-    JSON.stringify({ name: '@scope/my-lib', dependencies: {} })
-  );
-  await writeFile(
-    join(tmpDir, 'config.ts'),
-    `export interface MyConfig {\n  outDir?: string;\n}\n`
-  );
-  await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
-  process.chdir(tmpDir);
-  return process.cwd();
+function captureLog(): { logged: string[]; restore: () => void } {
+  const logged: string[] = [];
+  const originalLog = console.log;
+  console.log = (...args: unknown[]): void => {
+    logged.push(String(args[0]));
+  };
+  return {
+    logged,
+    restore: () => {
+      console.log = originalLog;
+    }
+  };
 }
 
 async function run(deps: InitDeps, argv: string[] = []): Promise<void> {
@@ -108,182 +88,209 @@ async function run(deps: InitDeps, argv: string[] = []): Promise<void> {
   await cmd.parseAsync(argv, { from: 'user' });
 }
 
-describe('buildInitCommand', () => {
-  it('chooses @skillit/cli with the detected pnpm add command for a cli project', async () => {
+describe('postinstall wiring', () => {
+  it('calls wirePostinstall for the cli source', async () => {
+    await writeCliFixture();
+    const wirePostinstallCalls: string[] = [];
+    const { deps } = makeStubs({
+      wirePostinstall: async (cwd) => {
+        wirePostinstallCalls.push(cwd);
+      }
+    });
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    expect(wirePostinstallCalls).toHaveLength(1);
+  });
+
+  it('does not call wirePostinstall for mcp source', async () => {
+    await writeMcpFixture();
+    const wirePostinstallCalls: string[] = [];
+    const { deps } = makeStubs({
+      wirePostinstall: async (cwd) => {
+        wirePostinstallCalls.push(cwd);
+      }
+    });
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    expect(wirePostinstallCalls).toHaveLength(0);
+  });
+
+  it('writes skillit-postinstall.cjs and adds scripts.postinstall to package.json', async () => {
+    const dir = await writeCliFixture();
+    const { deps } = makeStubs();
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const script = await readFile(join(dir, 'skillit-postinstall.cjs'), 'utf8');
+    expect(script).toContain('replaceAll');
+    expect(script).toContain('skills');
+    expect(script).toContain('.claude');
+    expect(script).toContain('.copilot');
+    expect(script).toContain('.agents');
+    const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
+      scripts?: Record<string, string>;
+    };
+    expect(pkg.scripts?.['postinstall']).toBe('node ./skillit-postinstall.cjs');
+  });
+
+  it('writes a default skillit.config.ts when none exists', async () => {
+    const dir = await writeCliFixture();
+    const { deps } = makeStubs();
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const config = await readFile(join(dir, 'skillit.config.ts'), 'utf8');
+    expect(config).toContain('defineConfig');
+    expect(config).toContain('plugins');
+  });
+
+  it('does not overwrite an existing skillit.config.ts', async () => {
+    const dir = await writeCliFixture();
+    const configPath = join(dir, 'skillit.config.ts');
+    await writeFile(configPath, 'export default { skillDir: "keep-me" };\n', 'utf8');
+    const { deps } = makeStubs();
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const config = await readFile(configPath, 'utf8');
+    expect(config).toContain('keep-me');
+  });
+
+  it('skips wiring and warns when scripts.postinstall is already set', async () => {
+    const dir = await writeCliFixture();
+    const pkgPath = join(dir, 'package.json');
+    const existing = JSON.parse(await readFile(pkgPath, 'utf8')) as {
+      scripts?: Record<string, string>;
+    };
+    existing.scripts = { postinstall: 'existing-hook' };
+    await writeFile(pkgPath, JSON.stringify(existing, null, 2) + '\n');
+
+    const { deps } = makeStubs();
+    const warned: string[] = [];
+    const origWarn = console.warn;
+    console.warn = (...args: unknown[]): void => {
+      warned.push(String(args[0]));
+    };
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+      console.warn = origWarn;
+    }
+
+    await expect(readFile(join(dir, 'skillit-postinstall.cjs'), 'utf8')).rejects.toThrow();
+    expect(warned.some((w) => w.includes('already set'))).toBe(true);
+  });
+});
+
+describe('buildInitCommand (install/wire only)', () => {
+  it('installs @skillit/cli with the detected pnpm command for a cli project', async () => {
     const dir = await writeCliFixture();
     const { deps, installCalls } = makeStubs();
-    await run(deps);
+    const { restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
     expect(installCalls).toHaveLength(1);
     expect(installCalls[0]!.pkg).toBe('@skillit/cli');
     expect(installCalls[0]!.pm).toBe('pnpm');
     expect(installCalls[0]!.cwd).toBe(dir);
   });
 
-  it('generates the skill into <cwd>/skills before and after refine', async () => {
-    const dir = await writeCliFixture();
-    const { deps, generateCalls } = makeStubs();
-    await run(deps);
-    // Generated once before refine (initial) and once after (reflecting the
-    // freshly-written JSDoc), both into the same out dir.
-    expect(generateCalls).toHaveLength(2);
-    expect(generateCalls[0]!.outDir).toBe(join(dir, 'skills'));
-    expect(generateCalls[1]!.outDir).toBe(join(dir, 'skills'));
-  });
-
-  it('runs refine between the initial generate and the post-refine regenerate', async () => {
+  it('prints "run skillit gen" guidance and generates no artifacts for cli', async () => {
     await writeCliFixture();
-    const order: string[] = [];
-    const { deps } = makeStubs({
-      generateSkill: async () => {
-        order.push('generate');
-      },
-      runRefine: async () => {
-        order.push('refine');
-      }
-    });
-    await run(deps);
-    expect(order).toEqual(['generate', 'refine', 'generate']);
+    const { deps } = makeStubs();
+    const { logged, restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const out = logged.join('\n');
+    expect(out).toMatch(/Installed @skillit\/cli/);
+    expect(out).toMatch(/skillit gen/);
   });
 
-  it('dispatches refine with the cli source', async () => {
+  it('installs @skillit/mcp and points at skillit gen --source mcp for an mcp project', async () => {
+    await writeMcpFixture();
+    const { deps, installCalls } = makeStubs();
+    const { logged, restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    const out = logged.join('\n');
+    expect(installCalls[0]!.pkg).toBe('@skillit/mcp');
+    expect(out).toMatch(/skillit gen --source mcp --mcp <path>/);
+  });
+
+  it('does not install for the config source (built in) and points at skillit gen', async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'init-'));
+    await writeFile(join(tmpDir, 'package.json'), JSON.stringify({ name: '@scope/my-lib' }));
+    await writeFile(
+      join(tmpDir, 'config.ts'),
+      `export interface MyConfig {\n  outDir?: string;\n}\n`
+    );
+    await writeFile(join(tmpDir, 'pnpm-lock.yaml'), '');
+    process.chdir(tmpDir);
+    const { deps, installCalls } = makeStubs();
+    const { logged, restore } = captureLog();
+    try {
+      await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
+    } finally {
+      restore();
+    }
+    expect(installCalls).toHaveLength(0);
+    expect(logged.join('\n')).toMatch(/skillit gen --source config/);
+  });
+
+  it('installs typedoc plugin and points at skillit gen --source typedoc', async () => {
+    await writeTypedocFixture();
+    const { deps, installCalls } = makeStubs();
+    const { logged, restore } = captureLog();
+    try {
+      await run(deps);
+    } finally {
+      restore();
+    }
+    expect(installCalls[0]!.pkg).toBe('typedoc-plugin-skillit');
+    expect(logged.join('\n')).toMatch(/skillit gen --source typedoc/);
+  });
+
+  it('throws with the exact command on install failure', async () => {
     await writeCliFixture();
-    const { deps, refineCalls } = makeStubs();
-    await run(deps);
-    expect(refineCalls).toHaveLength(1);
-    expect((refineCalls[0] as { source?: string }).source).toBe('cli');
-  });
-
-  it('respects an explicit --out directory', async () => {
-    const dir = await writeCliFixture();
-    const { deps, generateCalls } = makeStubs();
-    await run(deps, ['--out', 'docs/skills']);
-    expect(generateCalls[0]!.outDir).toBe(join(dir, 'docs/skills'));
-  });
-
-  it('throws with the exact command on install failure and skips generate + refine', async () => {
-    await writeCliFixture();
-    const generate = vi.fn();
-    const refine = vi.fn();
     const { deps } = makeStubs({
       runInstall: async (pkg, pm) => {
         throw new Error(`install of ${pkg} via ${pm} failed`);
-      },
-      generateSkill: generate,
-      runRefine: refine
+      }
     });
     await expect(run(deps)).rejects.toThrow(/pnpm add -D @skillit\/cli/);
-    expect(generate).not.toHaveBeenCalled();
-    expect(refine).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid --source value', async () => {
     await writeCliFixture();
     const { deps } = makeStubs();
     await expect(run(deps, ['--source', 'bogus'])).rejects.toThrow(/cli\|mcp\|typedoc/);
-  });
-
-  it("degrades gracefully (no throw, no refine, prints guidance) when the cli program won't load", async () => {
-    await writeCliFixture();
-    const refine = vi.fn();
-    const { deps } = makeStubs({
-      generateSkill: async () => {
-        throw new Error('not a commander program');
-      },
-      runRefine: refine
-    });
-    // Capture via plain reassignment: vitest's console interceptor bypasses
-    // vi.spyOn(console, 'log') under this config.
-    const logged: string[] = [];
-    const originalLog = console.log;
-    console.log = (...args: unknown[]): void => {
-      logged.push(String(args[0]));
-    };
-    try {
-      await expect(run(deps)).resolves.toBeUndefined();
-    } finally {
-      console.log = originalLog;
-    }
-    expect(refine).not.toHaveBeenCalled();
-    const out = logged.join('\n');
-    expect(out).toMatch(/Installed @skillit\/cli/);
-    expect(out).toMatch(/not a commander program/);
-    expect(out).toMatch(/skillit refine --source cli --program/);
-  });
-
-  it('installs @skillit/mcp but skips generate + refine for an mcp project', async () => {
-    await writeMcpFixture();
-    const { deps, installCalls, generateCalls, refineCalls } = makeStubs();
-    // Override console.log directly: vitest's console interceptor bypasses
-    // vi.spyOn(console, 'log') here, so capture via a plain reassignment.
-    const logged: string[] = [];
-    const originalLog = console.log;
-    console.log = (...args: unknown[]): void => {
-      logged.push(String(args[0]));
-    };
-    try {
-      await run(deps);
-    } finally {
-      console.log = originalLog;
-    }
-    expect(installCalls).toHaveLength(1);
-    expect(installCalls[0]!.pkg).toBe('@skillit/mcp');
-    // CLI-first: no auto generate or refine for the mcp source this pass.
-    expect(generateCalls).toHaveLength(0);
-    expect(refineCalls).toHaveLength(0);
-    expect(logged.join('\n')).toMatch(/skillit refine --source mcp/);
-  });
-
-  it('threads --model-client and --model-cli-timeout into the refine dispatch', async () => {
-    await writeCliFixture();
-    const { deps, refineCalls } = makeStubs();
-    await run(deps, ['--source', 'cli', '--model-client', 'claude', '--model-cli-timeout', '7000']);
-    const opts = refineCalls[0] as RefineCommandOpts;
-    expect(opts.modelClient).toBe('claude');
-    expect(opts.modelCliTimeout).toBe('7000');
-  });
-
-  it('config source generates → refines → regenerates without installing a package', async () => {
-    const dir = await writeConfigFixture();
-    const { deps, installCalls, configGenerateCalls, refineCalls } = makeStubs();
-    await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
-
-    // Config is built into the client — nothing to install.
-    expect(installCalls).toHaveLength(0);
-    // Generated once before refine and once after (mirrors the cli flow).
-    expect(configGenerateCalls).toHaveLength(2);
-    expect(configGenerateCalls[0]!.typeName).toBe('MyConfig');
-    expect(configGenerateCalls[0]!.configFile).toBe(join(dir, 'config.ts'));
-    expect(configGenerateCalls[0]!.outDir).toBe(join(dir, 'skills'));
-    expect(refineCalls).toHaveLength(1);
-  });
-
-  it('config source dispatches refine with source=config and the config-type', async () => {
-    await writeConfigFixture();
-    const { deps, refineCalls } = makeStubs();
-    await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
-    const opts = refineCalls[0] as RefineCommandOpts;
-    expect(opts.source).toBe('config');
-    expect(opts.configType).toBe('./config.ts#MyConfig');
-  });
-
-  it('config source requires --config-type', async () => {
-    await writeConfigFixture();
-    const { deps } = makeStubs();
-    await expect(run(deps, ['--source', 'config'])).rejects.toThrow(/--config-type/);
-  });
-
-  it('runs config generate → refine → regenerate in order', async () => {
-    await writeConfigFixture();
-    const order: string[] = [];
-    const { deps } = makeStubs({
-      generateConfigSkill: async () => {
-        order.push('generate');
-      },
-      runRefine: async () => {
-        order.push('refine');
-      }
-    });
-    await run(deps, ['--source', 'config', '--config-type', './config.ts#MyConfig']);
-    expect(order).toEqual(['generate', 'refine', 'generate']);
   });
 });

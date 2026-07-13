@@ -15,6 +15,7 @@
  */
 
 export type {
+  DepSkillRef,
   ExtractedSkill,
   ExtractedSkillAudit,
   ExtractedFunction,
@@ -64,7 +65,6 @@ export type {
   AuditSeverity,
   AuditIssue,
   AuditPass,
-  AuditContext,
   ParsedReadme,
   AuditResult
 } from './audit-types.js';

@@ -12,5 +12,5 @@
   "hideGenerator": true,
   "llmsTxt": true,
   "skillsPerPackage": true,
-  "blockTags": ["@useWhen", "@avoidWhen", "@pitfalls", "@config"]
+  "blockTags": ["@useWhen", "@avoidWhen", "@never", "@config"]
 }

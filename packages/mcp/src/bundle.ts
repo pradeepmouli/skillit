@@ -26,8 +26,8 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { renderSkill, writeSkills } from '@skillit/core';
-import type { RenderedSkill } from '@skillit/core';
+import { attachDepSkills, renderSkill, writeSkills } from '@skillit/core';
+import type { ExtractedSkill, RenderedSkill } from '@skillit/core';
 import { loadAdapterAsync } from './adapter/loader.js';
 import { runMcpAudit, worstSeverityOf } from './audit/rules.js';
 import { loadBundledMcpGuidanceSkill } from './bundled-skills.js';
@@ -161,6 +161,8 @@ async function processEntry(
     return;
   }
 
+  attachDepSkills(skill, ctx.packageRoot);
+
   // Run the audit ONCE per entry — the IR is target-agnostic so M1–M4 are
   // identical across targets. (M5 freshness is per-target but isn't checkable
   // here without an embedded fingerprint, so we skip it for now.)
@@ -288,6 +290,48 @@ function recordFailure(result: BundleResult, skillName: string, err: unknown): v
   }
   const message = err instanceof Error ? err.message : String(err);
   result.failures[skillName] = { code: 'TRANSPORT_FAILED', message };
+}
+
+/**
+ * Render an extracted MCP skill and write SKILL.md + references under `outDir`.
+ *
+ * This is the deterministic render+write core shared by `generateMcpSkill`
+ * (the `skillit gen --source mcp` primitive) and {@link bundleMcpSkill} so both
+ * emit byte-identical output for the no-adapter, no-install case. It performs
+ * the plain (invocation-agnostic) render — bundle mode layers its own
+ * adapter/namePrefix/packageName/llms.txt/installTargets orchestration on top
+ * via {@link writeGeneratedSkill} and the per-target render loop.
+ *
+ * @param skill - the extracted skill IR.
+ * @param outDir - absolute output directory.
+ * @returns the write-result records returned by `writeSkills`.
+ *
+ * @public
+ */
+export function renderAndWriteMcpSkill(skill: ExtractedSkill, outDir: string, maxTokens?: number) {
+  const rendered = renderSkill(skill, maxTokens !== undefined ? { maxTokens } : undefined);
+  return writeBundledSkill([rendered], { outDir });
+}
+
+/**
+ * Shared `writeSkills` invocation with bundle's `LOCAL_IO_FAILED` error
+ * mapping. Centralised so {@link renderAndWriteMcpSkill}, the per-target
+ * bundle loop, and the bundled-guidance writer all funnel write failures
+ * through the same {@link McpError} translation.
+ */
+function writeBundledSkill(
+  skills: RenderedSkill[],
+  options: Parameters<typeof writeSkills>[1]
+): ReturnType<typeof writeSkills> {
+  try {
+    return writeSkills(skills, options);
+  } catch (error) {
+    throw new McpError(
+      `Failed to write skill output: ${messageOf(error)}`,
+      'LOCAL_IO_FAILED',
+      error
+    );
+  }
 }
 
 function writeGeneratedSkill(

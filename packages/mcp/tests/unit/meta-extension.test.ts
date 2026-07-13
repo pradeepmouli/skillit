@@ -3,7 +3,7 @@
 // Two-layer coverage:
 //
 //  1. `listTools` (tools.ts) — reads each tool's flat `_meta.{useWhen,
-//     avoidWhen, pitfalls}` string fields and projects them onto
+//     avoidWhen, never}` string fields and projects them onto
 //     `ExtractedFunction.tags`. Tested with the same mock-client pattern
 //     used in `introspect-tools.test.ts`.
 //
@@ -27,7 +27,7 @@ import type {
 import { listTools } from '../../src/introspect/tools.js';
 
 // ===========================================================================
-// Layer 1: listTools — per-tool _meta.toSkills → ExtractedFunction.tags
+// Layer 1: listTools — per-tool _meta → ExtractedFunction.tags
 // ===========================================================================
 
 function makeClient(tools: McpToolListEntry[]): McpClient {
@@ -46,7 +46,7 @@ function makeClient(tools: McpToolListEntry[]): McpClient {
   };
 }
 
-describe('listTools — _meta.toSkills (per-tool)', () => {
+describe('listTools — _meta (per-tool)', () => {
   it('reads flat string fields from _meta and stores as single-element arrays', async () => {
     const client = makeClient([
       {
@@ -56,7 +56,7 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
         _meta: {
           useWhen: 'use this for X',
           avoidWhen: 'avoid for Z',
-          pitfalls: 'NEVER pass a regex with backreferences'
+          never: 'NEVER pass a regex with backreferences'
         }
       }
     ]);
@@ -65,14 +65,14 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     expect(fns).toHaveLength(1);
     expect(fns[0]!.tags.useWhen).toBe('use this for X');
     expect(fns[0]!.tags.avoidWhen).toBe('avoid for Z');
-    expect(fns[0]!.tags.pitfalls).toBe('NEVER pass a regex with backreferences');
-    expect(fns[0]!.mcpMetadata?.toSkills).toEqual({
+    expect(fns[0]!.tags.never).toBe('NEVER pass a regex with backreferences');
+    expect(fns[0]!.mcpMetadata?.skillit).toEqual({
       useWhen: ['use this for X'],
       avoidWhen: ['avoid for Z'],
-      pitfalls: ['NEVER pass a regex with backreferences']
+      never: ['NEVER pass a regex with backreferences']
     });
     // Marker so audit rules can flag tools that emit metadata.
-    expect(fns[0]!.tags.hasMetaToSkills).toBe('true');
+    expect(fns[0]!.tags.hasMetaSkillit).toBe('true');
   });
 
   it('leaves tags empty when _meta is absent', async () => {
@@ -97,9 +97,9 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
 
     const fns = await listTools(client);
     expect(fns[0]!.tags.useWhen).toBeUndefined();
-    expect(fns[0]!.tags.hasMetaToSkills).toBeUndefined();
+    expect(fns[0]!.tags.hasMetaSkillit).toBeUndefined();
     expect(fns[0]!.tags['metaToSkillsMalformed']).toBeUndefined();
-    expect(fns[0]!.mcpMetadata?.toSkills).toBeUndefined();
+    expect(fns[0]!.mcpMetadata?.skillit).toBeUndefined();
   });
 
   it('silently skips empty string values (treated as absent)', async () => {
@@ -151,12 +151,12 @@ describe('listTools — _meta.toSkills (per-tool)', () => {
     expect(fns[0]!.tags.schemaError).toBe('true');
     expect(fns[0]!.tags.useWhen).toBe('still annotated');
     expect(fns[0]!.mcpMetadata?.schemaError).toEqual({ kind: 'ref-cycle' });
-    expect(fns[0]!.mcpMetadata?.toSkills?.useWhen).toEqual(['still annotated']);
+    expect(fns[0]!.mcpMetadata?.skillit?.useWhen).toEqual(['still annotated']);
   });
 });
 
 // ===========================================================================
-// Layer 2: extractMcpSkill — server-level _meta.toSkills + aggregation
+// Layer 2: extractMcpSkill — server-level _meta + aggregation
 //
 // Mirrors the SDK-mock setup from `extract.test.ts` so we can drive
 // getServerVersion() with arbitrary `_meta` payloads.
@@ -249,7 +249,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('extractMcpSkill — server-level _meta.toSkills', () => {
+describe('extractMcpSkill — server-level _meta', () => {
   it('populates skill.remarks and skill.packageDescription', async () => {
     state.serverInfo = {
       name: 'meta-test',
@@ -293,13 +293,13 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     expect(skill.useWhen).toEqual(['Server-wide trigger A', 'Tool-specific trigger C']);
   });
 
-  it('aggregates avoidWhen and pitfalls onto skill arrays', async () => {
+  it('aggregates avoidWhen and never onto skill arrays', async () => {
     state.serverInfo = {
       name: 'meta-test',
       version: '1.0.0',
       _meta: {
         avoidWhen: 'Avoid scenario X',
-        pitfalls: 'NEVER pass null'
+        never: 'NEVER pass null'
       }
     };
     state.listToolsImpl = async () => ({
@@ -310,7 +310,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
           inputSchema: { type: 'object' },
           _meta: {
             avoidWhen: 'Avoid Y for tool t1',
-            pitfalls: 'NEVER pass empty array to t1'
+            never: 'NEVER pass empty array to t1'
           }
         }
       ]
@@ -318,7 +318,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
 
     const skill = await extractMcpSkill(baseStdio);
     expect(skill.avoidWhen).toEqual(['Avoid scenario X', 'Avoid Y for tool t1']);
-    expect(skill.pitfalls).toEqual(['NEVER pass null', 'NEVER pass empty array to t1']);
+    expect(skill.never).toEqual(['NEVER pass null', 'NEVER pass empty array to t1']);
   });
 
   it('leaves IR fields unset when _meta is empty', async () => {
@@ -331,7 +331,7 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     const skill = await extractMcpSkill(baseStdio);
     expect(skill.useWhen).toBeUndefined();
     expect(skill.avoidWhen).toBeUndefined();
-    expect(skill.pitfalls).toBeUndefined();
+    expect(skill.never).toBeUndefined();
     expect(skill.remarks).toBeUndefined();
     expect(skill.packageDescription).toBeUndefined();
   });
@@ -369,6 +369,6 @@ describe('extractMcpSkill — server-level _meta.toSkills', () => {
     const skill = await extractMcpSkill(baseStdio);
     expect(skill.useWhen).toBeUndefined();
     expect(skill.avoidWhen).toBeUndefined();
-    expect(skill.pitfalls).toBeUndefined();
+    expect(skill.never).toBeUndefined();
   });
 });

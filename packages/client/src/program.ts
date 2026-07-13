@@ -2,6 +2,8 @@
 import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
 import { buildMcpCommand } from '@skillit/mcp';
+import { buildAuditCommand } from './commands/audit.js';
+import { buildGenCommand } from './commands/gen.js';
 import { buildInitCommand } from './commands/init.js';
 import { buildRefineCommand } from './commands/refine.js';
 
@@ -35,6 +37,8 @@ export function buildProgram(): Command {
   program.addCommand(buildRefineCommand());
   program.addCommand(buildInitCommand());
   program.addCommand(buildMcpCommand());
+  program.addCommand(buildGenCommand());
+  program.addCommand(buildAuditCommand());
 
   return program;
 }

@@ -154,6 +154,9 @@ function readSkillMetadataFromContent(content: string): {
     curated?: boolean;
     version?: unknown;
     name?: unknown;
+    skillit?: { managed?: unknown } | unknown;
+    // Pre-rebrand marker key, still present in already-installed SKILL.md
+    // files written by older skillit versions.
     toSkills?: { managed?: unknown } | unknown;
   } | null;
   try {
@@ -161,6 +164,7 @@ function readSkillMetadataFromContent(content: string): {
       curated?: boolean;
       version?: unknown;
       name?: unknown;
+      skillit?: { managed?: unknown } | unknown;
       toSkills?: { managed?: unknown } | unknown;
     } | null;
   } catch (error) {
@@ -168,13 +172,12 @@ function readSkillMetadataFromContent(content: string): {
       cause: error
     });
   }
-  const toSkills =
-    frontmatter?.toSkills &&
-    typeof frontmatter.toSkills === 'object' &&
-    !Array.isArray(frontmatter.toSkills)
-      ? (frontmatter.toSkills as { managed?: unknown })
+  const managedBlock = (raw: unknown): { managed?: unknown } | undefined =>
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as { managed?: unknown })
       : undefined;
-  const explicitBundledGuidance = toSkills?.managed === 'bundled-guidance';
+  const skillit = managedBlock(frontmatter?.skillit) ?? managedBlock(frontmatter?.toSkills);
+  const explicitBundledGuidance = skillit?.managed === 'bundled-guidance';
   const legacyBundledGuidance =
     typeof frontmatter?.name === 'string' &&
     frontmatter.name.startsWith('skillit-') &&
@@ -219,20 +222,20 @@ function parseLenientFrontmatter(frontmatter: string): {
   let version: string | undefined;
   let curated: boolean | undefined;
   let bundledGuidance: boolean | undefined;
-  let inToSkills = false;
-  let toSkillsIndent = -1;
+  let inSkillit = false;
+  let skillitIndent = -1;
 
   for (const line of frontmatter.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (trimmed.length === 0) continue;
 
     const indent = leadingIndentWidth(line);
-    if (inToSkills && indent <= toSkillsIndent) {
-      inToSkills = false;
-      toSkillsIndent = -1;
+    if (inSkillit && indent <= skillitIndent) {
+      inSkillit = false;
+      skillitIndent = -1;
     }
 
-    if (inToSkills) {
+    if (inSkillit) {
       const [key, value] = splitFrontmatterKeyValue(trimmed);
       if (key === 'managed' && value === 'bundled-guidance') {
         bundledGuidance = true;
@@ -254,9 +257,11 @@ function parseLenientFrontmatter(frontmatter: string): {
       curated = true;
       continue;
     }
-    if (key === 'toSkills') {
-      inToSkills = true;
-      toSkillsIndent = indent;
+    // 'toSkills' is the pre-rebrand marker key, still present in
+    // already-installed SKILL.md files written by older skillit versions.
+    if (key === 'skillit' || key === 'toSkills') {
+      inSkillit = true;
+      skillitIndent = indent;
     }
   }
 

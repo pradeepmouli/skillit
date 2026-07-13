@@ -12,7 +12,7 @@ LLMs are great at code — but they don't know YOUR library's API, trade-offs, a
 
 ## How It Works
 
-1. **Write JSDoc** with convention tags (`@useWhen`, `@avoidWhen`, `@pitfalls`)
+1. **Write JSDoc** with convention tags (`@useWhen`, `@avoidWhen`, `@never`)
 2. **Run TypeDoc** — the plugin extracts and generates skills automatically
 3. **LLMs discover your library** via the structured SKILL.md
 

@@ -2,7 +2,7 @@
 name: skillit-docs
 description: "Documentation conventions for generating high-quality AI agent skills from TypeScript source. Use when preparing a library for skill generation, auditing JSDoc quality, fixing audit warnings, writing @useWhen/@avoidWhen/@never tags, or asking about documentation conventions for skills. Use this even if the user just says 'audit my docs', 'improve my JSDoc', or 'make my skills better'."
 version: 1.3.0
-toSkills:
+skillit:
   managed: bundled-guidance
 ---
 
@@ -275,7 +275,7 @@ Accepted heading variants (case-insensitive):
 
 Generated skills are evaluated on 8 dimensions. The biggest gaps without conventions:
 
-- **Knowledge Delta**: Function signatures are things Claude already knows. The value comes from @param prose, @returns meaning, @throws conditions, and Pitfalls.
+- **Knowledge Delta**: Function signatures are things Claude already knows. The value comes from @param prose, @returns meaning, @throws conditions, and @never entries.
 - **Anti-Patterns**: Without a ## Troubleshooting section, skills score ~2/15 on anti-pattern quality.
 - **Description**: Without proper package.json description + keywords, skills never trigger.
 

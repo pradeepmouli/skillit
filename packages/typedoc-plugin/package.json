@@ -1,6 +1,6 @@
 {
   "name": "typedoc-plugin-skillit",
-  "version": "1.4.1",
+  "version": "2.0.1",
   "description": "TypeDoc plugin that generates AI agent skills (SKILL.md) and llms.txt — auto-discovered by TypeDoc",
   "keywords": [
     "agent-skills",
@@ -19,6 +19,10 @@
     "typedoc-plugin",
     "typescript"
   ],
+  "homepage": "https://github.com/pradeepmouli/skillit/tree/develop/packages/typedoc-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/pradeepmouli/skillit/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",

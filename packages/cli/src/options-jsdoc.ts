@@ -1,7 +1,7 @@
 import { readJsDocTags, type RefineTag } from '@skillit/core';
 
 /**
- * Reads routing tags (`@useWhen`/`@avoidWhen`/`@pitfalls`/`@remarks`/`@example`)
+ * Reads routing tags (`@useWhen`/`@avoidWhen`/`@never`/`@remarks`/`@example`)
  * from the JSDoc attached to a `<Command>Options` interface.
  *
  * Thin wrapper over core's {@link readJsDocTags} that keeps the CLI package's

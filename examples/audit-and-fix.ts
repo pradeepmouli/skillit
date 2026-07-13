@@ -4,21 +4,14 @@
  */
 
 import { auditSkill, formatAuditText, parseReadme } from '@skillit/core';
-import type { ExtractedSkill, AuditContext } from '@skillit/core';
+import type { ExtractedSkill } from '@skillit/core';
 import { readFileSync } from 'node:fs';
 
-// Build audit context from your project's package.json and README
+// Project metadata lives on the skill IR — the audit reads it directly.
 const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
 const readme = parseReadme(readFileSync('README.md', 'utf-8'));
 
-const context: AuditContext = {
-  packageDescription: pkg.description,
-  keywords: pkg.keywords,
-  repository: pkg.repository?.url,
-  readme
-};
-
-// Run audit against an extracted skill
+// Run audit against an extracted skill carrying its project metadata
 const skill: ExtractedSkill = {
   name: pkg.name,
   description: '',
@@ -27,10 +20,14 @@ const skill: ExtractedSkill = {
   types: [],
   enums: [],
   variables: [],
-  examples: []
+  examples: [],
+  packageDescription: pkg.description,
+  keywords: pkg.keywords,
+  repository: pkg.repository?.url,
+  readme
 };
 
-const result = auditSkill(skill, context);
+const result = auditSkill(skill);
 console.log(formatAuditText(result));
 
 // Check if CI should fail

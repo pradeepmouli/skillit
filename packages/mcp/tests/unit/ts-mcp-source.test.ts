@@ -31,7 +31,8 @@ describe('TypeScriptMcpRefineSource.applyFixes', () => {
 
     const source = new TypeScriptMcpRefineSource({
       transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
-      sourceGlob: join(tmpDir, '*.ts')
+      sourceGlob: join(tmpDir, '*.ts'),
+      cwd: tmpDir
     });
 
     await source.applyFixes([
@@ -63,7 +64,8 @@ describe('TypeScriptMcpRefineSource.applyFixes', () => {
 
     const source = new TypeScriptMcpRefineSource({
       transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
-      sourceGlob: join(tmpDir, '*.ts')
+      sourceGlob: join(tmpDir, '*.ts'),
+      cwd: tmpDir
     });
 
     await source.applyFixes([
@@ -86,7 +88,8 @@ describe('TypeScriptMcpRefineSource.applyFixes', () => {
 
     const source = new TypeScriptMcpRefineSource({
       transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
-      sourceGlob: join(tmpDir, '*.ts')
+      sourceGlob: join(tmpDir, '*.ts'),
+      cwd: tmpDir
     });
 
     await source.applyFixes([{ toolName: 'shared_tool', tag: 'useWhen', value: 'x' }]);
@@ -106,7 +109,8 @@ describe('TypeScriptMcpRefineSource.applyFixes', () => {
 
     const source = new TypeScriptMcpRefineSource({
       transport: { type: 'stdio', command: 'node', args: ['never-runs.js'] },
-      sourceGlob: join(tmpDir, '*.ts')
+      sourceGlob: join(tmpDir, '*.ts'),
+      cwd: tmpDir
     });
 
     await source.applyFixes([{ toolName: 'missing_tool', tag: 'useWhen', value: 'x' }]);

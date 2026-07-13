@@ -790,16 +790,16 @@ describe('renderSkill — variables in SKILL.md', () => {
 });
 
 describe('renderSkill — new description and content behaviour', () => {
-  it('uses packageDescription as frontmatter description when present', () => {
+  it('uses description as frontmatter description; packageDescription is audit-only', () => {
     const skill: ExtractedSkill = {
       ...minimalSkill,
-      description: 'Short fallback',
-      packageDescription: 'Full package description for LLM triggering'
+      description: 'Surface headline for LLM triggering',
+      packageDescription: 'Literal package.json description (audit-only)'
     };
 
     const { skill: s } = renderSkill(skill);
-    expect(s.content).toContain('Full package description for LLM triggering');
-    expect(s.content).not.toContain('Short fallback');
+    expect(s.content).toContain('Surface headline for LLM triggering');
+    expect(s.content).not.toContain('Literal package.json description');
   });
 
   it('uses description as fallback in frontmatter when packageDescription is absent', () => {
@@ -812,17 +812,16 @@ describe('renderSkill — new description and content behaviour', () => {
     expect(s.content).toContain('description: Fallback description');
   });
 
-  it('renders packageDescription as body intro after title', () => {
+  it('does not render packageDescription anywhere (audit-only metadata)', () => {
     const skill: ExtractedSkill = {
       ...minimalSkill,
-      packageDescription: 'UNIQUE_PACKAGE_DESC_BODY'
+      description: 'Real surface headline',
+      packageDescription: 'PKG_ONLY_AUDIT_VALUE'
     };
 
     const { skill: s } = renderSkill(skill);
-    const titleIndex = s.content.indexOf('# my-lib');
-    // Find the occurrence after the title
-    const bodyIndex = s.content.indexOf('UNIQUE_PACKAGE_DESC_BODY', titleIndex);
-    expect(bodyIndex).toBeGreaterThan(titleIndex);
+    expect(s.content).not.toContain('PKG_ONLY_AUDIT_VALUE');
+    expect(s.content).toContain('Real surface headline');
   });
 
   it('renders description as body intro when packageDescription is absent', () => {
@@ -1603,10 +1602,10 @@ describe('renderSkill — Documentation section in SKILL.md', () => {
 });
 
 describe('renderSkill — @never in SKILL.md', () => {
-  it('renders NEVER section when pitfalls are present', () => {
+  it('renders NEVER section when never is present', () => {
     const skill: ExtractedSkill = {
       ...minimalSkill,
-      pitfalls: ['Forgetting to await async calls', 'Not handling null returns']
+      never: ['Forgetting to await async calls', 'Not handling null returns']
     };
 
     const { skill: s } = renderSkill(skill);
@@ -1615,7 +1614,7 @@ describe('renderSkill — @never in SKILL.md', () => {
     expect(s.content).toContain('- Not handling null returns');
   });
 
-  it('omits NEVER section when pitfalls is empty/absent', () => {
+  it('omits NEVER section when never is empty/absent', () => {
     const { skill: s } = renderSkill(minimalSkill);
     expect(s.content).not.toContain('## NEVER');
   });
@@ -1635,16 +1634,16 @@ describe('renderSkill — @never in SKILL.md', () => {
           tags: {}
         }
       ],
-      pitfalls: ['Watch out for this']
+      never: ['Watch out for this']
     };
 
     const { skill: s } = renderSkill(skill);
     const content = s.content;
     const whenIdx = content.indexOf('## When to Use');
-    const pitfallsIdx = content.indexOf('## NEVER');
+    const neverIdx = content.indexOf('## NEVER');
     const quickRefIdx = content.indexOf('## Quick Reference');
-    expect(whenIdx).toBeLessThan(pitfallsIdx);
-    expect(pitfallsIdx).toBeLessThan(quickRefIdx);
+    expect(whenIdx).toBeLessThan(neverIdx);
+    expect(neverIdx).toBeLessThan(quickRefIdx);
   });
 });
 
@@ -1852,7 +1851,7 @@ describe('renderSkill — readmeFeatures in SKILL.md', () => {
   it('renders Features after body intro and before Quick Start', () => {
     const skill: ExtractedSkill = {
       ...minimalSkill,
-      packageDescription: 'BODY_INTRO',
+      description: 'BODY_INTRO',
       readmeFeatures: 'FEATURES_CONTENT',
       examples: ['```ts\nconst x = 1;\n```']
     };
@@ -1899,16 +1898,16 @@ describe('renderSkill — readmeTroubleshooting in SKILL.md', () => {
           tags: {}
         }
       ],
-      pitfalls: ['Watch out'],
+      never: ['Watch out'],
       readmeTroubleshooting: 'TROUBLESHOOTING_CONTENT'
     };
 
     const { skill: s } = renderSkill(skill);
     const content = s.content;
-    const pitfallsIdx = content.indexOf('**NEVER:**');
+    const neverIdx = content.indexOf('**NEVER:**');
     const troubleshootingIdx = content.indexOf('## Troubleshooting');
     const quickRefIdx = content.indexOf('## Quick Reference');
-    expect(pitfallsIdx).toBeLessThan(troubleshootingIdx);
+    expect(neverIdx).toBeLessThan(troubleshootingIdx);
     expect(troubleshootingIdx).toBeLessThan(quickRefIdx);
   });
 });
@@ -2086,7 +2085,7 @@ describe('renderSkill — truncateDescription word-boundary fallback', () => {
     const desc = Array(100).fill('word').join(' ') + ' ' + longWord;
     const skill: ExtractedSkill = {
       ...minimalSkill,
-      packageDescription: desc
+      description: desc
     };
     const { skill: s } = renderSkill(skill);
     // The description in frontmatter should end with "..." and not cut mid-word

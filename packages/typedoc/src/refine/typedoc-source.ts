@@ -1,6 +1,6 @@
 // packages/typedoc/src/refine/typedoc-source.ts
 import { readFile, writeFile } from 'node:fs/promises';
-import type { ExtractedSkill, AuditContext, DraftedFix, RefineSource } from '@skillit/core';
+import type { ExtractedSkill, DraftedFix, RefineSource, TargetLocation } from '@skillit/core';
 import { insertJsDocTag } from '@skillit/core';
 
 interface TypeDocRefineSourceOptions {
@@ -15,8 +15,14 @@ export class TypeDocRefineSource implements RefineSource {
     return this.opts.extract();
   }
 
-  auditContext(_skill: ExtractedSkill): AuditContext {
-    return {};
+  resolveTargetLocation(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): TargetLocation | undefined {
+    const file = this.opts.resolveSourceFile(target.name);
+    if (!file) return undefined;
+    return { file, declName: target.name };
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {

@@ -3,13 +3,13 @@ import { existsSync } from 'node:fs';
 import { glob, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { extractConfigSurface } from '../config-extract.js';
-import { parseReadme } from '../readme-parser.js';
 import { truncateToTokenBudget } from '../tokens.js';
-import type { AuditContext, ParsedReadme } from '../audit-types.js';
+import type { ParsedReadme } from '../audit-types.js';
 import type { ExtractedConfigSurface } from '../config-types.js';
 import type { ExtractedSkill } from '../types.js';
-import { upsertPropertyJsDocTag } from './ast-edit.js';
-import type { DraftedFix, RefineSource } from './types.js';
+import { stripRefineTags, upsertPropertyJsDocTag } from './ast-edit.js';
+import { readPackageMetadata } from './package-metadata.js';
+import type { DraftedFix, RefineSource, TargetLocation } from './types.js';
 
 export interface ConfigRefineSourceOptions {
   /** Path to the TypeScript file declaring the config type. */
@@ -86,11 +86,12 @@ export class ConfigRefineSource implements RefineSource {
 
     const meta = await this.loadMetadata();
 
-    // An explicit description wins for BOTH fields: the renderer uses
-    // packageDescription for the body, so without this a config skill would show
-    // the package blurb (which describes the package, not the config surface)
-    // even when the caller supplied a config-specific description. The audit's
-    // F1 check still reads the real package description from auditContext().
+    // The render headline (`skill.description`) prefers a caller-supplied
+    // config-specific description so the skill body describes the config surface
+    // rather than the package. `skill.packageDescription` (set below) is kept as
+    // the LITERAL package.json description so the audit's F1 check validates the
+    // real published metadata — a config override must not mask a missing or
+    // too-short package.json description.
     const description = this.opts.description ?? meta.packageDescription ?? '';
     const skill: ExtractedSkill = {
       name: this.opts.name ?? meta.packageName ?? this.opts.typeName,
@@ -105,7 +106,8 @@ export class ConfigRefineSource implements RefineSource {
     };
     if (meta.keywords?.length) skill.keywords = meta.keywords;
     if (meta.repository) skill.repository = meta.repository;
-    if (description) skill.packageDescription = description;
+    if (meta.packageDescription) skill.packageDescription = meta.packageDescription;
+    if (meta.readme !== undefined) skill.readme = meta.readme;
 
     // A sibling `<config>.example.ts` (if present) is the skill's usage example
     // — clears E4 and feeds the rendered Examples section. The refine loop
@@ -122,17 +124,24 @@ export class ConfigRefineSource implements RefineSource {
   }
 
   /**
-   * Audit context from the discovered package.json + README. Synchronous per the
-   * {@link RefineSource} contract; reads the cache that {@link extract} fills (the
-   * refine loop always calls `extract()` before scoring). Empty until then.
+   * Map an improvement target to its on-disk location. Config targets carry the
+   * option's dot-path `configKey` as `name` (kind `config-option`); the config
+   * type holds them, so the file is always the config file and the declName is
+   * the type. A `config-example` target points at the same file with no path.
    */
-  auditContext(_skill: ExtractedSkill): AuditContext {
-    const ctx: AuditContext = {};
-    if (this.metadata.packageDescription) ctx.packageDescription = this.metadata.packageDescription;
-    if (this.metadata.keywords?.length) ctx.keywords = this.metadata.keywords;
-    if (this.metadata.repository) ctx.repository = this.metadata.repository;
-    if (this.metadata.readme) ctx.readme = this.metadata.readme;
-    return ctx;
+  resolveTargetLocation(target: {
+    name: string;
+    kind: string;
+    file?: string;
+  }): TargetLocation | undefined {
+    if (target.kind === 'config-example') {
+      return { file: this.opts.configFile, declName: this.opts.typeName };
+    }
+    return {
+      file: this.opts.configFile,
+      declName: this.opts.typeName,
+      propertyPath: target.name
+    };
   }
 
   async applyFixes(fixes: readonly DraftedFix[]): Promise<void> {
@@ -196,7 +205,7 @@ export class ConfigRefineSource implements RefineSource {
     return [
       `You are documenting the individual options of the TypeScript configuration object \`${typeName}\`.`,
       `Each work item's "Tool" is ONE option, named by its dot-path key (e.g. \`outDir\`, \`components.prefix\`) — except an @example work item, whose "Tool" is the config type \`${typeName}\` itself.`,
-      `For @useWhen / @avoidWhen / @pitfalls: write guidance SPECIFIC to that single option — when to set it (and to what kind of value), when to leave it unset, and footguns unique to its value or interactions. Do NOT describe the configuration type as a whole, the annotate-vs-\`defineConfig()\` choice, or anything that applies to every option; never repeat the same point across options.`,
+      `For @useWhen / @avoidWhen / @never: write guidance SPECIFIC to that single option — when to set it (and to what kind of value), when to leave it unset, and footguns unique to its value or interactions. Do NOT describe the configuration type as a whole, the annotate-vs-\`defineConfig()\` choice, or anything that applies to every option; never repeat the same point across options.`,
       this.grounding
         ? `GROUND every runtime-behavior claim in the IMPLEMENTATION REFERENCE below (the actual code that consumes this config) and the option's type. State behavior the code actually exhibits — e.g. what an empty array/object means, whether an invalid value throws or is silently ignored, what a flag toggles, how options interact. Do NOT contradict the reference, and do NOT assert behavior absent from both the reference and the type; omit it instead. A confidently wrong "NEVER" is worse than no pitfall.`
         : `GROUND every claim in the option's TYPE and the documentation provided to you. You can see the type, not the code that reads this config — so do NOT assert runtime behavior you cannot verify: whether an empty array/object means "all" or "none", whether an invalid value throws or is silently ignored, what a boolean flag actually toggles, or how two options interact at runtime. If a behavior is not evidenced by the type or the docs, omit it or phrase it as a type-level fact ("\`mode\` accepts 'submit' | 'auto-save'"). A confidently wrong "NEVER" is worse than no pitfall — prefer fewer, verifiable points over speculative ones.`,
@@ -220,27 +229,7 @@ export class ConfigRefineSource implements RefineSource {
     const pkgDir = this.findPackageDir();
     if (!pkgDir) return this.metadata;
 
-    const meta: ConfigMetadata & { packageName?: string } = {};
-    try {
-      const pkg = JSON.parse(await readFile(join(pkgDir, 'package.json'), 'utf8')) as {
-        name?: string;
-        description?: string;
-        keywords?: string[];
-        repository?: string | { url?: string };
-      };
-      if (pkg.name) meta.packageName = stripScope(pkg.name);
-      if (pkg.description) meta.packageDescription = pkg.description;
-      if (Array.isArray(pkg.keywords)) meta.keywords = pkg.keywords;
-      const repo = typeof pkg.repository === 'string' ? pkg.repository : pkg.repository?.url;
-      if (repo) meta.repository = repo;
-    } catch {
-      // No/invalid package.json — leave metadata fields unset.
-    }
-    try {
-      meta.readme = parseReadme(await readFile(join(pkgDir, 'README.md'), 'utf8'));
-    } catch {
-      // No README — metadata checks that need it will report the gap.
-    }
+    const meta = await readPackageMetadata(pkgDir);
 
     this.metadata = {
       ...(meta.packageDescription !== undefined
@@ -267,17 +256,31 @@ export class ConfigRefineSource implements RefineSource {
 
   /**
    * Read the grounding globs into a single token-capped implementation
-   * reference. Skips `.d.ts`, excluded dirs, and the config file itself (the
-   * model already has the type). Returns `''` when no globs are configured or
-   * nothing matches — never throws.
+   * reference. Prepends the config module's own declarations (refine tags
+   * stripped — see {@link stripRefineTags}) so preset tables/defaults/validation
+   * ground the model, then appends the matched glob files (skipping `.d.ts`,
+   * excluded dirs, and the already-included config file). Returns `''` when no
+   * globs are configured or nothing matches — never throws.
    */
   private async loadGrounding(): Promise<string> {
     const globs = this.opts.groundingGlobs;
     if (!globs?.length) return '';
 
     const configAbs = resolve(this.opts.configFile);
-    const seen = new Set<string>();
+    const seen = new Set<string>([configAbs]);
     const parts: string[] = [];
+
+    // The config module itself often holds non-type declarations the model
+    // needs to be accurate — preset tables, defaults, `defineConfig`/validation
+    // (e.g. z2f's `SHADCN_OVERRIDES`). Include it, but strip ONLY the routing
+    // tags this source writes back across iterations (so our own accumulated
+    // annotations aren't fed back as "implementation"); hand-authored prose —
+    // the real runtime-behavior grounding — is preserved.
+    const configSource = await readFile(this.opts.configFile, 'utf8').catch(() => '');
+    const configDecls = stripRefineTags(configSource).trim();
+    if (configDecls)
+      parts.push(`// ${this.opts.configFile} (config module declarations)\n${configDecls}`);
+
     for (const pattern of globs) {
       let matches: AsyncIterable<string>;
       try {
@@ -290,7 +293,7 @@ export class ConfigRefineSource implements RefineSource {
       }
       for await (const file of matches) {
         const abs = resolve(file);
-        if (abs === configAbs || seen.has(abs)) continue;
+        if (seen.has(abs)) continue; // config file is pre-seeded above
         seen.add(abs);
         const content = await readFile(file, 'utf8').catch(() => '');
         if (content.trim()) parts.push(`// ${file}\n${content.trim()}`);
@@ -311,12 +314,6 @@ export class ConfigRefineSource implements RefineSource {
     }
     return undefined;
   }
-}
-
-/** Strip a leading `@scope/` from a package name. */
-function stripScope(name: string): string {
-  const slash = name.indexOf('/');
-  return name.startsWith('@') && slash !== -1 ? name.slice(slash + 1) : name;
 }
 
 /**

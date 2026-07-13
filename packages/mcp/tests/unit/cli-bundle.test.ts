@@ -194,7 +194,7 @@ describe('bundle subcommand', () => {
         '---',
         'name: skillit-mcp-docs',
         'version: 0.7.0',
-        'toSkills:',
+        'skillit:',
         '  managed: bundled-guidance',
         '---',
         '# Existing bundled guidance'

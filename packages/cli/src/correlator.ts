@@ -6,7 +6,7 @@ import type { ExtractedConfigSurface, ExtractedConfigOption } from '@skillit/cor
  *
  * The CLI surface is treated as authoritative for structural fields (flags,
  * description, required, defaultValue). The config surface contributes rich
- * JSDoc metadata (remarks, useWhen, avoidWhen, pitfalls, category) that the
+ * JSDoc metadata (remarks, useWhen, avoidWhen, never, category) that the
  * CLI help text does not capture.
  *
  * @param cliSurface   - The surface extracted from CLI introspection/help parsing
@@ -44,7 +44,7 @@ export function correlateFlags(
       remarks: cliOpt.remarks ?? configOpt.remarks,
       useWhen: cliOpt.useWhen ?? configOpt.useWhen,
       avoidWhen: cliOpt.avoidWhen ?? configOpt.avoidWhen,
-      pitfalls: cliOpt.pitfalls ?? configOpt.pitfalls,
+      never: cliOpt.never ?? configOpt.never,
       category: cliOpt.category ?? configOpt.category
     };
   });
@@ -55,7 +55,7 @@ export function correlateFlags(
     options: mergedOptions,
     useWhen: cliSurface.useWhen ?? configSurface.useWhen,
     avoidWhen: cliSurface.avoidWhen ?? configSurface.avoidWhen,
-    pitfalls: cliSurface.pitfalls ?? configSurface.pitfalls,
+    never: cliSurface.never ?? configSurface.never,
     remarks: cliSurface.remarks ?? configSurface.remarks,
     // A config-provided usage example (e.g. from JSDoc @example) is preferred
     // over commander's synthesized boilerplate (`[options]`, `[options] <args>`).

@@ -2,7 +2,7 @@
 name: skillit-cli-docs
 description: 'CLI documentation conventions for generated skills. Use when improving Commander descriptions, help text, positional argument docs, and config-surface correlation.'
 version: 0.3.13
-toSkills:
+skillit:
   managed: bundled-guidance
 ---
 
@@ -17,6 +17,28 @@ Use this skill when documenting command-line programs for `@skillit/cli`.
 - `.argument()` descriptions for positional inputs
 - `.usage()` strings and example help text
 - Environment-variable documentation and config-surface JSDoc correlation
+
+## Routing Tags via Option Interfaces
+
+For routing tags (`@useWhen`, `@avoidWhen`, `@never`), add them as JSDoc on
+a `<PascalCommandName>Options` interface in a TypeScript source file.
+The interface needs no properties — only the JSDoc block matters:
+
+```typescript
+/**
+ * @useWhen - Server advertises callHierarchyProvider capability
+ * @avoidWhen - Server doesn't support call hierarchy; lsproxy will error
+ * @never - NEVER invoke without verifying server supports this capability. Fix: check --help output or use `lsproxy call` to probe the server first
+ */
+interface CallHierarchyOptions {}
+```
+
+`CliRefineSource` discovers these interfaces via the source glob (`**/*.ts`) and
+correlates their tags onto the corresponding command in the generated skill.
+Create one per command that needs routing guidance; the filename is arbitrary
+(e.g. `src/command-options.ts`). After adding the interface, re-run `skillit gen`
+to regenerate — `resolveTargetLocation` will now resolve and `skillit refine`
+can write tags into the interface directly.
 
 ## Fix Patterns
 

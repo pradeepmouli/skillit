@@ -8,7 +8,7 @@ function skill(fns: Array<{ name: string }>): ExtractedSkill {
     functions: fns.map((f) => ({ name: f.name, description: '', parameters: [], tags: {} })),
     useWhen: [],
     avoidWhen: [],
-    pitfalls: []
+    never: []
   } as unknown as ExtractedSkill;
 }
 
@@ -20,18 +20,18 @@ describe('mergeOverlay', () => {
     expect(s.functions[0]!.tags).toEqual({});
   });
 
-  it('sets mcpMetadata.toSkills on matched function', () => {
+  it('sets mcpMetadata.skillit on matched function', () => {
     const s = skill([{ name: 'list_files' }]);
     const overlay = {
       version: 1 as const,
       tools: {
-        list_files: { useWhen: 'When listing directory contents', pitfalls: 'Avoid on Windows' }
+        list_files: { useWhen: 'When listing directory contents', never: 'Avoid on Windows' }
       }
     };
     const result = mergeOverlay(s, overlay);
     const fn = result.functions.find((f) => f.name === 'list_files')!;
-    expect(fn.mcpMetadata?.toSkills?.useWhen).toEqual(['When listing directory contents']);
-    expect(fn.mcpMetadata?.toSkills?.pitfalls).toEqual(['Avoid on Windows']);
+    expect(fn.mcpMetadata?.skillit?.useWhen).toEqual(['When listing directory contents']);
+    expect(fn.mcpMetadata?.skillit?.never).toEqual(['Avoid on Windows']);
   });
 
   it('leaves unmatched functions unchanged', () => {

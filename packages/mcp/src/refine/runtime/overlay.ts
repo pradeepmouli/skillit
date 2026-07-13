@@ -4,22 +4,22 @@ import type { DraftedFix } from '@skillit/core';
 export interface OverlayAnnotations {
   useWhen?: string;
   avoidWhen?: string;
-  pitfalls?: string;
+  never?: string;
   remarks?: string;
   example?: string;
 }
 
-export interface ToSkillsOverlay {
+export interface SkillitOverlay {
   version: 1;
   server?: OverlayAnnotations;
   tools: Record<string, OverlayAnnotations>;
 }
 
-export function emptyOverlay(): ToSkillsOverlay {
+export function emptyOverlay(): SkillitOverlay {
   return { version: 1, tools: {} };
 }
 
-export function readOverlay(path: string): ToSkillsOverlay {
+export function readOverlay(path: string): SkillitOverlay {
   let raw: string;
   try {
     raw = readFileSync(path, 'utf8');
@@ -36,14 +36,14 @@ export function readOverlay(path: string): ToSkillsOverlay {
   ) {
     return emptyOverlay();
   }
-  return parsed as ToSkillsOverlay;
+  return parsed as SkillitOverlay;
 }
 
-export function writeOverlay(path: string, overlay: ToSkillsOverlay): void {
+export function writeOverlay(path: string, overlay: SkillitOverlay): void {
   writeFileSync(path, JSON.stringify(overlay, null, 2), 'utf8');
 }
 
-export function applyFixToOverlay(overlay: ToSkillsOverlay, fix: DraftedFix): ToSkillsOverlay {
+export function applyFixToOverlay(overlay: SkillitOverlay, fix: DraftedFix): SkillitOverlay {
   const toolKey = fix.toolName;
   // RefineTag and keyof OverlayAnnotations share the same 5 keys — cast is safe
   const tag = fix.tag as keyof OverlayAnnotations;

@@ -41,14 +41,14 @@ describe('extractCliSkill', () => {
               type: 'boolean',
               description: '',
               required: false,
-              pitfalls: ['NEVER use in CI']
+              never: ['NEVER use in CI']
             }
           ]
         }
       ]
     });
 
-    expect(skill.configSurfaces![0].options[0].pitfalls).toContain('NEVER use in CI');
+    expect(skill.configSurfaces![0].options[0].never).toContain('NEVER use in CI');
   });
 
   it('extracts from help text when no program', async () => {

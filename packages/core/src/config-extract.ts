@@ -12,10 +12,13 @@ import type { ExtractedConfigOption, ExtractedConfigSurface } from './config-typ
  * Each property becomes an {@link ExtractedConfigOption} keyed by its
  * dot-notation `configKey`; nested object-literal types recurse (e.g.
  * `components.prefix`). Per-property JSDoc supplies the description, the
- * `@default` value, and the `@useWhen` / `@avoidWhen` / `@pitfalls` / `@remarks`
+ * `@default` value, and the `@useWhen` / `@avoidWhen` / `@never` / `@remarks`
  * routing tags.
  *
- * Returns `undefined` when no matching type declaration is found.
+ * @param source - TypeScript source text containing the config type declaration.
+ * @param typeName - Name of the interface or object-type alias to extract.
+ * @returns The extracted config surface, or `undefined` when no matching type
+ *   declaration is found in `source`.
  */
 export function extractConfigSurface(
   source: string,
@@ -114,7 +117,7 @@ function walkProperties(bodyNode: SgNode, prefix: string): ExtractedConfigOption
     if (doc.defaultValue !== undefined) option.defaultValue = doc.defaultValue;
     if (doc.useWhen) option.useWhen = splitTagContent(doc.useWhen);
     if (doc.avoidWhen) option.avoidWhen = splitTagContent(doc.avoidWhen);
-    if (doc.pitfalls) option.pitfalls = splitTagContent(doc.pitfalls);
+    if (doc.never) option.never = splitTagContent(doc.never);
     if (doc.remarks !== undefined) option.remarks = doc.remarks;
     options.push(option);
 
@@ -149,7 +152,7 @@ export function unescapeJsDocClose(text: string): string {
  * Split a JSDoc tag's content into discrete entries. A markdown bullet list
  * (lines starting with `-` or `*`) becomes one entry per bullet (marker
  * stripped, continuation lines folded in); plain prose stays a single entry.
- * This keeps `useWhen`/`avoidWhen`/`pitfalls` — which are `string[]` — as clean
+ * This keeps `useWhen`/`avoidWhen`/`never` — which are `string[]` — as clean
  * per-item arrays so the renderer emits one bullet each, instead of wrapping a
  * whole pre-bulleted blob in another `- ` (the `- - …` double-bullet defect).
  */
@@ -177,7 +180,7 @@ interface PropertyDoc {
   defaultValue?: string;
   useWhen?: string;
   avoidWhen?: string;
-  pitfalls?: string;
+  never?: string;
   remarks?: string;
 }
 
@@ -223,8 +226,8 @@ function parsePropertyJsDoc(node: SgNode | undefined): PropertyDoc {
   if (useWhen !== undefined) doc.useWhen = useWhen;
   const avoidWhen = join('avoidWhen');
   if (avoidWhen !== undefined) doc.avoidWhen = avoidWhen;
-  const pitfalls = join('pitfalls');
-  if (pitfalls !== undefined) doc.pitfalls = pitfalls;
+  const never = join('never');
+  if (never !== undefined) doc.never = never;
   const remarks = join('remarks');
   if (remarks !== undefined) doc.remarks = remarks;
   return doc;

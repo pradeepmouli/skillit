@@ -89,6 +89,16 @@ describe('ConfigRefineSource.extract', () => {
     expect(skill.name).toBe('override');
     expect(skill.description).toBe('override desc');
   });
+
+  it('populates skill.readme on the IR from the sibling README', async () => {
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/my-lib', description: 'desc' },
+      readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
+    });
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.readme).toBeDefined();
+    expect(skill.readme?.blockquote ?? skill.readme?.firstParagraph ?? '').toMatch(/summary/);
+  });
 });
 
 describe('ConfigRefineSource example file', () => {
@@ -153,7 +163,14 @@ describe('ConfigRefineSource grounding', () => {
   it('feeds matched grounding files into guidance and switches to the grounded directive', async () => {
     tmp = mkdtempSync(join(tmpdir(), 'config-source-'));
     const file = join(tmp, 'config.ts');
-    writeFileSync(file, `export interface Cfg {\n  include?: string[];\n}`, 'utf8');
+    writeFileSync(
+      file,
+      `export interface Cfg {\n` +
+        `  /**\n   * A glob.\n   * @useWhen including files.\n   */\n  include?: string[];\n}\n` +
+        `/** Select renders as a controlled component. */\n` +
+        `export const PRESET_OVERRIDES = { Select: { controlled: true } };`,
+      'utf8'
+    );
     writeFileSync(
       join(tmp, 'filter.ts'),
       `export function matchesAnyPattern(p: string[]) {\n  // empty array means MATCH ALL\n  return !p || p.length === 0;\n}`,
@@ -167,10 +184,22 @@ describe('ConfigRefineSource grounding', () => {
     await source.extract();
     const g = source.guidance();
     expect(g).toContain('IMPLEMENTATION REFERENCE');
-    expect(g).toContain('empty array means MATCH ALL'); // real behavior is now in context
+    expect(g).toContain('empty array means MATCH ALL'); // consumer behavior in context
     expect(g).toMatch(/GROUND every runtime-behavior claim in the IMPLEMENTATION REFERENCE/);
-    // The config file itself is excluded (the model already has the type).
-    expect(g).not.toContain('export interface Cfg');
+    // The config module's NON-type declarations (e.g. preset tables) are now
+    // included so the model can be accurate about them.
+    expect(g).toContain('PRESET_OVERRIDES');
+    expect(g).toContain('Select: { controlled: true }');
+    // Hand-authored prose is PRESERVED — it is the runtime-behavior grounding we
+    // want (both the property description and the const's doc comment).
+    expect(g).toContain('A glob.');
+    expect(g).toContain('Select renders as a controlled component.');
+    // ...but the routing tags THIS source writes back across iterations are
+    // stripped from the grounding, so our own accumulated annotations aren't fed
+    // back as "implementation". (The `@useWhen` token itself can't be the probe:
+    // guidance()'s own directive names the tags it asks the model to write — so
+    // we assert on the stripped tag's CONTENT, which is unique to the grounding.)
+    expect(g).not.toContain('including files.');
   });
 
   it('uses the conservative directive when no grounding is configured', async () => {
@@ -183,8 +212,8 @@ describe('ConfigRefineSource grounding', () => {
   });
 });
 
-describe('ConfigRefineSource.auditContext', () => {
-  it('returns the discovered package + README context after extract()', async () => {
+describe('ConfigRefineSource metadata on the IR', () => {
+  it('writes the discovered package + README metadata onto the skill', async () => {
     const file = fixture(`export interface Cfg { a: string; }`, {
       packageJson: {
         name: 'lib',
@@ -194,21 +223,40 @@ describe('ConfigRefineSource.auditContext', () => {
       },
       readme: `# lib\n\n> One-line summary.\n\nFirst paragraph here.\n`
     });
-    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
-    await source.extract();
-    const ctx = source.auditContext(await source.extract());
-    expect(ctx.packageDescription).toBe('desc');
-    expect(ctx.keywords).toEqual(['k1', 'k2']);
-    expect(ctx.repository).toBe('https://example.com/repo.git');
-    expect(ctx.readme).toBeDefined();
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    // An explicit/config description wins for packageDescription; keywords +
+    // repository + readme come straight from the discovered package.
+    expect(skill.keywords).toEqual(['k1', 'k2']);
+    expect(skill.repository).toBe('https://example.com/repo.git');
+    expect(skill.readme).toBeDefined();
   });
 
-  it('is empty when no package.json is discoverable', async () => {
+  it('leaves metadata unset when no package.json is discoverable', async () => {
     // mkdtemp dirs live under the OS tmp root, which has no ancestor package.json.
     const file = fixture(`export interface Cfg { a: string; }`);
-    const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
-    await source.extract();
-    expect(source.auditContext(await source.extract())).toEqual({});
+    const skill = await new ConfigRefineSource({ configFile: file, typeName: 'Cfg' }).extract();
+    expect(skill.keywords).toBeUndefined();
+    expect(skill.repository).toBeUndefined();
+    expect(skill.readme).toBeUndefined();
+  });
+
+  it('packageDescription is the literal package.json value, not a config override (F1 integrity)', async () => {
+    // A config-specific description override goes to the render headline
+    // (skill.description), NOT skill.packageDescription — otherwise the audit's
+    // F1 check would treat the override as the package.json description and stop
+    // reporting a missing/short one.
+    const file = fixture(`export interface Cfg { a: string; }`, {
+      packageJson: { name: '@scope/lib', description: 'short' } // <10 chars → F1 should still flag
+    });
+    const skill = await new ConfigRefineSource({
+      configFile: file,
+      typeName: 'Cfg',
+      description: 'A long, config-specific description that would otherwise mask F1'
+    }).extract();
+    expect(skill.description).toBe(
+      'A long, config-specific description that would otherwise mask F1'
+    );
+    expect(skill.packageDescription).toBe('short'); // the real (too-short) package.json value
   });
 });
 
@@ -237,12 +285,12 @@ describe('ConfigRefineSource.applyFixes', () => {
 }`);
     const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
     await source.applyFixes([
-      { toolName: 'components.prefix', tag: 'pitfalls', value: 'must be a valid identifier' }
+      { toolName: 'components.prefix', tag: 'never', value: 'must be a valid identifier' }
     ]);
 
     const written = readFileSync(file, 'utf8');
-    expect(written).toContain('@pitfalls must be a valid identifier');
-    expect(written.indexOf('@pitfalls')).toBeLessThan(written.indexOf('prefix'));
+    expect(written).toContain('@never must be a valid identifier');
+    expect(written.indexOf('@never')).toBeLessThan(written.indexOf('prefix'));
   });
 
   it('leaves the file untouched when no fix applies', async () => {
@@ -257,12 +305,12 @@ describe('ConfigRefineSource.applyFixes', () => {
     const file = fixture(`export interface Cfg {\n  include?: string[];\n}`);
     const source = new ConfigRefineSource({ configFile: file, typeName: 'Cfg' });
     await source.applyFixes([
-      { toolName: 'include', tag: 'pitfalls', value: 'avoid the `**/*.ts` glob — too broad' }
+      { toolName: 'include', tag: 'never', value: 'avoid the `**/*.ts` glob — too broad' }
     ]);
     // The type must still parse (an unescaped */ would have corrupted the file).
     const skill = await source.extract();
     const include = skill.configSurfaces![0]!.options.find((o) => o.name === 'include')!;
-    expect(include.pitfalls?.join(' ')).toContain('**/*.ts'); // round-trips unescaped
+    expect(include.never?.join(' ')).toContain('**/*.ts'); // round-trips unescaped
   });
 
   it('accumulates multiple fixes across properties in one pass', async () => {

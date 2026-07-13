@@ -15,7 +15,7 @@ Extract CLI command structure from commander/yargs for AI agent skill generation
 - Runtime introspection is unavailable (no access to the program object)
 - The CLI uses a framework other than Commander (yargs, oclif, custom)
 - You have both CLI surfaces (from introspection/help) and typed config interfaces (from TypeDoc)
-- You want JSDoc @useWhen/@avoidWhen/@pitfalls tags to appear on CLI options in the generated skill
+- You want JSDoc @useWhen/@avoidWhen/@never tags to appear on CLI options in the generated skill
 - You have a Commander program and want to generate a skill from its command structure
 - You have raw --help output and no runtime access to the program object
 
@@ -25,7 +25,7 @@ Extract CLI command structure from commander/yargs for AI agent skill generation
 - Your CLI is built with a framework other than Commander — use parseHelpOutput directly instead
 - API surface: 4 functions
 
-## Pitfalls
+## NEVER
 
 - NEVER pass both `program` and `helpTexts` — program takes precedence and helpTexts is silently ignored
 - NEVER forget to pass configSurfaces when you have typed option interfaces — JSDoc metadata won't be correlated

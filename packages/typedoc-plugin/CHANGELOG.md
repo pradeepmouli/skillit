@@ -1,5 +1,65 @@
 # typedoc-plugin-to-skills
 
+## 2.0.1
+
+### Patch Changes
+
+- [#104](https://github.com/pradeepmouli/skillit/pull/104) [`6952e4a`](https://github.com/pradeepmouli/skillit/commit/6952e4ab788e3173b790ab73eb0aa85f89d0d0d7) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Standardize the anti-pattern JSDoc tag on `@never` across every source type, and fix `skillit gen --source cli` to correlate JSDoc from typed CLI option interfaces (closes [pradeepmouli/skillit#87](https://github.com/pradeepmouli/skillit/issues/87)).
+
+  **Breaking:**
+
+  - `@skillit/core`: renamed `RefineTag`'s `'pitfalls'` member to `'never'`, and the `ExtractedConfigSurface.pitfalls`/`ExtractedConfigOption.pitfalls`/`ExtractedSkill.pitfalls` fields to `.never`. CLI-sourced skills previously had to use `@pitfalls` as the JSDoc tag name on `<Command>Options` interfaces — despite skillit's own bundled docs showing `@never` in the worked example. Both now use `@never`, matching the convention TypeDoc-sourced skills already used.
+  - `@skillit/mcp`: renamed the flat `_meta.pitfalls` wire convention to `_meta.never`. Any MCP server annotating tools with `_meta: { pitfalls: "..." }` must update to `_meta: { never: "..." }`.
+
+  **Fixed:**
+
+  - `skillit gen --source cli` (via `generateCliSkill`) now correlates `@useWhen`/`@avoidWhen`/`@never`/`@remarks`/`@example` JSDoc from `<Command>Options`/`<Command>Opts`/`<Command>CommandOpts` interfaces onto the generated skill — previously only `skillit refine --source cli` did this, so `gen` silently produced skills missing their `## NEVER` section even when the JSDoc was correctly authored.
+  - Fixed a self-contradiction in the bundled `skillit-cli-docs` guidance skill: its prose told authors to use `@pitfalls` while its own code example used `@never`.
+
+- Updated dependencies [[`6952e4a`](https://github.com/pradeepmouli/skillit/commit/6952e4ab788e3173b790ab73eb0aa85f89d0d0d7)]:
+  - @skillit/typedoc@2.0.1
+
+## 2.0.0
+
+### Major Changes
+
+- [#95](https://github.com/pradeepmouli/skillit/pull/95) [`1121aaf`](https://github.com/pradeepmouli/skillit/commit/1121aaf9da3f4f2609165b9a8d30af173cc45a97) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - - Fix PR review issues in config loading and init guidance
+  - Address remaining PR review suggestions
+  - Address follow-up PR review nits
+  - Address PR comment code cleanup
+  - Add defineConfig alias for skillit config helper
+
+### Patch Changes
+
+- [#102](https://github.com/pradeepmouli/skillit/pull/102) [`a1c6af7`](https://github.com/pradeepmouli/skillit/commit/a1c6af7249054dc6ab8ebf99c2a6b9bfc8bee93c) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - DRY cleanup for the dep-skill wiring, and a sweep of leftover pre-rebrand `toSkills` naming.
+
+  **Breaking (internal IR / adapter API):**
+
+  - `@skillit/core`: renamed the `ExtractedFunctionMcpMetadata.toSkills` field to `.skillit` (matches the `@skillit/*` scope). Consumers reading `fn.mcpMetadata?.toSkills` must update to `fn.mcpMetadata?.skillit`.
+  - `@skillit/vitepress`: renamed the exported plugin factory `toSkills()` to `skillit()`, and `ToSkillsVitePressOptions` to `SkillitVitePressOptions`.
+
+  **Fixes:**
+
+  - `@skillit/mcp`: fixed a real (previously undetected) bug in the `_meta` annotation reader's own test fixture — an integration test gated behind `RUN_INTEGRATION_TESTS=true` was asserting against the old nested `_meta.toSkills.{useWhen: [...]}` wire shape, which the flat-string reader no longer accepts. The fixture and test now use the current flat `_meta.useWhen` string format and the test passes.
+  - `@skillit/mcp`: `skillit-mcp-docs` bundled skill guidance was telling agents to annotate MCP tools with the deprecated nested `_meta.toSkills.useWhen = [...]` shape; corrected to the current flat `_meta.useWhen = "..."` string convention.
+  - Fixed a stale `toSkillsVitePlugin({ docsDir })` code example (a function/option that never existed) in the VitePress docs guide.
+
+  **Cleanup:**
+
+  - `@skillit/core`, `@skillit/client`, `@skillit/mcp`, `@skillit/typedoc`: extracted `attachDepSkills(skill, pkgDir)` to replace 5 duplicated `rootDir`/`seeAlso`-wiring call sites.
+  - Renamed the bundled-guidance frontmatter marker key from `toSkills:` to `skillit:` across all bundled `SKILL.md` files.
+  - Synced `.github/copilot-instructions.md` branding with `CLAUDE.md` (was still `to-skills`/`@to-skills/*`).
+
+- Updated dependencies [[`1121aaf`](https://github.com/pradeepmouli/skillit/commit/1121aaf9da3f4f2609165b9a8d30af173cc45a97), [`a1c6af7`](https://github.com/pradeepmouli/skillit/commit/a1c6af7249054dc6ab8ebf99c2a6b9bfc8bee93c)]:
+  - @skillit/typedoc@2.0.0
+
+## 1.4.2
+
+### Patch Changes
+
+- Updated dependencies [[`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b)]:
+  - @skillit/typedoc@1.2.1
+
 ## 1.4.1
 
 ### Patch Changes
@@ -9,8 +69,8 @@
   - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
   - fix(client): extract drafted annotation from <answer> tags
   - fix(client): forbid Insight-block decoration in the claude refine backend
-- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2)]:
-  - @skillit/typedoc@1.1.1
+- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2), [`3d5d8eb`](https://github.com/pradeepmouli/skillit/commit/3d5d8eb9df812c628a118764ccdf3a5d4478b4db), [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a), [`9d67124`](https://github.com/pradeepmouli/skillit/commit/9d671242bf95a5bb49dd2121c37c08008c1a8279)]:
+  - @skillit/typedoc@1.2.0
 
 ## 1.4.0
 

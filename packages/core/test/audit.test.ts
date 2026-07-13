@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { auditSkill } from '@skillit/core';
-import type { AuditContext, AuditIssue, AuditPass } from '@skillit/core';
+import type { AuditIssue, AuditPass } from '@skillit/core';
 import type { ExtractedSkill, ExtractedFunction, ExtractedParameter } from '@skillit/core';
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,15 @@ function makeSkill(overrides: Partial<ExtractedSkill> = {}): ExtractedSkill {
   };
 }
 
-function makeContext(overrides: Partial<AuditContext> = {}): AuditContext {
+// Project metadata now lives on the IR; the audit reads it directly from the
+// skill. `makeContext` produces that metadata subset (default values exercising
+// the passing path); the helpers merge it onto the skill before auditing.
+type ProjectMeta = Pick<
+  ExtractedSkill,
+  'packageDescription' | 'keywords' | 'repository' | 'readme'
+>;
+
+function makeContext(overrides: Partial<ProjectMeta> = {}): Partial<ProjectMeta> {
   return {
     packageDescription: 'A library for doing useful things with data',
     keywords: ['data', 'transform', 'parse', 'validate', 'schema'],
@@ -61,13 +69,21 @@ function makeContext(overrides: Partial<AuditContext> = {}): AuditContext {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getIssues(skill: ExtractedSkill, context: AuditContext, code: string): AuditIssue[] {
-  const result = auditSkill(skill, context);
+function getIssues(
+  skill: ExtractedSkill,
+  context: Partial<ProjectMeta>,
+  code: string
+): AuditIssue[] {
+  const result = auditSkill({ ...skill, ...context });
   return result.issues.filter((i) => i.code === code);
 }
 
-function getPassing(skill: ExtractedSkill, context: AuditContext, code: string): AuditPass[] {
-  const result = auditSkill(skill, context);
+function getPassing(
+  skill: ExtractedSkill,
+  context: Partial<ProjectMeta>,
+  code: string
+): AuditPass[] {
+  const result = auditSkill({ ...skill, ...context });
   return result.passing.filter((p) => p.code === code);
 }
 
@@ -1147,21 +1163,21 @@ describe('W8: @avoidWhen on at least one export', () => {
 // ---------------------------------------------------------------------------
 
 describe('W9: @never on at least one export', () => {
-  it('fails when skill.pitfalls is undefined', () => {
-    const issues = getIssues(makeSkill({ pitfalls: undefined }), makeContext(), 'W9');
+  it('fails when skill.never is undefined', () => {
+    const issues = getIssues(makeSkill({ never: undefined }), makeContext(), 'W9');
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('warning');
     expect(issues[0].message).toContain('@never');
   });
 
-  it('fails when skill.pitfalls is an empty array', () => {
-    const issues = getIssues(makeSkill({ pitfalls: [] }), makeContext(), 'W9');
+  it('fails when skill.never is an empty array', () => {
+    const issues = getIssues(makeSkill({ never: [] }), makeContext(), 'W9');
     expect(issues).toHaveLength(1);
   });
 
-  it('passes when skill.pitfalls has at least one entry', () => {
+  it('passes when skill.never has at least one entry', () => {
     const passing = getPassing(
-      makeSkill({ pitfalls: ['mutates the original array'] }),
+      makeSkill({ never: ['mutates the original array'] }),
       makeContext(),
       'W9'
     );
@@ -1170,24 +1186,24 @@ describe('W9: @never on at least one export', () => {
 
   it('passes with multiple pitfall entries', () => {
     const passing = getPassing(
-      makeSkill({ pitfalls: ['pitfall A', 'pitfall B'] }),
+      makeSkill({ never: ['pitfall A', 'pitfall B'] }),
       makeContext(),
       'W9'
     );
     expect(passing).toHaveLength(1);
   });
 
-  it('passes when a configSurface carries pitfalls (no top-level pitfalls)', () => {
+  it('passes when a configSurface carries never (no top-level never)', () => {
     const passing = getPassing(
       makeSkill({
-        pitfalls: undefined,
+        never: undefined,
         configSurfaces: [
           {
             name: 'build',
             description: 'Build the project',
             sourceType: 'cli',
             options: [],
-            pitfalls: ['never run with --force in CI']
+            never: ['never run with --force in CI']
           }
         ]
       }),
@@ -1197,17 +1213,17 @@ describe('W9: @never on at least one export', () => {
     expect(passing).toHaveLength(1);
   });
 
-  it('fails when neither top-level nor configSurface carries pitfalls', () => {
+  it('fails when neither top-level nor configSurface carries never', () => {
     const issues = getIssues(
       makeSkill({
-        pitfalls: undefined,
+        never: undefined,
         configSurfaces: [
           {
             name: 'build',
             description: 'Build the project',
             sourceType: 'cli',
             options: [],
-            pitfalls: []
+            never: []
           }
         ]
       }),
@@ -1757,7 +1773,7 @@ describe('A4: Verbose Quick Start', () => {
 
 describe('auditSkill — AuditResult structure', () => {
   it('returns the package name', () => {
-    const result = auditSkill(makeSkill({ name: 'my-package' }), makeContext());
+    const result = auditSkill({ ...makeSkill({ name: 'my-package' }), ...makeContext() });
     expect(result.package).toBe('my-package');
   });
 
@@ -1765,7 +1781,7 @@ describe('auditSkill — AuditResult structure', () => {
     const skill = makeSkill({
       functions: [makeFunction({ description: '' })]
     });
-    const result = auditSkill(skill, makeContext({ packageDescription: undefined }));
+    const result = auditSkill({ ...skill, ...makeContext({ packageDescription: undefined }) });
     expect(result.summary.fatal).toBe(result.issues.filter((i) => i.severity === 'fatal').length);
     expect(result.summary.error).toBe(result.issues.filter((i) => i.severity === 'error').length);
     expect(result.summary.warning).toBe(
@@ -1775,7 +1791,7 @@ describe('auditSkill — AuditResult structure', () => {
   });
 
   it('all passing checks have a code and message', () => {
-    const result = auditSkill(makeSkill(), makeContext());
+    const result = auditSkill({ ...makeSkill(), ...makeContext() });
     for (const p of result.passing) {
       expect(p.code).toBeTruthy();
       expect(p.message).toBeTruthy();
@@ -1783,10 +1799,10 @@ describe('auditSkill — AuditResult structure', () => {
   });
 
   it('all issues have required fields', () => {
-    const result = auditSkill(
-      makeSkill({ functions: [makeFunction({ description: '' })] }),
-      makeContext({ packageDescription: '' })
-    );
+    const result = auditSkill({
+      ...makeSkill({ functions: [makeFunction({ description: '' })] }),
+      ...makeContext({ packageDescription: '' })
+    });
     for (const iss of result.issues) {
       expect(iss.code).toBeTruthy();
       expect(iss.severity).toMatch(/^(fatal|error|warning|alert)$/);
@@ -1843,7 +1859,7 @@ describe('auditSkill — AuditResult structure', () => {
       }
     });
 
-    const result = auditSkill(skill, context);
+    const result = auditSkill({ ...skill, ...context });
     const fatalAndError = result.issues.filter(
       (i) => i.severity === 'fatal' || i.severity === 'error'
     );

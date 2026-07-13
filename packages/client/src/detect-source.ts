@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { loadProgram } from '@skillit/cli';
 
 export type RefineSourceKind = 'cli' | 'mcp' | 'typedoc';
@@ -117,7 +117,13 @@ async function hasLoadableProgram(cwd: string): Promise<boolean> {
  * `pnpm-lock.yaml` → `'pnpm'`, `yarn.lock` → `'yarn'`, else `'npm'`.
  */
 export function detectPackageManager(cwd: string): 'pnpm' | 'yarn' | 'npm' {
-  if (existsSync(join(cwd, 'pnpm-lock.yaml'))) return 'pnpm';
-  if (existsSync(join(cwd, 'yarn.lock'))) return 'yarn';
+  let dir = cwd;
+  while (true) {
+    if (existsSync(join(dir, 'pnpm-lock.yaml'))) return 'pnpm';
+    if (existsSync(join(dir, 'yarn.lock'))) return 'yarn';
+    const parent = dirname(dir);
+    if (parent === dir) break; // filesystem root
+    dir = parent;
+  }
   return 'npm';
 }

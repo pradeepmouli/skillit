@@ -242,11 +242,11 @@ describe('CliRefineSource', () => {
 
     await source.applyFixes([
       { toolName: 'init', tag: 'useWhen', value: 'When scaffolding' },
-      { toolName: 'refine', tag: 'pitfalls', value: 'Needs a built program' }
+      { toolName: 'refine', tag: 'never', value: 'Needs a built program' }
     ]);
 
     expect(readFileSync(initFile, 'utf8')).toContain('@useWhen When scaffolding');
-    expect(readFileSync(refineFile, 'utf8')).toContain('@pitfalls Needs a built program');
+    expect(readFileSync(refineFile, 'utf8')).toContain('@never Needs a built program');
   });
 
   it('guidance() returns the bundled CLI conventions skill', async () => {

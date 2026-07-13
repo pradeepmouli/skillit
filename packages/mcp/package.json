@@ -1,6 +1,6 @@
 {
   "name": "@skillit/mcp",
-  "version": "0.3.1",
+  "version": "2.0.0",
   "description": "Extract and bundle MCP servers as Agent Skills — introspects live MCP servers (stdio or HTTP) and produces SKILL.md consumable by MCP-native agents (via mcp: frontmatter) or non-MCP agents (via CLI-as-proxy adapters)",
   "keywords": [
     "agent-skills",
@@ -61,6 +61,6 @@
     "@skillit/target-fastmcp": "workspace:*",
     "@skillit/target-mcpc": "workspace:*",
     "@types/node": "^25.9.1",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0-beta.4"
   }
 }

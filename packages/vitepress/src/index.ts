@@ -18,7 +18,7 @@ export { walkSidebar } from './sidebar-walker.js';
 
 // ─── Options ──────────────────────────────────────────────────────────────────
 
-export interface ToSkillsVitePressOptions {
+export interface SkillitVitePressOptions {
   /** Output directory for skill files (default: "skills") */
   skillsOutDir?: string;
   /** Skill name override (default: from VitePress site title) */
@@ -54,7 +54,7 @@ function resolveDocPath(srcDir: string, link: string): string | undefined {
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 
-export function toSkills(options?: ToSkillsVitePressOptions): VitePlugin {
+export function skillit(options?: SkillitVitePressOptions): VitePlugin {
   let siteTitle = '';
   let siteDescription = '';
   let sidebar: any = [];

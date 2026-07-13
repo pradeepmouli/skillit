@@ -19,7 +19,7 @@ const baseSkill = (): ExtractedSkill =>
     functions: [{ name: 'list_files', description: '', parameters: [], tags: {} }],
     useWhen: [],
     avoidWhen: [],
-    pitfalls: []
+    never: []
   }) as unknown as ExtractedSkill;
 
 describe('McpRefineSource', () => {
@@ -27,24 +27,24 @@ describe('McpRefineSource', () => {
     tmp = mkdtempSync(join(tmpdir(), 'mcp-source-'));
     const overlayPath = join(tmp, 'overlay.json');
     const rawExtract = vi.fn(async () => baseSkill());
-    const source = new McpRefineSource({ overlayPath, extract: rawExtract });
+    const source = new McpRefineSource({ overlayPath, extract: rawExtract, cwd: tmp });
 
     const s1 = await source.extract();
     expect(s1.functions[0]!.name).toBe('list_files');
 
     await source.applyFixes([{ toolName: 'list_files', tag: 'useWhen', value: 'When listing' }]);
     const s2 = await source.extract();
-    expect(s2.functions[0]!.mcpMetadata?.toSkills?.useWhen).toEqual(['When listing']);
+    expect(s2.functions[0]!.mcpMetadata?.skillit?.useWhen).toEqual(['When listing']);
   });
 
   it('applyFixes writes overlay to disk', async () => {
     tmp = mkdtempSync(join(tmpdir(), 'mcp-source-'));
     const overlayPath = join(tmp, 'overlay.json');
-    const source = new McpRefineSource({ overlayPath, extract: async () => baseSkill() });
+    const source = new McpRefineSource({ overlayPath, extract: async () => baseSkill(), cwd: tmp });
     await source.applyFixes([
-      { toolName: 'tool_a', tag: 'pitfalls', value: 'Do not call in parallel' }
+      { toolName: 'tool_a', tag: 'never', value: 'Do not call in parallel' }
     ]);
     const written = JSON.parse(readFileSync(overlayPath, 'utf8'));
-    expect(written.tools.tool_a.pitfalls).toBe('Do not call in parallel');
+    expect(written.tools.tool_a.never).toBe('Do not call in parallel');
   });
 });

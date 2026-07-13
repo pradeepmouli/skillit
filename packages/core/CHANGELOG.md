@@ -1,6 +1,94 @@
 # @to-skills/core
 
-## 1.6.0
+## 4.0.0
+
+### Major Changes
+
+- [#104](https://github.com/pradeepmouli/skillit/pull/104) [`6952e4a`](https://github.com/pradeepmouli/skillit/commit/6952e4ab788e3173b790ab73eb0aa85f89d0d0d7) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Standardize the anti-pattern JSDoc tag on `@never` across every source type, and fix `skillit gen --source cli` to correlate JSDoc from typed CLI option interfaces (closes [pradeepmouli/skillit#87](https://github.com/pradeepmouli/skillit/issues/87)).
+
+  **Breaking:**
+
+  - `@skillit/core`: renamed `RefineTag`'s `'pitfalls'` member to `'never'`, and the `ExtractedConfigSurface.pitfalls`/`ExtractedConfigOption.pitfalls`/`ExtractedSkill.pitfalls` fields to `.never`. CLI-sourced skills previously had to use `@pitfalls` as the JSDoc tag name on `<Command>Options` interfaces — despite skillit's own bundled docs showing `@never` in the worked example. Both now use `@never`, matching the convention TypeDoc-sourced skills already used.
+  - `@skillit/mcp`: renamed the flat `_meta.pitfalls` wire convention to `_meta.never`. Any MCP server annotating tools with `_meta: { pitfalls: "..." }` must update to `_meta: { never: "..." }`.
+
+  **Fixed:**
+
+  - `skillit gen --source cli` (via `generateCliSkill`) now correlates `@useWhen`/`@avoidWhen`/`@never`/`@remarks`/`@example` JSDoc from `<Command>Options`/`<Command>Opts`/`<Command>CommandOpts` interfaces onto the generated skill — previously only `skillit refine --source cli` did this, so `gen` silently produced skills missing their `## NEVER` section even when the JSDoc was correctly authored.
+  - Fixed a self-contradiction in the bundled `skillit-cli-docs` guidance skill: its prose told authors to use `@pitfalls` while its own code example used `@never`.
+
+## 3.0.0
+
+### Major Changes
+
+- [#95](https://github.com/pradeepmouli/skillit/pull/95) [`1121aaf`](https://github.com/pradeepmouli/skillit/commit/1121aaf9da3f4f2609165b9a8d30af173cc45a97) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - - Fix PR review issues in config loading and init guidance
+
+  - Address remaining PR review suggestions
+  - Address follow-up PR review nits
+  - Address PR comment code cleanup
+  - Add defineConfig alias for skillit config helper
+
+- [#102](https://github.com/pradeepmouli/skillit/pull/102) [`a1c6af7`](https://github.com/pradeepmouli/skillit/commit/a1c6af7249054dc6ab8ebf99c2a6b9bfc8bee93c) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - DRY cleanup for the dep-skill wiring, and a sweep of leftover pre-rebrand `toSkills` naming.
+
+  **Breaking (internal IR / adapter API):**
+
+  - `@skillit/core`: renamed the `ExtractedFunctionMcpMetadata.toSkills` field to `.skillit` (matches the `@skillit/*` scope). Consumers reading `fn.mcpMetadata?.toSkills` must update to `fn.mcpMetadata?.skillit`.
+  - `@skillit/vitepress`: renamed the exported plugin factory `toSkills()` to `skillit()`, and `ToSkillsVitePressOptions` to `SkillitVitePressOptions`.
+
+  **Fixes:**
+
+  - `@skillit/mcp`: fixed a real (previously undetected) bug in the `_meta` annotation reader's own test fixture — an integration test gated behind `RUN_INTEGRATION_TESTS=true` was asserting against the old nested `_meta.toSkills.{useWhen: [...]}` wire shape, which the flat-string reader no longer accepts. The fixture and test now use the current flat `_meta.useWhen` string format and the test passes.
+  - `@skillit/mcp`: `skillit-mcp-docs` bundled skill guidance was telling agents to annotate MCP tools with the deprecated nested `_meta.toSkills.useWhen = [...]` shape; corrected to the current flat `_meta.useWhen = "..."` string convention.
+  - Fixed a stale `toSkillsVitePlugin({ docsDir })` code example (a function/option that never existed) in the VitePress docs guide.
+
+  **Cleanup:**
+
+  - `@skillit/core`, `@skillit/client`, `@skillit/mcp`, `@skillit/typedoc`: extracted `attachDepSkills(skill, pkgDir)` to replace 5 duplicated `rootDir`/`seeAlso`-wiring call sites.
+  - Renamed the bundled-guidance frontmatter marker key from `toSkills:` to `skillit:` across all bundled `SKILL.md` files.
+  - Synced `.github/copilot-instructions.md` branding with `CLAUDE.md` (was still `to-skills`/`@to-skills/*`).
+
+## 2.1.0
+
+### Minor Changes
+
+- [#82](https://github.com/pradeepmouli/skillit/pull/82) [`820abae`](https://github.com/pradeepmouli/skillit/commit/820abae1d853395efdca25230d11074cda7b6d6b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Skill generation now auto-populates a `## See Also` section linking to skills bundled in direct dependencies.
+
+  When a dependency ships a skill (detected via `node_modules/<dep>/skills/*/SKILL.md` or `package.json#skillit.skills`), its name, path, and description appear in `## See Also` of the consuming package's skill. This prevents agents using only a CLI skill from missing critical context — like `## NEVER` rules — documented in a core library skill.
+
+  **New exports from `@skillit/core`:**
+
+  - `DepSkillRef` — cross-reference type (`name`, `path`, `description?`)
+  - `discoverDepSkills(pkgDir)` / `discoverDepSkillsSync(pkgDir)` — dep-skill discovery helpers
+  - `ExtractedSkill.seeAlso?` and `ExtractedSkill.rootDir?` — new IR fields
+
+  **New audit check W12:** warns when a dep has a skill not referenced in `## See Also`; contributes +3 to D3 (Anti-Patterns) when passing.
+
+- [#76](https://github.com/pradeepmouli/skillit/pull/76) [`7d1596f`](https://github.com/pradeepmouli/skillit/commit/7d1596fa37a412f048253111a7618748ccefe67b) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Add npx invocation mode for CLI skills on public packages.
+
+  - `skillit gen --source cli` now defaults to `npx <packageName>` as the invocation prefix for public packages that declare a `bin` field in `package.json` (mirrors `npm install -g` detection: `bin` present + not `"private": true`).
+  - Add `--invocation npx|global` flag to `skillit gen` to override the auto-detected mode.
+  - README sections (features, troubleshooting, quick start) are now included in generated CLI skills, with the bare binary name substituted by `npx <packageName>` in npx mode.
+  - New `applyNpxMode` / `resolveInvocationMode` helpers exported from `@skillit/cli`.
+  - New `PackageMetadata` fields: `fullPackageName`, `bin`, `isPrivate`.
+  - New `ExtractedSkill` field: `cliInvocationPrefix`.
+  - `CliRefineSource` and `CliRefineSourceOptions` support `invocationMode` override.
+
+## 2.0.0
+
+### Major Changes
+
+- [#69](https://github.com/pradeepmouli/skillit/pull/69) [`3d5d8eb`](https://github.com/pradeepmouli/skillit/commit/3d5d8eb9df812c628a118764ccdf3a5d4478b4db) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - refactor: consolidate project metadata onto the ExtractedSkill IR
+
+  `auditSkill(skill, context)` is now `auditSkill(skill)` — the deterministic audit
+  is a pure function of the IR. `ExtractedSkill` gains `readme?: ParsedReadme`;
+  every source populates it (plus the existing identity fields) in `extract()`. The
+  separate `AuditContext` type and the `RefineSource.auditContext()` method are
+  **removed** — they were a parallel metadata channel that three sources
+  independently forgot, leaving package-description/README findings unaddressable.
+  Project metadata now has one source of truth (the IR), consumed by both the
+  renderer and the audit; repo-reading stays at the agent layer.
+
+  BREAKING (`@skillit/core`): `auditSkill` is single-arg; `AuditContext` and
+  `RefineSource.auditContext()` are gone. Callers pass metadata via the skill IR.
 
 ### Minor Changes
 
@@ -38,13 +126,82 @@
     - don't truncate per-option targets at the class cap;
     - the rendered skill describes the config surface, not the package blurb.
 
+- [#61](https://github.com/pradeepmouli/skillit/pull/61) [`5920b77`](https://github.com/pradeepmouli/skillit/commit/5920b77af23641357912552eaf035055a5c61b8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: agent-bootstrap Phase 0 core affordances
+
+  - **`skillit gen`** — new first-class, deterministic, side-effect-free command that (re)generates the skill from current source (cli + config). It shares ONE generate path with the rest of the client (`packages/client/src/generate.ts`).
+  - **`skillit init` is now install/wire only** — it no longer generates or refines. After `init`, run `skillit gen`. (Behavior change for `init`.)
+  - **`skillit audit --json`** — new command wrapping `auditSkill` + `estimateSkillJudgeScore`, emitting the full `AuditResult` + `SkillJudgeEstimate` plus a resolved on-disk location per improvement target.
+  - **`RefineSource.resolveTargetLocation`** — new optional method on the core `RefineSource` contract, implemented for typedoc, cli, config, and mcp (build) sources.
+
+- [#67](https://github.com/pradeepmouli/skillit/pull/67) [`9d67124`](https://github.com/pradeepmouli/skillit/commit/9d671242bf95a5bb49dd2121c37c08008c1a8279) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: ship the `/skillit-bootstrap` agent skill (Phase 1)
+  - New bundled Claude Code skill `skillit-bootstrap` (`packages/client/skills/`)
+    that orchestrates the agent-bootstrap loop — `skillit gen` → `skillit audit
+--json` → agent enriches repo source → regenerate — for the **cli** and
+    **typedoc** source kinds. The agent never writes a `SKILL.md`; it edits only
+    source surfaces (JSDoc / README / examples / package.json). `@skillit/client`
+    now ships its `skills/` directory.
+  - **fix(cli):** `CliRefineSource` now reads package.json metadata + README
+    (description, keywords, repository) into its audit context. Previously it
+    returned an empty context, so the F1/F3 (description/README) audit findings
+    were unaddressable and a cli-source skill could not reach grade B.
+  - **core:** new shared `readPackageMetadata()` / `findNearestPackageDir()`
+    exports (the single package-metadata reader used by both the config and cli
+    sources).
+  - **typedoc + client:** `skillit gen --source typedoc` and `skillit audit
+--source typedoc` are now wired, so the bootstrap skill's typedoc claim is
+    real. `gen` drives the existing `@skillit/typedoc` plugin pipeline
+    (`load(app)` + `convert()`); `audit` reuses `extractSkills`. New
+    `@skillit/typedoc` exports: `generateTypeDocSkills`, `extractTypeDocSkills`,
+    `createTypeDocRefineSource`.
+  - config / mcp orchestration and the mechanical no-hand-edit guard are deferred
+    to later phases; the CLI commands remain for headless/CI use.
+
 ### Patch Changes
 
 - [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+
   - fix(client): isolate the copilot model backend with an empty tool whitelist
   - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
   - fix(client): extract drafted annotation from <answer> tags
   - fix(client): forbid Insight-block decoration in the claude refine backend
+
+- [#60](https://github.com/pradeepmouli/skillit/pull/60) [`126416e`](https://github.com/pradeepmouli/skillit/commit/126416e59bd35e798f4655ebac8c4ab2243ccdea) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - fix(core): config refine grounding now includes the config module's own declarations
+
+  `ConfigRefineSource` grounding previously fed only the external `--ground`
+  globs (the consuming code) and explicitly skipped the config file. But config
+  modules routinely hold the non-type declarations the model needs to be
+  accurate — preset/override tables, defaults, `defineConfig`/validation (e.g.
+  z2f's `SHADCN_OVERRIDES`). Excluding the config file forced the model to guess
+  those runtime values, producing factually-wrong routing prose.
+
+  The config module is now prepended to grounding, with only the refine routing
+  tags this source writes back across iterations stripped out (`stripRefineTags`)
+  — so our own accumulated annotations aren't fed back as "implementation", while
+  hand-authored docs (the real runtime-behavior grounding) are preserved.
+
+- [#60](https://github.com/pradeepmouli/skillit/pull/60) [`62c0e2a`](https://github.com/pradeepmouli/skillit/commit/62c0e2a5f4ec05af30f262d24f53631d190eadb9) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - fix(core): correct config-refine JSDoc indentation and per-option coverage ordering
+
+  Two refinements surfaced by review of the config refine pipeline:
+
+  - `upsertTagOnAnchor` derived the JSDoc indent from the declaration's column.
+    For a property documented on the same line (`/** desc */ outDir`), that column
+    is the text _after_ the comment, so every rebuilt continuation line was
+    massively over-indented and the declaration was packed onto the closing `*/`
+    line. The indent now comes from the comment node, and a same-line declaration
+    is spliced onto its own line.
+  - `selectWorkItems` sorted purely by points descending, so on a wide config
+    surface all `@pitfalls` targets (higher points) filled every bounded iteration
+    before any `@useWhen`/`@avoidWhen` target was drafted — letting the loop's
+    score plateau stop early with those dimensions still failing. It now
+    round-robins across tags so each iteration spreads over all still-failing
+    dimensions. With one target per group this is identical to the old order.
+  - The refine loop's plateau check stopped on any flat-score iteration, but
+    per-option coverage targets are score-neutral once the routing thresholds
+    pass — so wide surfaces halted before every option was documented. The check
+    is now coverage-aware: it only plateaus when the score is flat AND the
+    available-work backlog is not shrinking, so score-neutral completeness work
+    runs to exhaustion (bounded by `maxIterations`) while the genuinely-stuck case
+    still stops early.
 
 ## 1.5.0
 
