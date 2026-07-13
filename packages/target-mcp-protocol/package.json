@@ -45,7 +45,7 @@
   "devDependencies": {
     "@skillit/mcp": "workspace:*",
     "@types/node": "^25.9.1",
-    "vitest": "^5.0.0-beta.4"
+    "vitest": "^5.0.0-beta.6"
   },
   "peerDependencies": {
     "@skillit/mcp": "workspace:*"
