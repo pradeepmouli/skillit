@@ -1,10 +1,23 @@
 # @to-skills/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+  - fix(client): isolate the copilot model backend with an empty tool whitelist
+  - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
+  - fix(client): extract drafted annotation from <answer> tags
+  - fix(client): forbid Insight-block decoration in the claude refine backend
+- Updated dependencies [[`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2), [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186)]:
+  - @skillit/core@1.6.0
+
 ## 0.4.0
 
 ### Minor Changes
 
 - [#41](https://github.com/pradeepmouli/skillit/pull/41) [`989f899`](https://github.com/pradeepmouli/skillit/commit/989f899fd506f422d67c808bce8b5302f11986c6) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(client): guard msg.content[0] access — throw on empty or non-text response
+
   - fix(typedoc/refine): fix JSDoc closer indentation + use async fs I/O in TypeDocRefineSource
   - feat(client): add skillit bin with refine command
   - feat(client): add AnthropicModelClient (Sonnet drafter, Opus reviewer)

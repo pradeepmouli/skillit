@@ -1,10 +1,57 @@
 # @to-skills/core
 
+## 1.6.0
+
+### Minor Changes
+
+- [#58](https://github.com/pradeepmouli/skillit/pull/58) [`de4b5dc`](https://github.com/pradeepmouli/skillit/commit/de4b5dc92a8cd422e69b3adc640debce50885186) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - feat: refine TypeScript config surfaces (`--source config`)
+
+  - `@skillit/core` adds `ConfigRefineSource` + `extractConfigSurface`: extract a
+    config type's options (incl. nested dot-path keys) and refine their per-option
+    routing JSDoc (`@useWhen`/`@avoidWhen`/`@pitfalls`) in place via
+    `upsertPropertyJsDocTag`. The audit credits per-option config tags and
+    audit-score emits per-option `config-option` targets so the refine loop
+    converges on a config skill.
+  - `@skillit/client` wires `skillit refine --source config --config-type <file#export>`
+    and `skillit init --source config` (generate → refine in place → regenerate;
+    installs nothing — config is built into the client).
+  - `ConfigRefineSource` enriches the skill + audit context from the nearest
+    package.json (description/keywords/repository) and a sibling README, and drafts
+    a type-correct example to a sibling `<config>.example.ts` (only if absent),
+    read back as the skill's usage example. `guidance()` scopes drafting to the
+    single named option.
+  - audit-score surfaces config per-option routing coverage and the example
+    independent of dimension thresholds, so the loop documents the whole surface
+    rather than stopping once the rubric is satisfied.
+  - `--ground <glob>` (repeatable) feeds the code that CONSUMES the config to the
+    draft model as a token-capped implementation reference, so it states correct
+    runtime behavior instead of guessing from the type; without it the model is
+    instructed not to assert unverifiable runtime semantics.
+  - fixes surfaced by dogfooding against a real generic config:
+    - normalize multi-line option types to one line (mapped types can't corrupt
+      the options table);
+    - prefix every line when creating a JSDoc block with multi-line content
+      (no column-0 continuation bullets, which also broke later merges);
+    - escape the comment-close sequence in written tag content so a value
+      containing it (e.g. a `**`-glob) can't terminate the block and corrupt the
+      file; unescape on read;
+    - don't truncate per-option targets at the class cap;
+    - the rendered skill describes the config surface, not the package blurb.
+
+### Patch Changes
+
+- [#56](https://github.com/pradeepmouli/skillit/pull/56) [`f64f0af`](https://github.com/pradeepmouli/skillit/commit/f64f0afd2765a9546b8f3444902ba87b11ac6df2) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - dogfood: refine the skillit client's own command annotations
+  - fix(client): isolate the copilot model backend with an empty tool whitelist
+  - fix(core): upsertJsDocTag merges into single-line JSDoc without mangling
+  - fix(client): extract drafted annotation from <answer> tags
+  - fix(client): forbid Insight-block decoration in the claude refine backend
+
 ## 1.5.0
 
 ### Minor Changes
 
 - [#41](https://github.com/pradeepmouli/skillit/pull/41) [`989f899`](https://github.com/pradeepmouli/skillit/commit/989f899fd506f422d67c808bce8b5302f11986c6) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(client): guard msg.content[0] access — throw on empty or non-text response
+
   - fix(typedoc/refine): fix JSDoc closer indentation + use async fs I/O in TypeDocRefineSource
   - feat(client): add skillit bin with refine command
   - feat(client): add AnthropicModelClient (Sonnet drafter, Opus reviewer)
@@ -26,12 +73,14 @@
 - [#20](https://github.com/pradeepmouli/to-skills/pull/20) [`2b91bd8`](https://github.com/pradeepmouli/to-skills/commit/2b91bd8e2882ee470c00e5b12705a28c052bb5c8) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Extract and bundle MCP servers as Agent Skills (`@to-skills/mcp` + invocation-target adapters)
 
   New host package and three invocation-target adapters land at `0.1.0`:
+
   - `@to-skills/mcp` — CLI + programmatic API for extracting a SKILL.md from a live Model Context Protocol server (stdio or HTTP) and bundling a server's own skill into its npm package via a `to-skills.mcp` field. Ships `to-skills-mcp extract` and `to-skills-mcp bundle` subcommands plus `extractMcpSkill` / `bundleMcpSkill` programmatic entry points. Adds an in-package `llms.txt` emitter wired to the `--llms-txt` flag.
   - `@to-skills/target-mcp-protocol` — default invocation-target adapter; emits `mcp:` frontmatter for MCP-native agent harnesses (Claude Code, Cursor, OpenCode, Codex).
   - `@to-skills/target-mcpc` — CLI-as-proxy adapter for Apify's `mcpc@^2.1`. Renders shell-command skills consumable by any harness with a shell tool.
   - `@to-skills/target-fastmcp` — CLI-as-proxy adapter for the Python `fastmcp@^2` CLI; mirrors the mcpc adapter's shape with Python-side install instructions.
 
   `@to-skills/core` extensions (backward-compatible — existing extractors continue to produce non-MCP skills unchanged):
+
   - New IR fields on `ExtractedSkill`: `resources?: ExtractedResource[]`, `prompts?: ExtractedPrompt[]`, `setup?: SkillSetup`.
   - New types: `ExtractedResource`, `ExtractedPrompt`, `ExtractedPromptArgument`, `SkillSetup`, `AdapterFingerprint`, `InvocationAdapter`, `AdapterRenderContext`.
   - `renderSkill` extension points: `invocation` adapter dispatch with per-adapter context (`launchCommand`, `httpEndpoint`, `packageName`, `binName`); `additionalFrontmatter` for adapters that delegate body rendering to core; `bodyPrefix` for prepending Setup sections; `skipDefaultFunctionsRef` for adapters owning the Tools section; `canonicalize: false` for adapters that wrap core's renderer and post-process references.
@@ -61,6 +110,7 @@
 - Router skill: deduplicate sections, natural example queries
 
   Each section now has distinct content:
+
   - When to Use: package descriptions (broad)
   - Decision Tree: numbered routing
   - Routing Logic: @useWhen detail (only place)
@@ -115,6 +165,7 @@
 - Switch When to Use from tables to bullet lists, matching published skill conventions
 
   BREAKING: When to Use section now uses bullet lists instead of markdown tables.
+
   - Multi-source attribution: "Display images → use `Sprite`" (not table rows)
   - Avoid when: "**Do NOT use when:**" bullet list
   - NEVER rules: own "## NEVER" section (not folded into When to Use)
@@ -359,6 +410,7 @@
 - Progressive disclosure: SKILL.md is now a lean discovery document, with full API details in references/
 
   Skills now generate a file tree instead of a single monolithic file:
+
   - `SKILL.md` — frontmatter, overview, when-to-use, quick reference (~500 tokens)
   - `references/functions.md` — full function signatures, params, examples
   - `references/classes.md` — class details with constructors, methods, properties
