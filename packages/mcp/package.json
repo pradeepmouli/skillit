@@ -61,6 +61,6 @@
     "@skillit/target-fastmcp": "workspace:*",
     "@skillit/target-mcpc": "workspace:*",
     "@types/node": "^25.9.1",
-    "vitest": "^5.0.0-beta.4"
+    "vitest": "^5.0.0-beta.6"
   }
 }
