@@ -41,8 +41,8 @@
     }
   },
   "scripts": {
-    "build": "tsgo -p tsconfig.build.json",
-    "type-check": "tsgo --noEmit"
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@skillit/core": "workspace:*"

@@ -27,9 +27,9 @@
     }
   },
   "scripts": {
-    "build": "tsgo -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "gen-cli-skill": "pnpm build && node scripts/gen-refine-cli-skill.mjs",
-    "type-check": "tsgo --noEmit"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",

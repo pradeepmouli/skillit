@@ -44,15 +44,16 @@
     }
   },
   "scripts": {
-    "build": "tsgo -p tsconfig.build.json",
-    "type-check": "tsgo --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
     "@skillit/core": "workspace:*"
   },
   "devDependencies": {
-    "typedoc": "^0.28.19"
+    "typedoc": "^0.28.19",
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "typedoc": ">=0.28.0"
