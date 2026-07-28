@@ -32,7 +32,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.102.0",
+    "@anthropic-ai/sdk": "^0.115.0",
     "@skillit/cli": "workspace:*",
     "@skillit/core": "workspace:*",
     "@skillit/mcp": "workspace:*",
