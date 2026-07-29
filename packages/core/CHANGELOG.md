@@ -1,5 +1,20 @@
 # @to-skills/core
 
+## 4.0.1
+
+### Patch Changes
+
+- [`6467ad2`](https://github.com/pradeepmouli/skillit/commit/6467ad2d1399ea19de8ab625341a9815d37b84cf) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Fix a crash when writing skills whose description contains a newline.
+
+  `quoteYaml()` wrapped multi-line descriptions in double quotes without
+  escaping the embedded newlines, producing invalid YAML. Consuming that
+  same invalid frontmatter back (in `shouldPreserveExistingSkill`, when
+  deciding whether to preserve an already-installed skill) then threw,
+  since that code path - unlike `readSkillMetadata` for the on-disk file -
+  had no lenient-parser fallback. Newlines are now escaped correctly, and
+  `shouldPreserveExistingSkill` falls back to the lenient parser like its
+  sibling function already did.
+
 ## 4.0.0
 
 ### Major Changes
