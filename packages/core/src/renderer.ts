@@ -614,9 +614,19 @@ function renderSkillMd(
 // Reference files — full detail loaded on demand
 // ===========================================================================
 
+/**
+ * Escape angle brackets in free-form prose (JSDoc comment text) before embedding it in
+ * reference markdown. Without this, a comment like "satisfies BuilderFor<T>" renders a
+ * literal `<T>` that VitePress's Vue-based markdown compiler parses as an unclosed HTML
+ * element, failing the docs build.
+ */
+function escapeProse(text: string): string {
+  return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /** Format description suffix — returns " — desc" or empty string, never trailing " — " */
 function descSuffix(description: string | undefined): string {
-  return description ? ` — ${description}` : '';
+  return description ? ` — ${escapeProse(description)}` : '';
 }
 
 function getGroupKey<T extends { category?: string; sourceModule?: string }>(item: T): string {
@@ -649,11 +659,11 @@ function renderFunctionBody(
   opts: SkillRenderOptions,
   lines: string[]
 ): void {
-  if (fn.description) lines.push(fn.description);
+  if (fn.description) lines.push(escapeProse(fn.description));
 
   if (fn.remarks) {
     lines.push('');
-    lines.push(fn.remarks);
+    lines.push(escapeProse(fn.remarks));
   }
 
   if (opts.includeSignatures && fn.signature) {
@@ -670,22 +680,22 @@ function renderFunctionBody(
   }
 
   if (fn.returnType && fn.returnType !== 'void') {
-    const desc = fn.returnsDescription ? ` — ${fn.returnsDescription}` : '';
+    const desc = fn.returnsDescription ? ` — ${escapeProse(fn.returnsDescription)}` : '';
     lines.push(`**Returns:** \`${fn.returnType}\`${desc}`);
   }
 
   // Render important tags
   if (fn.tags['deprecated']) {
-    lines.push(`> **Deprecated:** ${fn.tags['deprecated']}`);
+    lines.push(`> **Deprecated:** ${escapeProse(fn.tags['deprecated'])}`);
   }
   if (fn.tags['since']) {
     lines.push(`**Since:** \`${fn.tags['since']}\``);
   }
   if (fn.tags['throws']) {
-    lines.push(`**Throws:** ${fn.tags['throws']}`);
+    lines.push(`**Throws:** ${escapeProse(fn.tags['throws'])}`);
   }
   if (fn.tags['see']) {
-    lines.push(`**See:** ${fn.tags['see']}`);
+    lines.push(`**See:** ${escapeProse(fn.tags['see'])}`);
   }
 
   if (opts.includeSignatures && fn.overloads && fn.overloads.length > 0) {
@@ -732,7 +742,7 @@ function renderClassBody(
   lines: string[],
   parentPropNames?: Set<string>
 ): void {
-  if (cls.description) lines.push(cls.description);
+  if (cls.description) lines.push(escapeProse(cls.description));
 
   if (cls.extends) {
     lines.push(`*extends \`${cls.extends}\`*`);
@@ -841,7 +851,7 @@ function renderTypesRef(types: ExtractedType[], enums: ExtractedEnum[]): string 
       const modTypes = typeGroups.get(mod) ?? [];
       for (const t of modTypes) {
         lines.push(heading(t.name));
-        if (t.description) lines.push(t.description);
+        if (t.description) lines.push(escapeProse(t.description));
         if (t.properties && t.properties.length > 0) {
           lines.push('**Properties:**');
           for (const p of t.properties) {
@@ -858,7 +868,7 @@ function renderTypesRef(types: ExtractedType[], enums: ExtractedEnum[]): string 
       const modEnums = enumGroups.get(mod) ?? [];
       for (const e of modEnums) {
         lines.push(heading(e.name));
-        if (e.description) lines.push(e.description);
+        if (e.description) lines.push(escapeProse(e.description));
         for (const m of e.members) {
           lines.push(`- \`${m.name}\` = \`${m.value}\`${descSuffix(m.description)}`);
         }
@@ -870,7 +880,7 @@ function renderTypesRef(types: ExtractedType[], enums: ExtractedEnum[]): string 
       lines.push('## Types\n');
       for (const t of types) {
         lines.push(`### \`${t.name}\``);
-        if (t.description) lines.push(t.description);
+        if (t.description) lines.push(escapeProse(t.description));
         if (t.properties && t.properties.length > 0) {
           lines.push('**Properties:**');
           for (const p of t.properties) {
@@ -889,7 +899,7 @@ function renderTypesRef(types: ExtractedType[], enums: ExtractedEnum[]): string 
       lines.push('## Enums\n');
       for (const e of enums) {
         lines.push(`### \`${e.name}\``);
-        if (e.description) lines.push(e.description);
+        if (e.description) lines.push(escapeProse(e.description));
         for (const m of e.members) {
           lines.push(`- \`${m.name}\` = \`${m.value}\`${descSuffix(m.description)}`);
         }
@@ -910,7 +920,7 @@ function renderVariablesRef(variables: ExtractedVariable[]): string {
       if (mod) lines.push(`## ${mod}\n`);
       for (const v of modVars) {
         lines.push(mod ? `### \`${v.name}\`` : `## \`${v.name}\``);
-        if (v.description) lines.push(v.description);
+        if (v.description) lines.push(escapeProse(v.description));
         const keyword = v.isConst ? 'const' : 'let';
         lines.push('```ts', `${keyword} ${v.name}: ${v.type}`, '```');
         lines.push('');
@@ -919,7 +929,7 @@ function renderVariablesRef(variables: ExtractedVariable[]): string {
   } else {
     for (const v of variables) {
       lines.push(`## \`${v.name}\``);
-      if (v.description) lines.push(v.description);
+      if (v.description) lines.push(escapeProse(v.description));
       const keyword = v.isConst ? 'const' : 'let';
       lines.push('```ts', `${keyword} ${v.name}: ${v.type}`, '```');
       lines.push('');

@@ -747,6 +747,60 @@ describe('renderSkill — class inheritance in classes.md', () => {
   });
 });
 
+describe('renderSkill — escapes angle brackets in prose (VitePress compat)', () => {
+  it('escapes a raw generic type reference in a class description', () => {
+    const skill: ExtractedSkill = {
+      ...minimalSkill,
+      classes: [
+        {
+          name: 'NumberBuilder',
+          description: 'Implements BuilderFor<ZodNumber>',
+          constructorSignature: 'constructor()',
+          methods: [],
+          properties: [],
+          examples: []
+        }
+      ]
+    };
+
+    const { references } = renderSkill(skill);
+    const cls = references.find((r) => r.filename.endsWith('classes.md'));
+    expect(cls!.content).toContain('Implements BuilderFor&lt;ZodNumber&gt;');
+    expect(cls!.content).not.toContain('<ZodNumber>');
+  });
+
+  it('escapes a raw generic type reference in a method description', () => {
+    const skill: ExtractedSkill = {
+      ...minimalSkill,
+      classes: [
+        {
+          name: 'NumberBuilder',
+          description: 'A builder',
+          constructorSignature: 'constructor()',
+          methods: [
+            {
+              name: 'gt',
+              description: 'Satisfies BuilderFor<ZodNumber> for stub methods',
+              signature: 'gt(value: number): this',
+              parameters: [],
+              returnType: 'this',
+              examples: [],
+              tags: {}
+            }
+          ],
+          properties: [],
+          examples: []
+        }
+      ]
+    };
+
+    const { references } = renderSkill(skill);
+    const cls = references.find((r) => r.filename.endsWith('classes.md'));
+    expect(cls!.content).toContain('Satisfies BuilderFor&lt;ZodNumber&gt; for stub methods');
+    expect(cls!.content).not.toContain('<ZodNumber>');
+  });
+});
+
 describe('renderSkill — variables in SKILL.md', () => {
   it('shows variables in Quick Reference', () => {
     const skill: ExtractedSkill = {
