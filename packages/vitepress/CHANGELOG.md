@@ -1,5 +1,12 @@
 # @to-skills/vitepress
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`c57ad12`](https://github.com/pradeepmouli/skillit/commit/c57ad1265a86a49c324c944e180327ff93a7dc70)]:
+  - @skillit/core@4.0.2
+
 ## 1.0.2
 
 ### Patch Changes
