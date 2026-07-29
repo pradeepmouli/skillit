@@ -1,5 +1,15 @@
 # @skillit/client
 
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`6467ad2`](https://github.com/pradeepmouli/skillit/commit/6467ad2d1399ea19de8ab625341a9815d37b84cf)]:
+  - @skillit/core@4.0.1
+  - @skillit/cli@1.1.1
+  - @skillit/mcp@2.0.1
+  - @skillit/typedoc@2.0.2
+
 ## 1.1.0
 
 ### Minor Changes
