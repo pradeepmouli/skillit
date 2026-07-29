@@ -311,6 +311,45 @@ describe('writeSkills', () => {
     });
   });
 
+  it('falls back to the lenient parser instead of crashing when incoming frontmatter has malformed YAML', () => {
+    // Regression test: a description containing a raw (unescaped) newline
+    // inside a double-quoted YAML scalar is invalid YAML that the strict
+    // parser rejects. shouldPreserveExistingSkill() used to call
+    // readSkillMetadataFromContent() directly on the incoming content with
+    // no fallback (unlike readSkillMetadata(), which already had one for the
+    // on-disk file), so this crashed the whole write instead of preserving.
+    const outDir = tempDir('skillit-out-');
+    const installDir = tempDir('skillit-install-');
+    writeBundledSkill(installDir, 'weird-docs', '1.0.0');
+
+    const malformed: RenderedSkill = {
+      skill: {
+        filename: 'weird-docs/SKILL.md',
+        content: [
+          '---',
+          'name: weird-docs',
+          'description: "Multi-line description.',
+          '',
+          'This raw newline inside double quotes is invalid YAML."',
+          'skillit:',
+          '  managed: bundled-guidance',
+          'version: 1.0.0',
+          '---',
+          '',
+          '# weird-docs',
+          ''
+        ].join('\n')
+      },
+      references: []
+    };
+
+    const results = writeSkills([malformed], { outDir, installTargets: [installDir] });
+    expect(results.find((result) => result.root === installDir)).toMatchObject({
+      action: 'preserved',
+      preserveReason: 'bundled-same-version'
+    });
+  });
+
   it('recognizes the pre-rebrand toSkills: marker key on already-installed skills', () => {
     // Simulates a skill installed by an older skillit version, before the
     // toSkills: -> skillit: marker rename. Name deliberately does NOT start
