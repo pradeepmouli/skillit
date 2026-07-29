@@ -94,7 +94,7 @@ function shouldPreserveExistingSkill(
     return 'curated';
   }
 
-  const incomingMetadata = readSkillMetadataFromContent(incoming.skill.content);
+  const incomingMetadata = readSkillMetadataWithFallback(incoming.skill.content);
   if (!incomingMetadata.bundledGuidance) return null;
 
   if (existing.name && incomingMetadata.name && existing.name !== incomingMetadata.name) {
@@ -129,16 +129,26 @@ function readSkillMetadata(
       cause: error
     });
   }
-  let frontmatter: ReturnType<typeof readSkillMetadataFromContent>;
-  try {
-    frontmatter = readSkillMetadataFromContent(content);
-  } catch {
-    frontmatter = readLenientSkillMetadataFromContent(content);
-  }
+  const frontmatter = readSkillMetadataWithFallback(content);
   return {
     ...frontmatter,
     curated: frontmatter.curated === true || content.includes('<!-- curated -->') ? true : undefined
   };
+}
+
+/**
+ * Parse SKILL.md frontmatter, falling back to a lenient line-based parser
+ * when the YAML parser rejects it (e.g. multi-line quoted scalars the
+ * `yaml` package's strict mode doesn't accept).
+ */
+function readSkillMetadataWithFallback(
+  content: string
+): ReturnType<typeof readSkillMetadataFromContent> {
+  try {
+    return readSkillMetadataFromContent(content);
+  } catch {
+    return readLenientSkillMetadataFromContent(content);
+  }
 }
 
 function readSkillMetadataFromContent(content: string): {

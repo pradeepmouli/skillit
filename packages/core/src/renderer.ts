@@ -1132,7 +1132,7 @@ function renderFrontmatter(
 
 function quoteYaml(value: string): string {
   if (/[:#{}[\],&*?|>!%@`"']/.test(value) || value.includes('\n')) {
-    return `"${value.replace(/"/g, '\\"')}"`;
+    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
   }
   return value;
 }
