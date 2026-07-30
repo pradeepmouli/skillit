@@ -1,5 +1,13 @@
 # @to-skills/core
 
+## 4.0.2
+
+### Patch Changes
+
+- [`c57ad12`](https://github.com/pradeepmouli/skillit/commit/c57ad1265a86a49c324c944e180327ff93a7dc70) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Fix VitePress build failures caused by raw generic type references (e.g. `BuilderFor<T>`) in JSDoc comments.
+
+  Class, function, type, enum, and variable descriptions (and function `@remarks`/`@returns`/`@deprecated`/`@throws`/`@see` tags) were embedded verbatim into generated reference markdown. When a comment contained a bare `<Type>` sequence, VitePress's Vue-based markdown compiler parsed it as an unclosed HTML element and failed the docs build. These are now HTML-escaped before being written into reference markdown.
+
 ## 4.0.1
 
 ### Patch Changes
