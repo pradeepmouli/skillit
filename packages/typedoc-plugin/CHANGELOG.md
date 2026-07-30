@@ -1,5 +1,12 @@
 # typedoc-plugin-to-skills
 
+## 2.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @skillit/typedoc@2.0.2
+
 ## 2.0.1
 
 ### Patch Changes
