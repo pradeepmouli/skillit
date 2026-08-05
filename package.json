@@ -44,7 +44,7 @@
     "simple-git-hooks": "^2.13.1",
     "typedoc": "^0.28.19",
     "typescript": "^7.0.2",
-    "vite": "^8.0.14",
+    "vite": "^8.2.0",
     "vitest": "5.0.0-beta.4"
   },
   "simple-git-hooks": {
