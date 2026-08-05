@@ -45,7 +45,7 @@
     "typedoc": "^0.28.19",
     "typescript": "^7.0.2",
     "vite": "^8.2.0",
-    "vitest": "5.0.0-beta.4"
+    "vitest": "5.0.0-beta.7"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",
