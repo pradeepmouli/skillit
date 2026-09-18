@@ -1,5 +1,18 @@
 # @to-skills/target-mcp-protocol
 
+## 5.0.2
+
+### Patch Changes
+
+- [#121](https://github.com/pradeepmouli/skillit/pull/121) [`7acd316`](https://github.com/pradeepmouli/skillit/commit/7acd316c38288215f70ba0afe29e8c29f16072c4) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(ci): generate changeset and keep TS6 pins in dep-update workflow
+  - chore(deps)(deps-dev): bump the code-quality group across 1 directory with 2 updates
+  - chore(deps)(deps-dev): bump vite
+  - chore(deps)(deps-dev): bump @types/node from 25.9.1 to 26.5.1
+  - chore(deps)(deps-dev): bump @changesets/cli from 2.31.0 to 2.31.1
+- Updated dependencies [[`7acd316`](https://github.com/pradeepmouli/skillit/commit/7acd316c38288215f70ba0afe29e8c29f16072c4)]:
+  - @skillit/core@4.0.2
+  - @skillit/mcp@2.0.2
+
 ## 5.0.1
 
 ### Patch Changes
