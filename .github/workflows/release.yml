@@ -62,12 +62,12 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
-          version: pnpm changeset:version
-          publish: pnpm changeset:publish
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
+          version-script: pnpm changeset:version
+          publish-script: pnpm changeset:publish
+          commit-message: 'chore: version packages'
+          pr-title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           NPM_CONFIG_PROVENANCE: true
