@@ -30,8 +30,8 @@ importers:
         specifier: ^2.13.1
         version: 2.13.1
       typedoc:
-        specifier: ^0.28.19
-        version: 0.28.19(typescript@7.0.2)
+        specifier: ^0.28.20
+        version: 0.28.20(typescript@7.0.2)
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -198,8 +198,8 @@ importers:
         version: link:../core
     devDependencies:
       typedoc:
-        specifier: ^0.28.19
-        version: 0.28.19(typescript@6.0.3)
+        specifier: ^0.28.20
+        version: 0.28.20(typescript@6.0.3)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1867,6 +1867,9 @@ packages:
   linkify-it@5.0.1:
     resolution: {integrity: sha512-wVoTjP4Q6R0NW5hiZkVJaFZPWgtXfoGF+6LucL3/FtiNjmcHhYjEr5f1Kqjirc1nBW07J/ZuRFumqr2oqccEWg==}
 
+  linkify-it@5.0.2:
+    resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
+
   lint-staged@17.5.1:
     resolution: {integrity: sha512-7EDuco1xnBMeVpvAbeMq1U5KXwJGLmY8q6l+Ye78r36C4mPc+Vg1Z2SK8gHyRTyvPro90A0q5/FAZ+Au23d6QQ==}
     engines: {node: '>=22.22.1'}
@@ -1897,6 +1900,10 @@ packages:
 
   markdown-it@14.2.0:
     resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
+    hasBin: true
+
+  markdown-it@14.3.2:
+    resolution: {integrity: sha512-sHHjZ5fJKlgrG4qns2YwVcdNep35h5fERrfkD2YNsb9UFk0UIHarbiTaHKVMlPuWAoiilyK8Fv/jAm11slsY7Q==}
     hasBin: true
 
   math-intrinsics@1.1.0:
@@ -2331,6 +2338,13 @@ packages:
 
   typedoc@0.28.19:
     resolution: {integrity: sha512-wKh+lhdmMFivMlc6vRRcMGXeGEHGU2g8a2CkPTJjJlwRf1iXbimWIPcFolCqe4E0d/FRtGszpIrsp3WLpDB8Pw==}
+    engines: {node: '>= 18', pnpm: '>= 10'}
+    hasBin: true
+    peerDependencies:
+      typescript: 5.0.x || 5.1.x || 5.2.x || 5.3.x || 5.4.x || 5.5.x || 5.6.x || 5.7.x || 5.8.x || 5.9.x || 6.0.x
+
+  typedoc@0.28.20:
+    resolution: {integrity: sha512-uSKqkh8Cr48vllnEy+jdaAgOeR6Y+QCBW7usgUsKj7gJEfR7stw9U/fE49LBnj2tPRKPY0c0EBJSWe9Appmplg==}
     engines: {node: '>= 18', pnpm: '>= 10'}
     hasBin: true
     peerDependencies:
@@ -3971,6 +3985,10 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
+  linkify-it@5.0.2:
+    dependencies:
+      uc.micro: 2.1.0
+
   lint-staged@17.5.1:
     dependencies:
       picomatch: 4.0.7
@@ -4008,6 +4026,15 @@ snapshots:
       argparse: 2.0.1
       entities: 4.5.0
       linkify-it: 5.0.1
+      mdurl: 2.0.0
+      punycode.js: 2.3.1
+      uc.micro: 2.1.0
+
+  markdown-it@14.3.2:
+    dependencies:
+      argparse: 2.0.1
+      entities: 4.5.0
+      linkify-it: 5.0.2
       mdurl: 2.0.0
       punycode.js: 2.3.1
       uc.micro: 2.1.0
@@ -4455,15 +4482,6 @@ snapshots:
       media-typer: 1.1.0
       mime-types: 3.0.2
 
-  typedoc@0.28.19(typescript@6.0.3):
-    dependencies:
-      '@gerrit0/mini-shiki': 3.23.0
-      lunr: 2.3.9
-      markdown-it: 14.2.0
-      minimatch: 10.2.5
-      typescript: 6.0.3
-      yaml: 2.9.0
-
   typedoc@0.28.19(typescript@7.0.2):
     dependencies:
       '@gerrit0/mini-shiki': 3.23.0
@@ -4472,6 +4490,24 @@ snapshots:
       minimatch: 10.2.5
       typescript: 7.0.2
       yaml: 2.9.0
+
+  typedoc@0.28.20(typescript@6.0.3):
+    dependencies:
+      '@gerrit0/mini-shiki': 3.23.0
+      lunr: 2.3.9
+      markdown-it: 14.3.2
+      minimatch: 10.2.5
+      typescript: 6.0.3
+      yaml: 2.9.1
+
+  typedoc@0.28.20(typescript@7.0.2):
+    dependencies:
+      '@gerrit0/mini-shiki': 3.23.0
+      lunr: 2.3.9
+      markdown-it: 14.3.2
+      minimatch: 10.2.5
+      typescript: 7.0.2
+      yaml: 2.9.1
 
   typescript@6.0.3: {}
 
