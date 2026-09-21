@@ -60,6 +60,27 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Generate changeset for runtime dependency updates
+        # Dependabot PRs get no changeset, so runtime dependency bumps would never be released
+        run: |
+          base=$(git log -1 --format=%H --grep='^chore: version packages' HEAD)
+          if [ -z "$base" ]; then echo "No previous release commit found; skipping"; exit 0; fi
+          q='{d:(.dependencies//{}),o:(.optionalDependencies//{}),p:(.peerDependencies//{})}'
+          pkgs=""
+          for f in $(git ls-files '*package.json'); do
+            case "$f" in *node_modules*) continue;; esac
+            [ "$(jq -r '.private // false' "$f")" = "true" ] && continue
+            name=$(jq -r '.name // empty' "$f"); [ -z "$name" ] && continue
+            old=$(git show "$base:$f" 2>/dev/null | jq -S -c "$q" 2>/dev/null) || continue
+            [ -z "$old" ] && continue
+            new=$(jq -S -c "$q" "$f")
+            [ "$old" != "$new" ] && pkgs="$pkgs $name"
+          done
+          echo "Release base: ${base:0:7}; packages with runtime dependency changes:${pkgs:- none}"
+          if [ -n "$pkgs" ]; then
+            { echo '---'; for p in $pkgs; do echo "\"$p\": patch"; done; echo '---'; echo; echo '- chore(deps): update runtime dependencies'; } > ".changeset/deps-runtime-$(date +%s).md"
+          fi
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v2
