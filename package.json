@@ -36,15 +36,15 @@
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.31.0",
-    "@types/node": "^25.9.1",
+    "@changesets/cli": "^2.31.1",
+    "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "5.0.0-beta.3",
-    "lint-staged": "^17.0.7",
-    "oxlint": "^1.69.0",
+    "lint-staged": "^17.5.1",
+    "oxlint": "^1.83.0",
     "simple-git-hooks": "^2.13.1",
     "typedoc": "^0.28.19",
     "typescript": "^7.0.2",
-    "vite": "^8.0.14",
+    "vite": "^8.3.0",
     "vitest": "5.0.0-beta.4"
   },
   "simple-git-hooks": {
