@@ -1,6 +1,6 @@
 {
   "name": "@skillit/target-mcp-protocol",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "Default invocation-target adapter for @skillit/mcp — emits mcp: frontmatter for MCP-native agent harnesses (OpenCode, Codex, Cursor)",
   "keywords": [
     "agent-skills",
