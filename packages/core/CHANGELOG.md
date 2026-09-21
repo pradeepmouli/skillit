@@ -1,14 +1,18 @@
 # @to-skills/core
 
+## 4.0.2
+
+### Patch Changes
+
+- [`c57ad12`](https://github.com/pradeepmouli/skillit/commit/c57ad1265a86a49c324c944e180327ff93a7dc70) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Fix VitePress build failures caused by raw generic type references (e.g. `BuilderFor<T>`) in JSDoc comments.
+
+  Class, function, type, enum, and variable descriptions (and function `@remarks`/`@returns`/`@deprecated`/`@throws`/`@see` tags) were embedded verbatim into generated reference markdown. When a comment contained a bare `<Type>` sequence, VitePress's Vue-based markdown compiler parsed it as an unclosed HTML element and failed the docs build. These are now HTML-escaped before being written into reference markdown.
+
 ## 4.0.1
 
 ### Patch Changes
 
-- [`905a449`](https://github.com/pradeepmouli/skillit/commit/905a4491f1acde75e5cf46a3795a929b717d4c5a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Fix VitePress build failures caused by raw generic type references (e.g. `BuilderFor<T>`) in JSDoc comments.
-
-  Class, function, type, enum, and variable descriptions (and function `@remarks`/`@returns`/`@deprecated`/`@throws`/`@see` tags) were embedded verbatim into generated reference markdown. When a comment contained a bare `<Type>` sequence, VitePress's Vue-based markdown compiler parsed it as an unclosed HTML element and failed the docs build. These are now HTML-escaped before being written into reference markdown.
-
-- [#114](https://github.com/pradeepmouli/skillit/pull/114) [`f25d268`](https://github.com/pradeepmouli/skillit/commit/f25d268b940d3cf87dc55f71623dc95157086e05) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix a crash when writing skills whose description contains a newline.
+- [`6467ad2`](https://github.com/pradeepmouli/skillit/commit/6467ad2d1399ea19de8ab625341a9815d37b84cf) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Fix a crash when writing skills whose description contains a newline.
 
   `quoteYaml()` wrapped multi-line descriptions in double quotes without
   escaping the embedded newlines, producing invalid YAML. Consuming that

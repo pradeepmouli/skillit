@@ -1,10 +1,17 @@
 # @to-skills/docusaurus
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`c57ad12`](https://github.com/pradeepmouli/skillit/commit/c57ad1265a86a49c324c944e180327ff93a7dc70)]:
+  - @skillit/core@4.0.2
+
 ## 1.0.2
 
 ### Patch Changes
 
-- Updated dependencies [[`905a449`](https://github.com/pradeepmouli/skillit/commit/905a4491f1acde75e5cf46a3795a929b717d4c5a), [`f25d268`](https://github.com/pradeepmouli/skillit/commit/f25d268b940d3cf87dc55f71623dc95157086e05)]:
+- Updated dependencies [[`6467ad2`](https://github.com/pradeepmouli/skillit/commit/6467ad2d1399ea19de8ab625341a9815d37b84cf)]:
   - @skillit/core@4.0.1
 
 ## 1.0.1
