@@ -38,14 +38,14 @@
     "@changesets/changelog-github": "^1.0.1",
     "@changesets/cli": "^3.0.3",
     "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "5.0.0-beta.3",
+    "@vitest/coverage-v8": "5.0.1",
     "lint-staged": "^17.5.1",
     "oxlint": "^1.83.0",
     "simple-git-hooks": "^2.13.1",
     "typedoc": "^0.28.20",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
-    "vitest": "5.0.0-beta.4"
+    "vitest": "5.0.1"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",
