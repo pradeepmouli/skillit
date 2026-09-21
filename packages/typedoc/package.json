@@ -52,7 +52,7 @@
     "@skillit/core": "workspace:*"
   },
   "devDependencies": {
-    "typedoc": "^0.28.19",
+    "typedoc": "^0.28.20",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {

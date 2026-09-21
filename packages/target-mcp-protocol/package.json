@@ -40,12 +40,12 @@
   },
   "dependencies": {
     "@skillit/core": "workspace:*",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@skillit/mcp": "workspace:*",
     "@types/node": "^26.5.1",
-    "vitest": "^5.0.0-beta.4"
+    "vitest": "^5.0.1"
   },
   "peerDependencies": {
     "@skillit/mcp": "workspace:*"
