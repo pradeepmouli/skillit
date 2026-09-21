@@ -49,6 +49,6 @@
   },
   "dependencies": {
     "@ast-grep/napi": "^0.45.3",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   }
 }
