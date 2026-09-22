@@ -1,5 +1,24 @@
 # @skillit/client
 
+## 1.1.3
+
+### Patch Changes
+
+- [#121](https://github.com/pradeepmouli/skillit/pull/121) [`7acd316`](https://github.com/pradeepmouli/skillit/commit/7acd316c38288215f70ba0afe29e8c29f16072c4) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - fix(ci): generate changeset and keep TS6 pins in dep-update workflow
+  - chore(deps)(deps-dev): bump the code-quality group across 1 directory with 2 updates
+  - chore(deps)(deps-dev): bump vite
+  - chore(deps)(deps-dev): bump @types/node from 25.9.1 to 26.5.1
+  - chore(deps)(deps-dev): bump @changesets/cli from 2.31.0 to 2.31.1
+
+- [#141](https://github.com/pradeepmouli/skillit/pull/141) [`8410f29`](https://github.com/pradeepmouli/skillit/commit/8410f29c4d6b7ad59da0025f5232ba5f20c4ed8a) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - Bump `@anthropic-ai/sdk` from `^0.102.0` to `^0.127.0` (runtime dependency). Checked the intervening changelog for the two categories of real breaking change (removed/retired models, removed content-block types) — this package's usage is a single plain-text `messages.create()` call per role, with model IDs (`claude-sonnet-4-6`, `claude-opus-4-7`) that were never affected. No test suite exists for this package; verified via clean build + full-workspace type-check.
+
+- - chore(deps): update runtime dependencies
+- Updated dependencies [[`7acd316`](https://github.com/pradeepmouli/skillit/commit/7acd316c38288215f70ba0afe29e8c29f16072c4), [`2043194`](https://github.com/pradeepmouli/skillit/commit/2043194469364adbd5bbeaa298b0899acb82cfae)]:
+  - @skillit/cli@1.1.3
+  - @skillit/core@4.0.3
+  - @skillit/mcp@2.0.3
+  - @skillit/typedoc@2.0.4
+
 ## 1.1.2
 
 ### Patch Changes
