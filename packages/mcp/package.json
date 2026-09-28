@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^16.0.3",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.30.1",
     "@skillit/core": "workspace:*",
     "@skillit/target-mcp-protocol": "workspace:*",
     "@types/json-schema": "^7.0.15",
