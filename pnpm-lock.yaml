@@ -97,8 +97,8 @@ importers:
   packages/mcp:
     dependencies:
       '@apidevtools/json-schema-ref-parser':
-        specifier: ^16.0.5
-        version: 16.0.5(@types/json-schema@7.0.15)
+        specifier: ^16.0.8
+        version: 16.0.8(@types/json-schema@7.0.15)
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.1
         version: 1.32.1(zod@4.4.3)
@@ -245,8 +245,8 @@ packages:
       zod:
         optional: true
 
-  '@apidevtools/json-schema-ref-parser@16.0.5':
-    resolution: {integrity: sha512-z3LiEMqTP2FNu6u8bdUgBYErVuwMSZReOJy1MCEIB0BDHMoNgBtkciby32HOlcrfWwrOSzRU8YIsZ0CogYRuYQ==}
+  '@apidevtools/json-schema-ref-parser@16.0.8':
+    resolution: {integrity: sha512-I/VwYjPV/OTQegEhO+ITP2cFUChohqMJ6pNSXx2Q2dLCbGGa5WWT1ATCFhjseapSCcfcFxk04Bg07dgwSs+Pxw==}
     engines: {node: '>=22.19.0'}
     peerDependencies:
       '@types/json-schema': ^7.0.15
@@ -2998,7 +2998,7 @@ snapshots:
     optionalDependencies:
       zod: 4.4.3
 
-  '@apidevtools/json-schema-ref-parser@16.0.5(@types/json-schema@7.0.15)':
+  '@apidevtools/json-schema-ref-parser@16.0.8(@types/json-schema@7.0.15)':
     dependencies:
       '@types/json-schema': 7.0.15
       js-yaml: 5.5.0
